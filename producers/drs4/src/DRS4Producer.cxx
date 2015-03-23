@@ -14,16 +14,19 @@
 #include <ostream>
 #include <vector>
 #include <mutex>
+#include <cmath>
 #include <string>
 #include <unistd.h>
 
+using namespace std;
 static const std::string EVENT_TYPE = "DRS4";
 
 DRS4Producer::DRS4Producer(const std::string & name, const std::string & runcontrol, const std::string & verbosity)  : eudaq::Producer(name, runcontrol),
 		m_run(0),
 		m_ev(0),
 		m_producerName(name),
-		m_event_type("DRS4"){
+		m_event_type("DRS4"),
+		m_self_triggering(false){
 	m_t = new eudaq::Timer;
 	n_channels = 4;
 	cout<<"Started DRS4Producer with Name: "<<name<<endl;
@@ -62,7 +65,7 @@ void DRS4Producer::OnStartRun(unsigned runnumber) {
 		// Send the event out:
 		SendEvent(bore);
 
-		std::cout << "BORE for DRS4 Board: (event type"<<m_event_type<<")"<<endl;
+		std::cout << "BORE for DRS4 Board: (event type"<<m_event_type<<")\tself trigger: "<<m_self_triggering<<endl;
 
 		SetStatus(eudaq::Status::LVL_OK, "Running");
 		m_running = true;
@@ -119,18 +122,25 @@ void DRS4Producer::ReadoutLoop() {
 		else {
 			if (!m_b)
 				continue;
-			// Acquire lock for pxarCore object access:
-			if (m_b->IsBusy()){
-				cout<<"Device Is Busy send trigger"<<endl;
-				m_b->SoftTrigger();
-				usleep(10);
-				continue;
+			k++;
+
+
+			//Check if ready for triggers
+			if ( m_b->IsBusy()){
+				if (m_self_triggering && k%(int)2e4 == 0 ){
+					cout<<"Send software trigger"<<endl;
+					m_b->SoftTrigger();
+					usleep(10);
+				}
+				else{
+//					cout<<"continue"<<m_self_triggering<<"/"<<k<<endl;
+					continue;
+				}
 			}
 			// Trying to get the next event, daqGetRawEvent throws exception if none is available:
 			try {
 				/* read all waveforms */
 				m_b->TransferWaves(0, 8);
-
 
 				for (int ch = 0; ch < n_channels; ch++){
 					/* read time (X) array of  channel in ns
@@ -151,14 +161,15 @@ void DRS4Producer::ReadoutLoop() {
 				//
 				//				  float time_array[8][1024];
 				//				  float wave_array[8][1024];
-
+				unsigned int block_no = 0;
+//				ev.AddBlock(block_no,"EHDR");
 				for (int ch = 0; ch < n_channels; ch++){
 					/* Set time block of ch */
 					ev.AddBlock(ch*2+0, reinterpret_cast<const char*>(&time_array[ch]), sizeof( time_array[ch][0])*1024);
 					/* Set data block of ch */
 					ev.AddBlock(ch*2+1, reinterpret_cast<const char*>(&wave_array[ch]), sizeof( wave_array[ch][0])*1024);
 				}
-
+				cout<<"Send Event"<<m_ev<<" "<<m_self_triggering<<endl;
 				SendEvent(ev);
 				m_ev++;
 				//				if(daqEvent.data.size() > 1) { m_ev_filled++; m_ev_runningavg_filled++; }
@@ -188,17 +199,20 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf) {
 		float trigger_level = m_config.Get("trigger_level",-0.05);
 		bool trigger_polarity = m_config.Get("trigger_polarity",false);
 		int nBoards = m_drs->GetNumberOfBoards();
+		m_self_triggering = m_config.Get("self_triggering",false);
+		m_n_self_trigger = m_config.Get("n_self_trigger",1e5);
 		cout<<"Config: "<<endl;
-		cout<<"\tserial no:"<<m_serialno<<endl;
-		cout<<"\ttrigger_level:"<<trigger_level<<endl;
+		cout<<"\tserial no:       "<<m_serialno<<endl;
+		cout<<"\ttrigger_level:   "<<trigger_level<<endl;
 		cout<<"\ttrigger_polarity:"<<trigger_polarity<<endl<<endl;
+		cout<<"\tself_triggering: "<<m_self_triggering<<endl;
 		cout<<"Show boards..."<<endl;
 		cout<<"There are "<<nBoards<<" DRS4-Evaluation-Board(s) connected:"<<endl;
 		/* show any found board(s) */
 		int board_no = 0;
 		for (size_t i=0 ; i<m_drs->GetNumberOfBoards() ; i++) {
 			m_b = m_drs->GetBoard(i);
-			printf("\t %2d) serial #%d, firmware revision %d\n",
+			printf("    #%2d: serial #%d, firmware revision %d\n",
 					i, m_b->GetBoardSerialNumber(), m_b->GetFirmwareVersion());
 			if (m_b->GetBoardSerialNumber() == m_serialno)
 				board_no = i;
@@ -207,7 +221,7 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf) {
 		/* exit if no board found */
 		if (!nBoards){
 			EUDAQ_ERROR(string("No Board connected exception."));
-//			SetStatus(eudaq::Status::LVL_ERROR, "No Board connected.");
+			//			SetStatus(eudaq::Status::LVL_ERROR, "No Board connected.");
 			return;
 		}
 
@@ -215,21 +229,28 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf) {
 		/* continue working with first board only */
 		m_b = m_drs->GetBoard(board_no);
 
-
+		cout<<"Init"<<endl;
 		/* initialize board */
 		m_b->Init();
 
+		double sampling_frequency = m_config.Get("sampling_frequency",5);
+		bool wait_for_PLL_lock = m_config.Get("wait_for_PLL_lock",true);
+		cout<<"Set Freqeuncy: "<<sampling_frequency<<" | Wait for PLL lock" <<wait_for_PLL_lock<<endl;
 		/* set sampling frequency */
-		m_b->SetFrequency(5, true);
+		m_b->SetFrequency(sampling_frequency, wait_for_PLL_lock);
 
+		cout<<"Set Transparent mode"<<endl;
 		/* enable transparent mode needed for analog trigger */
 		m_b->SetTranspMode(1);
 
 		/* set input range to -0.5V ... +0.5V */
+		double input_range_center =  m_config.Get("input_range_center",0);
+		if (std::abs(input_range_center)>.5){
+			EUDAQ_WARN(string("Could not set valid input range,choose input range center to be 0V"));
+			input_range_center = 0;
+		}
+		EUDAQ_INFO(string("Set Input Range to: "+std::to_string(input_range_center-0.5) + "V - "+std::to_string(input_range_center-0.5) + "V"));
 		m_b->SetInputRange(0);
-
-		/* use following line to set range to 0..1V */
-		//b->SetInputRange(0.5);
 
 		/* use following line to turn on the internal 100 MHz clock connected to all channels  */
 		m_b->EnableTcal(1);
@@ -243,11 +264,18 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf) {
 			m_b->SetTriggerSource(0);           // use CH1 as source
 		}
 		m_b->SetTriggerLevel(trigger_level);            // 0.05 V
+		EUDAQ_INFO(string("Set Trigger Level to: "+std::to_string(trigger_level)));
+
 		m_b->SetTriggerPolarity(trigger_polarity);        // positive edge
+		if (trigger_polarity)
+			EUDAQ_INFO(string("Set Trigger Polarity to negative edge"));
+		else
+			EUDAQ_INFO(string("Set Trigger Polarity to positive edge"));
 	}catch ( ... ){
 		EUDAQ_ERROR(string("Unknown exception."));
 		SetStatus(eudaq::Status::LVL_ERROR, "Unknown exception.");
 	}
+	cout<<"Configured! Ready to take data"<<endl;
 }
 
 
@@ -278,5 +306,6 @@ int main(int /*argc*/, const char ** argv) {
 		// This does some basic error handling of common exceptions
 		return op.HandleMainException();
 	}
+
 	return 0;
 }
