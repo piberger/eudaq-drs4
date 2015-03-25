@@ -17,6 +17,7 @@
 #include <cmath>
 #include <string>
 #include <unistd.h>
+#include <algorithm>
 
 using namespace std;
 static const std::string EVENT_TYPE = "DRS4";
@@ -25,7 +26,7 @@ DRS4Producer::DRS4Producer(const std::string & name, const std::string & runcont
 		m_run(0),
 		m_ev(0),
 		m_producerName(name),
-		m_event_type("DRS4"),
+		m_event_type(EVENT_TYPE),
 		m_self_triggering(false){
 	m_t = new eudaq::Timer;
 	n_channels = 4;
@@ -40,6 +41,8 @@ DRS4Producer::DRS4Producer(const std::string & name, const std::string & runcont
 	m_drs = new DRS();
 	int nBoards = m_drs->GetNumberOfBoards();
 	cout <<" NBoards :"<<nBoards<<endl;
+	for (int ch =0; ch < 4; ch++) m_chnOn[ch] = true; //set all channels on per default
+
 }
 
 void DRS4Producer::OnStartRun(unsigned runnumber) {
@@ -50,17 +53,53 @@ void DRS4Producer::OnStartRun(unsigned runnumber) {
 		std::cout<<"Create event"<<m_event_type<<" "<<m_run<<std::endl;
 		eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
 		std::cout << "drs4 board"<<std::endl;
-		//		bore.SetTag("DRS4_BOARD", std::to_string(m_b->GetBoardSerialNumber()));
-		//
-		//		// Set Firmware name
-		//		std::cout << "Set tag fw"<<std::endl;
-		//		bore.SetTag("DRS4_FW", std::to_string(m_b->GetFirmwareVersion()));
-		//		// Set Names for different channels
-		//		for (int ch = 0; ch < n_channels; ch++){
-		//			string tag = "CH_%d"+std::to_string(ch);
-		//			std::cout << "Set tag"<<tag<<std::endl;
-		//			bore.SetTag(tag, "BLA");
-		//		}
+		bore.SetTag("DRS4_serial_no", std::to_string(m_b->GetBoardSerialNumber()));
+
+		// Set Firmware name
+		std::cout << "Set tag fw"<<std::endl;
+		bore.SetTag("DRS4_FW", std::to_string(m_b->GetFirmwareVersion()));
+		// Set Names for different channels
+		for (int ch = 0; ch < n_channels; ch++){
+			 continue;
+			string tag = "CH_%d"+std::to_string(ch);
+			std::cout << "Set tag"<<tag<<std::endl;
+			string value;
+			if (!m_chnOn[ch])
+				value = "OFF";
+			else
+				value = "NAME";//todo fill with name of DUT
+			bore.SetTag(tag, value);
+		}
+
+		bore.SetTag("DRS4_n_channels", n_channels);
+		bore.SetTag("DRS4_Board_type",std::to_string(m_b->GetBoardType()));
+		unsigned char *buffer = (unsigned char *)malloc(10);
+		unsigned char *p = buffer;
+		int block_id = 0;
+		int waveDepth = m_b->GetChannelDepth();
+		cout<<"WaveformDepth: "<<waveDepth<<endl;
+		for (int i=0 ; i<4 ; i++) {
+			if (m_chnOn[i]) {
+				cout<<"TimeCalibration CH"<<i+1<<":"<<endl;
+				float tcal[2048];
+				m_b->GetTimeCalibration(0, i*2, 0, tcal, 0);
+				if (waveDepth == 2048)
+				for (int j=0 ; j<waveDepth ; j++) {
+					// save binary time as 32-bit float value
+					tcal[j/2] = (tcal[j]+tcal[j+1])/2;
+					j++;
+				}
+				cout<<endl;
+				cout<<"Add block"<<endl;
+				sprintf((char *)p, "C%03d", i+1);
+//				bore.AddBlock(block_id,reinterpret_cast<const char*>(&i),sizeof(i));
+				bore.AddBlock(block_id,reinterpret_cast<const char*>(buffer),sizeof(*buffer)*4);
+				block_id++;
+				bore.AddBlock(block_id,reinterpret_cast<const char*>(&tcal), sizeof( tcal[0])*1024);
+			}
+		}
+
+
 		std::cout << "Send event"<<std::endl;
 		// Send the event out:
 		SendEvent(bore);
@@ -133,7 +172,7 @@ void DRS4Producer::ReadoutLoop() {
 					usleep(10);
 				}
 				else{
-//					cout<<"continue"<<m_self_triggering<<"/"<<k<<endl;
+					//					cout<<"continue"<<m_self_triggering<<"/"<<k<<endl;
 					continue;
 				}
 			}
@@ -147,10 +186,21 @@ void DRS4Producer::ReadoutLoop() {
 					   Note: On the evaluation board input #1 is connected to channel 0 and 1 of
 					   the DRS chip, input #2 is connected to channel 2 and 3 and so on. So to
 					   get the input #2 we have to read DRS channel #2, not #1. */
-					m_b->GetTime(0, ch*2, m_b->GetTriggerCell(0), time_array[ch]);
+					//					m_b->GetTime(0, ch*2, m_b->GetTriggerCell(0), time_array[ch*2]);
 					/* decode waveform (Y) array of first channel in mV */
 					m_b->GetWave(0, ch*2, wave_array[ch]);
 				}
+				int trigger_cell = m_b->GetTriggerCell(0);
+				float min_wave[8];
+				float max_wave[8];
+				for (int ch = 0; ch < n_channels; ch++){
+					min_wave[ch] = 1e9;
+					max_wave[ch] = 1e9;
+					min_wave[ch] = *std::min_element(wave_array[ch],wave_array[ch]+1024);
+					max_wave[ch] = *std::max_element(wave_array[ch],wave_array[ch]+1024);
+					cout<<"Channel "<<ch<<": "<<min_wave[ch]<<" - "<<max_wave[ch]<<endl;
+				}
+				cout<<"Trigger cell: "<<trigger_cell<<endl;
 
 				/* Restart Readout */
 				m_b->StartDomino();
@@ -158,21 +208,17 @@ void DRS4Producer::ReadoutLoop() {
 				printf("\rEvent #%6d read successfully\n",m_ev);
 
 				eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
-				//
-				//				  float time_array[8][1024];
-				//				  float wave_array[8][1024];
 				unsigned int block_no = 0;
-//				ev.AddBlock(block_no,"EHDR");
+				ev.AddBlock(0, reinterpret_cast<const char*>(&trigger_cell), sizeof( trigger_cell));				//				ev.AddBlock(block_no,"EHDR");
 				for (int ch = 0; ch < n_channels; ch++){
 					/* Set time block of ch */
-					ev.AddBlock(ch*2+0, reinterpret_cast<const char*>(&time_array[ch]), sizeof( time_array[ch][0])*1024);
 					/* Set data block of ch */
-					ev.AddBlock(ch*2+1, reinterpret_cast<const char*>(&wave_array[ch]), sizeof( wave_array[ch][0])*1024);
+					ev.AddBlock(ch+1, reinterpret_cast<const char*>(&wave_array[ch]), sizeof( wave_array[ch][0])*1024);
 				}
 				cout<<"Send Event"<<m_ev<<" "<<m_self_triggering<<endl;
 				SendEvent(ev);
 				m_ev++;
-				//				if(daqEvent.data.size() > 1) { m_ev_filled++; m_ev_runningavg_filled++; }
+				SendRawEvent();
 
 				if(m_ev%1000 == 0) {
 					std::cout << "DRS4 Board "
@@ -308,4 +354,11 @@ int main(int /*argc*/, const char ** argv) {
 	}
 
 	return 0;
+}
+
+
+void DRS4Producer::SendRawEvent() {
+
+	//				if(daqEvent.data.size() > 1) { m_ev_filled++; m_ev_runningavg_filled++; }
+
 }

@@ -23,27 +23,30 @@
 
 class DRS4Producer: public eudaq::Producer  {
 public:
-  DRS4Producer(const std::string & name, const std::string & runcontrol, const std::string & verbosity);
-  virtual void OnConfigure(const eudaq::Configuration & config);
-  virtual void OnStartRun(unsigned runnumber);
-  virtual void OnStopRun();
-  virtual void OnTerminate();
-  void ReadoutLoop();
-//  virtual ~DRS4Producer();
+	DRS4Producer(const std::string & name, const std::string & runcontrol, const std::string & verbosity);
+	virtual void OnConfigure(const eudaq::Configuration & config);
+	virtual void OnStartRun(unsigned runnumber);
+	virtual void OnStopRun();
+	virtual void OnTerminate();
+	void ReadoutLoop();
+	//  virtual ~DRS4Producer();
 private:
-  unsigned m_run, m_ev;
-  std::string m_verbosity, m_producerNamem,m_event_type, m_producerName;
-  bool m_terminated, m_running, triggering,m_self_triggering;;
-  int m_n_self_trigger;
-  unsigned NumOfChan, NumOfSil, NumOfADC;
-  eudaq::Configuration m_config;
-  eudaq::Timer* m_t;
-  DRS *m_drs;
-  int m_serialno;
-  DRSBoard *m_b;
-  float time_array[8][1024];
-  float wave_array[8][1024];
-  int n_channels;
+	virtual void SendRawEvent();
+	unsigned m_run, m_ev;
+	std::string m_verbosity, m_producerNamem,m_event_type, m_producerName;
+	bool m_terminated, m_running, triggering,m_self_triggering;;
+	int m_n_self_trigger;
+	unsigned NumOfChan, NumOfSil, NumOfADC;
+	eudaq::Configuration m_config;
+	eudaq::Timer* m_t;
+	DRS *m_drs;
+	int m_serialno;
+	DRSBoard *m_b;
+	float time_array[8][1024];
+	unsigned short raw_wave_array[8][1024];
+	float wave_array[8][1024];
+	int n_channels;
+	bool     m_chnOn[4];
 };
 int main(int /*argc*/, const char ** argv);
 #endif /*DRS4PRODUCER_HH*/
