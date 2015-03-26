@@ -24,15 +24,17 @@ public:
 			m_samples.push_back(data[i]);
 	} //todo: FIx issue with template
 //	void SetWaveform(float* data);
-	std::vector<float>* GetWaveform() const;
-
+	std::vector<float>* GetData() const{return &m_samples;};
+	void SetTriggerCell(unsigned trigger_cell){m_trigger_cell=trigger_cell;}
+	unsigned int GetTriggerCell() const{return m_trigger_cell;}
+	unsigned ID() const;
 	void Print(std::ostream &) const;
 private:
 	int m_n_samples;
 	mutable std::vector<float> m_samples;
 	unsigned m_id;
 	std::string m_type, m_sensor;
-
+	unsigned int m_trigger_cell;
 };
 
 class DLLEXPORT StandardPlane : public Serializable {
