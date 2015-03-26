@@ -59,32 +59,45 @@ public:
 		// they can be differentiated here
 		// Create a StandardPlane representing one sensor plane
 		int id = 0;
-		RawDataEvent::data_t trigger_cell_data = in_raw.GetBlock(0);
-		int trigger_cell = static_cast<int>(trigger_cell_data[0]);
+		// Get Trigger cell
+		RawDataEvent::data_t data = in_raw.GetBlock(id++);
+		int trigger_cell = static_cast<int>(data[0]);
+		// Get Timestamp
+		data = in_raw.GetBlock(id++);
+		uint64_t timestamp = *((uint64_t*) &data[0]);
+		sev.SetTimestamp(timestamp);
+
 		float min_waves[m_n_channels];
 		float max_waves[m_n_channels];
-		std::cout<<nblocks<<" "<<m_n_channels<<std::endl;
+		//Get Raw data
+		std::cout<<"Read Event: "<<nblocks<<" "<<m_n_channels<<" @ "<<timestamp<<std::endl;
 		for (int ch = 0; ch < m_n_channels && ch < nblocks-1; ch++){
 			StandardPlane plane(ch, EVENT_TYPE, m_dut_name);
 			// Set the number of pixels
-			int width = 1024, height = 1;
-			plane.SetSizeRaw(width, height);
-			RawDataEvent::data_t wave_array_data = in_raw.GetBlock(ch+1);
-			int wave_size = wave_array_data.size();
+			data = in_raw.GetBlock(id++);
+			int wave_size = data.size();
 			int n_samples =  wave_size/sizeof(float);
-			std::cout<<"CH: "<<ch<<" with "<<trigger_cell_data.size()<<" "
-					<<wave_array_data.size()<<" -> "<<n_samples<<"  .";//<<std::endl;
+			std::cout<<"CH: "<<ch<<" with "
+					<<data.size()<<" -> "<<n_samples<<"  .";//<<std::endl;
 			std::cout<<"Trigger cell "<<trigger_cell<<", ";
-			float * wave_array = (float*) &wave_array_data[0];
+			float * wave_array = (float*) &data[0];
+			plane.SetSizeRaw(n_samples, 1);
 			min_waves[ch] = *std::min_element(wave_array,wave_array+n_samples);
 			max_waves[ch] = *std::max_element(wave_array,wave_array+n_samples);
 			std::cout<<"From: "<< min_waves[ch] << " mV to " << max_waves[ch] << " mV"<<std::endl;
 			for (int sample = 0; sample < n_samples; sample++)
 				plane.PushPixel(sample,0,wave_array[sample]);
 			// Add the plane to the StandardEvent
-			sev.AddPlane(plane);
+//			sev.AddPlane(plane);
+			StandardWaveform wf(ch,EVENT_TYPE,m_dut_name);
+			wf.SetNSamples(n_samples);
+			wf.SetWaveform((float*) wave_array);
+			sev.AddWaveform(wf);
+//			std::cout<<"CH"<<ch<<": "<<wf<<std::endl;
+
 			// Indicate that data was successfully converted
 		}
+		std::cout<<sev<<std::endl;
 		return true;
 	}
 
@@ -96,22 +109,6 @@ public:
 #endif
 
 private:
-	static std::vector<uint16_t> TransformRawData(const std::vector<unsigned char> & block) {
-
-		// Transform data of form char* to vector<int16_t>
-		std::vector<uint16_t> rawData;
-
-		int size = block.size();
-		if(size < 2) { return rawData; }
-
-		int i = 0;
-		while(i < size-1) {
-			uint16_t temp = ((uint16_t)block.data()[i+1] << 8) | block.data()[i];
-			rawData.push_back(temp);
-			i+=2;
-		}
-		return rawData;
-	}
 	// The constructor can be private, only one static instance is created
 	// The DataConverterPlugin constructor must be passed the event type
 	// in order to register this converter for the corresponding conversions
