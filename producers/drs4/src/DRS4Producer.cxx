@@ -60,7 +60,7 @@ void DRS4Producer::OnStartRun(unsigned runnumber) {
 		bore.SetTag("DRS4_FW", std::to_string(m_b->GetFirmwareVersion()));
 		// Set Names for different channels
 		for (int ch = 0; ch < n_channels; ch++){
-			 continue;
+			continue;
 			string tag = "CH_%d"+std::to_string(ch);
 			std::cout << "Set tag"<<tag<<std::endl;
 			string value;
@@ -84,15 +84,15 @@ void DRS4Producer::OnStartRun(unsigned runnumber) {
 				float tcal[2048];
 				m_b->GetTimeCalibration(0, i*2, 0, tcal, 0);
 				if (waveDepth == 2048)
-				for (int j=0 ; j<waveDepth ; j++) {
-					// save binary time as 32-bit float value
-					tcal[j/2] = (tcal[j]+tcal[j+1])/2;
-					j++;
-				}
+					for (int j=0 ; j<waveDepth ; j++) {
+						// save binary time as 32-bit float value
+						tcal[j/2] = (tcal[j]+tcal[j+1])/2;
+						j++;
+					}
 				cout<<endl;
 				cout<<"Add block"<<endl;
 				sprintf((char *)p, "C%03d", i+1);
-//				bore.AddBlock(block_id,reinterpret_cast<const char*>(&i),sizeof(i));
+				//				bore.AddBlock(block_id,reinterpret_cast<const char*>(&i),sizeof(i));
 				bore.AddBlock(block_id,reinterpret_cast<const char*>(buffer),sizeof(*buffer)*4);
 				block_id++;
 				bore.AddBlock(block_id,reinterpret_cast<const char*>(&tcal), sizeof( tcal[0])*1024);
