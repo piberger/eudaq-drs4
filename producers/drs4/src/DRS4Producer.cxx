@@ -28,7 +28,6 @@ DRS4Producer::DRS4Producer(const std::string & name, const std::string & runcont
 		m_producerName(name),
 		m_event_type(EVENT_TYPE),
 		m_self_triggering(false){
-	m_t = new eudaq::Timer;
 	n_channels = 4;
 	cout<<"Started DRS4Producer with Name: "<<name<<endl;
 	m_b = 0;
@@ -49,7 +48,8 @@ void DRS4Producer::OnStartRun(unsigned runnumber) {
 	m_run = runnumber;
 	m_ev = 0;
 	try{
-		std::cout << "Start Run: " << m_run << std::endl;
+		this->SetTimeStamp();
+		std::cout << "Start Run: " << m_run << " @ "<<m_timestamp<<std::endl;
 		std::cout<<"Create event"<<m_event_type<<" "<<m_run<<std::endl;
 		eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
 		std::cout << "drs4 board"<<std::endl;
@@ -162,14 +162,12 @@ void DRS4Producer::ReadoutLoop() {
 			if (!m_b)
 				continue;
 			k++;
-
-
 			//Check if ready for triggers
 			if ( m_b->IsBusy()){
-				if (m_self_triggering && k%(int)2e4 == 0 ){
+				if (m_self_triggering && k%(int)1e4 == 0 ){
 					cout<<"Send software trigger"<<endl;
 					m_b->SoftTrigger();
-					usleep(10);
+					usleep(10); //todo not mt save
 				}
 				else{
 					//					cout<<"continue"<<m_self_triggering<<"/"<<k<<endl;
@@ -178,6 +176,8 @@ void DRS4Producer::ReadoutLoop() {
 			}
 			// Trying to get the next event, daqGetRawEvent throws exception if none is available:
 			try {
+				/* Set Time stamp */
+				SetTimeStamp();
 				/* read all waveforms */
 				m_b->TransferWaves(0, 8);
 
@@ -209,11 +209,15 @@ void DRS4Producer::ReadoutLoop() {
 
 				eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
 				unsigned int block_no = 0;
-				ev.AddBlock(0, reinterpret_cast<const char*>(&trigger_cell), sizeof( trigger_cell));				//				ev.AddBlock(block_no,"EHDR");
+				ev.AddBlock(block_no, reinterpret_cast<const char*>(&trigger_cell), sizeof( trigger_cell));				//				ev.AddBlock(block_no,"EHDR");
+				block_no++;
+				ev.AddBlock(block_no, reinterpret_cast<const char*>(&m_timestamp), sizeof( m_timestamp));				//				ev.AddBlock(block_no,"EHDR");
+				block_no++;
 				for (int ch = 0; ch < n_channels; ch++){
 					/* Set time block of ch */
 					/* Set data block of ch */
-					ev.AddBlock(ch+1, reinterpret_cast<const char*>(&wave_array[ch]), sizeof( wave_array[ch][0])*1024);
+					ev.AddBlock(block_no, reinterpret_cast<const char*>(&wave_array[ch]), sizeof( wave_array[ch][0])*1024);
+					block_no++;
 				}
 				cout<<"Send Event"<<m_ev<<" "<<m_self_triggering<<endl;
 				SendEvent(ev);
@@ -361,4 +365,14 @@ void DRS4Producer::SendRawEvent() {
 
 	//				if(daqEvent.data.size() > 1) { m_ev_filled++; m_ev_runningavg_filled++; }
 
+}
+
+void DRS4Producer::SetTimeStamp() {
+
+	std::chrono::high_resolution_clock::time_point epoch;
+	auto now = std::chrono::high_resolution_clock::now();
+	auto elapsed = now - epoch;
+	// you need to be explicit about your timestamp type
+	m_timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(elapsed).count()/ 100u;
+	std::cout<<"Set Timestamp: "<<m_timestamp<<endl;
 }

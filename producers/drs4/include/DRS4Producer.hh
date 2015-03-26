@@ -19,6 +19,7 @@
 #include<sys/time.h>
 #include <vector>
 #include <time.h>
+#include <chrono>
 
 
 class DRS4Producer: public eudaq::Producer  {
@@ -32,13 +33,14 @@ public:
 	//  virtual ~DRS4Producer();
 private:
 	virtual void SendRawEvent();
+	void SetTimeStamp();
 	unsigned m_run, m_ev;
 	std::string m_verbosity, m_producerNamem,m_event_type, m_producerName;
 	bool m_terminated, m_running, triggering,m_self_triggering;;
 	int m_n_self_trigger;
 	unsigned NumOfChan, NumOfSil, NumOfADC;
 	eudaq::Configuration m_config;
-	eudaq::Timer* m_t;
+	std::uint64_t m_timestamp;
 	DRS *m_drs;
 	int m_serialno;
 	DRSBoard *m_b;
@@ -46,7 +48,7 @@ private:
 	unsigned short raw_wave_array[8][1024];
 	float wave_array[8][1024];
 	int n_channels;
-	bool     m_chnOn[4];
+	bool     m_chnOn[4]; //todo fill with active channels
 };
 int main(int /*argc*/, const char ** argv);
 #endif /*DRS4PRODUCER_HH*/
