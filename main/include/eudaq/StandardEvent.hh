@@ -171,6 +171,7 @@ public:
 
 	StandardWaveform & AddWaveform(const StandardWaveform &);
 	size_t NumWaveforms() const;
+	size_t GetNWaveforms() const {return NumWaveforms();}
 	const StandardWaveform & GetWaveform(size_t i) const;
 	StandardWaveform & GetWaveform(size_t i);
 private:
