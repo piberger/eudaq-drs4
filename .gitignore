@@ -57,3 +57,16 @@ extern/libusb*
 # ignore OS files
 Thumbs.db
 *.lnk
+
+# ROOT Dicts
+*Dict.cxx
+*Dict.h
+
+#cmake stuff
+Makefile
+*.exe
+*/cmake_install.cmake
+cmake_install.cmake
+*/Makefile
+CMakeFiles
+CMakeCache.txt
