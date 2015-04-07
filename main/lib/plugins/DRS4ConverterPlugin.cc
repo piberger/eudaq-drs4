@@ -26,7 +26,6 @@ private:
 	int m_n_channels;
 	std::string m_dut_name;
 public:
-
 	// This is called once at the beginning of each run.
 	// You may extract information from the BORE and/or configuration
 	// and store it in member variables to use during the decoding later.
@@ -70,23 +69,19 @@ public:
 		float min_waves[m_n_channels];
 		float max_waves[m_n_channels];
 		//Get Raw data
-		std::cout<<"Read Event: "<<nblocks<<" "<<m_n_channels<<" @ "<<timestamp<<std::endl;
+//		std::cout<<"Read Event: "<<nblocks<<" "<<m_n_channels<<" @ "<<timestamp<<std::endl;
 		for (int ch = 0; ch < m_n_channels && ch < nblocks-1; ch++){
-			StandardPlane plane(ch, EVENT_TYPE, m_dut_name);
 			// Set the number of pixels
 			data = in_raw.GetBlock(id++);
 			int wave_size = data.size();
 			int n_samples =  wave_size/sizeof(float);
-			std::cout<<"CH: "<<ch<<" with "
-					<<data.size()<<" -> "<<n_samples<<"  .";//<<std::endl;
-			std::cout<<"Trigger cell "<<trigger_cell<<", ";
+//			std::cout<<"CH: "<<ch<<" with "
+//					<<data.size()<<" -> "<<n_samples<<"  .";//<<std::endl;
+//			std::cout<<"Trigger cell "<<trigger_cell<<", ";
 			float * wave_array = (float*) &data[0];
-			plane.SetSizeRaw(n_samples, 1);
 			min_waves[ch] = *std::min_element(wave_array,wave_array+n_samples);
 			max_waves[ch] = *std::max_element(wave_array,wave_array+n_samples);
-			std::cout<<"From: "<< min_waves[ch] << " mV to " << max_waves[ch] << " mV"<<std::endl;
-			for (int sample = 0; sample < n_samples; sample++)
-				plane.PushPixel(sample,0,wave_array[sample]);
+//			std::cout<<"From: "<< min_waves[ch] << " mV to " << max_waves[ch] << " mV"<<std::endl;
 			// Add the plane to the StandardEvent
 //			sev.AddPlane(plane);
 			StandardWaveform wf(ch,EVENT_TYPE,m_dut_name);
@@ -94,10 +89,10 @@ public:
 			wf.SetWaveform((float*) wave_array);
 			sev.AddWaveform(wf);
 //			std::cout<<"CH"<<ch<<": "<<wf<<std::endl;
-
 			// Indicate that data was successfully converted
 		}
-		std::cout<<sev<<std::endl;
+//		std::cout<<sev<<std::endl;
+//		std::cout<<"Standard Event with "<<sev.NumWaveforms()<<" Waveforms."<<std::endl;
 		return true;
 	}
 
