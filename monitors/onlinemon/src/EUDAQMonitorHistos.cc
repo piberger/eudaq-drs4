@@ -10,10 +10,12 @@
 EUDAQMonitorHistos::EUDAQMonitorHistos(const SimpleStandardEvent &ev)
 {
   nplanes=ev.getNPlanes();
+  nwfs = ev.getNWaveforms();
   Hits_vs_Events=new TProfile*[nplanes];
   TLUdelta_perEventHisto=new TProfile*[nplanes];
 
   Planes_perEventHisto= new TH1F("Planes in Event","Planes in Event",nplanes*2,0,nplanes*2);
+  Waveforms_perEventHisto= new TH1F("Waveforms in Event","Waveforms in Event",nwfs*2,0,nwfs*2);
   Hits_vs_PlaneHisto =new TProfile("Hits vs Plane", "Hits vs Plane",nplanes,0, nplanes);
   Hits_vs_EventsTotal=new TProfile("Hits vs Event", "Hits vs Event",1000, 0, 20000);
   //    TracksPerEvent = new TH2I("Tracks per Event", "Tracks per Event", 1000, 0, 20000, 5, 0, 5);
@@ -55,10 +57,8 @@ EUDAQMonitorHistos::EUDAQMonitorHistos(const SimpleStandardEvent &ev)
     TLUdelta_perEventHisto[i]->SetBit(TH1::kCanRebin);
   }
 
-
-
 }
-
+\
 EUDAQMonitorHistos::~EUDAQMonitorHistos()
 {
   // TODO Auto-generated destructor stub
@@ -69,6 +69,7 @@ void EUDAQMonitorHistos::Fill(const SimpleStandardEvent &ev)
 
   unsigned int event_nr=ev.getEvent_number();
   Planes_perEventHisto->Fill(ev.getNPlanes());
+  Waveforms_perEventHisto->Fill(ev.getNWaveforms());
   unsigned int nhits_total=0;
 
   for (unsigned int i=0; i<nplanes; i++)
@@ -79,7 +80,6 @@ void EUDAQMonitorHistos::Fill(const SimpleStandardEvent &ev)
     nhits_total+=ev.getPlane(i).getNHits();
   }
   Hits_vs_EventsTotal->Fill(event_nr,nhits_total);
-
 }
 
 void EUDAQMonitorHistos::Fill(const unsigned int evt_number, const unsigned int tracks)
@@ -92,6 +92,7 @@ void EUDAQMonitorHistos::Fill(const unsigned int evt_number, const unsigned int 
 void EUDAQMonitorHistos::Write()
 {
   Planes_perEventHisto->Write();
+  Waveforms_perEventHisto->Write();
   Hits_vs_PlaneHisto->Write();
   for (unsigned int i=0; i<nplanes; i++)
   {
@@ -124,6 +125,11 @@ TH1F *EUDAQMonitorHistos::getPlanes_perEventHisto() const
   return Planes_perEventHisto;
 }
 
+TH1F *EUDAQMonitorHistos::getWaveforms_perEventHisto() const
+{
+  return Waveforms_perEventHisto;
+}
+
 TProfile *EUDAQMonitorHistos::getTLUdelta_perEventHisto(unsigned int i) const
 {
   return TLUdelta_perEventHisto[i];
@@ -140,14 +146,29 @@ unsigned int EUDAQMonitorHistos::getNplanes() const
   return nplanes;
 }
 
+TH1F* EUDAQMonitorHistos::getWaveforms_AmplitudeHisto(unsigned int i) const {
+	return 0;
+}
+
+unsigned int EUDAQMonitorHistos::getNwaveforms() const
+{
+  return nwfs;
+}
+
 void EUDAQMonitorHistos::setPlanes_perEventHisto(TH1F *Planes_perEventHisto)
 {
   this->Planes_perEventHisto = Planes_perEventHisto;
 }
 
+void EUDAQMonitorHistos::setWaveforms_perEventHisto(TH1F *Waveforms_perEventHisto)
+{
+  this->Waveforms_perEventHisto = Waveforms_perEventHisto;
+}
+
 void EUDAQMonitorHistos::Reset()
 {
   Planes_perEventHisto->Reset();
+  Waveforms_perEventHisto->Reset();
   Hits_vs_PlaneHisto->Reset();
   for (unsigned int i=0; i<nplanes; i++)
   {

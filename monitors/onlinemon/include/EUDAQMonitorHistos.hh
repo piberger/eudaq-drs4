@@ -36,6 +36,7 @@ class EUDAQMonitorHistos
     TProfile** Hits_vs_Events;
     TProfile * Hits_vs_PlaneHisto;
     TH1F * Planes_perEventHisto;
+    TH1F * Waveforms_perEventHisto;
     TProfile ** TLUdelta_perEventHisto;
     //    TH2I * TracksPerEvent;
     TProfile * TracksPerEvent;
@@ -51,14 +52,19 @@ class EUDAQMonitorHistos
     TProfile *getHits_vs_EventsTotal() const;
     TProfile *getHits_vs_PlaneHisto()const;
     TH1F *getPlanes_perEventHisto() const;
+    TH1F *getWaveforms_perEventHisto() const;
+    TH1F *getWaveforms_AmplitudeHisto(unsigned int i) const;
     TProfile *getTLUdelta_perEventHisto(unsigned int i) const;
     //    TH2I *getTracksPerEventHisto() const;
     TProfile *getTracksPerEventHisto() const;
 
     void setPlanes_perEventHisto(TH1F *Planes_perEventHisto);
+    void setWaveforms_perEventHisto(TH1F* Waveforms_perEventHisto);
     unsigned int getNplanes() const;
+    unsigned int getNwaveforms() const;
   private:
     unsigned int nplanes;
+    unsigned int nwfs;
 };
 
 #ifdef __CINT__
