@@ -35,6 +35,8 @@
 #include "MonitorPerformanceCollection.hh"
 #include "EUDAQMonitorCollection.hh"
 
+#include "WaveformCollection.hh"
+
 #include "OnlineMonWindow.hh"
 //#include "OnlineHistograms.hh"
 #include "SimpleStandardEvent.hh"
@@ -87,6 +89,7 @@ class RootMonitor : private eudaq::Holder<int>,
       HitmapCollection *hmCollection;
       CorrelationCollection *corrCollection;
       EUDAQMonitorCollection * eudaqCollection;
+      WaveformCollection *wfCollection;
 
 
       virtual void StartIdleing() { }
