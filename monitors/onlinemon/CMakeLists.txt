@@ -21,7 +21,10 @@ SET (OnlineMon_SOURCES
   src/OnlineMonConfiguration.cc
   src/SimpleStandardEvent.cc
   src/SimpleStandardPlane.cc
+  src/SimpleStandardWaveform.cc
   src/TGraphSet.cc
+  src/WaveformCollection.cc
+  src/WaveformHistos.cc
 #  src/TreeHistoRelation.cc
   )
 
@@ -31,6 +34,7 @@ set(OnlineMon_HEADERS
   SimpleStandardHit.hh
   SimpleStandardCluster.hh
   SimpleStandardPlane.hh
+  SimpleStandardWaveform.hh
   OnlineMonConfiguration.hh
   CheckEOF.hh
 )
