@@ -79,13 +79,8 @@ namespace eudaq {
 
       const eudaq::StandardPlane & plane = sev.GetPlane(iplane);
       std::vector<double> cds = plane.GetPixels<double>();
-	  
-	 
 
       for (size_t ipix = 0; ipix < cds.size(); ++ipix) {
-
-
-
         id_plane = plane.ID();          
         id_hit = ipix;
         id_x = plane.GetX(ipix);
@@ -103,7 +98,6 @@ namespace eudaq {
 	  m_tfile->Close();
 	  delete m_tfile;
   }
-
   uint64_t FileWriterRoot::FileBytes() const { return 0; }
 
 }
