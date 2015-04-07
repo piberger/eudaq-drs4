@@ -22,28 +22,39 @@ typedef unsigned long long uint64_t
 #endif
 
 #include "include/SimpleStandardPlane.hh"
+#include "include/SimpleStandardWaveform.hh"
 
 inline bool operator==(SimpleStandardPlane const &a, SimpleStandardPlane const &b) {
   return (a.getName()==b.getName() && a.getID() == b.getID());
 }
 
-
-
 inline bool operator<(SimpleStandardPlane const &a, SimpleStandardPlane const &b) { // Needed to use struct in a map
-  return a.getName()<b.getName() || ( a.getName()==b.getName() && a.getID() < b.getID()); 
+  return a.getName()<b.getName() || ( a.getName()==b.getName() && a.getID() < b.getID());
+}
+
+inline bool operator==(SimpleStandardWaveform const &a, SimpleStandardWaveform const &b) {
+  return (a.getName()==b.getName() && a.getID() == b.getID());
+}
+
+inline bool operator<(SimpleStandardWaveform const &a, SimpleStandardWaveform const &b) {
+  return a.getName()<b.getName() || ( a.getName()==b.getName() && a.getID() < b.getID());
 }
 
 class SimpleStandardEvent {
   protected:
     //int _nr;
     std::vector<SimpleStandardPlane> _planes;
+    std::vector<SimpleStandardWaveform> _waveforms;
 
   public:
     SimpleStandardEvent();
 
     void addPlane(SimpleStandardPlane &plane);
+    void addWaveform(SimpleStandardWaveform &plane);
     SimpleStandardPlane getPlane (const int i) const {return _planes.at(i);}
+    SimpleStandardWaveform getWaveform (const int i) const {return _waveforms.at(i);}
     int getNPlanes() const {return _planes.size(); }
+    int getNWaveforms() const {return _waveforms.size();}
     void doClustering();
     double getMonitor_eventanalysistime() const;
     double getMonitor_eventfilltime() const;
