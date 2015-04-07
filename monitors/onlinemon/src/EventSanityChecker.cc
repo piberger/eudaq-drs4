@@ -11,14 +11,14 @@
 EventSanityChecker::EventSanityChecker()
 {
   NPlanes=0;
-
+  NWaveforms = 0;
 }
 
 //set the number of planes and frames
-EventSanityChecker::EventSanityChecker(int nplanes)
+EventSanityChecker::EventSanityChecker(int nplanes, int nwaveforms)
 {
-
   NPlanes=nplanes;
+  NWaveforms=nwaveforms;
 }
 
 EventSanityChecker::~EventSanityChecker()
@@ -37,6 +37,20 @@ unsigned int EventSanityChecker::getNPlanes() const
 void EventSanityChecker::setNPlanes(int NPlanes)
 {
   this->NPlanes = NPlanes;
+}
+
+
+
+unsigned int EventSanityChecker::getNWaveforms() const
+{
+  return NWaveforms;
+}
+
+
+
+void EventSanityChecker::setNWaveforms(int NWaveforms)
+{
+  this->NWaveforms = NWaveforms;
 }
 
 

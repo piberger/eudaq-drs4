@@ -13,12 +13,15 @@ class EventSanityChecker
   public:
 
     EventSanityChecker();
-    EventSanityChecker(int nplanes);
+    EventSanityChecker(int nplanes, int nwaveforms);
     virtual ~EventSanityChecker();
     unsigned int getNPlanes() const;
     void setNPlanes(int NPlanes);
+    unsigned int getNWaveforms() const;
+    void setNWaveforms(int NWaveforms);
   private:
     unsigned int NPlanes;
+    unsigned int NWaveforms;
 
 };
 
