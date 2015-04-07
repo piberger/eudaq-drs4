@@ -98,8 +98,6 @@ void DRS4Producer::OnStartRun(unsigned runnumber) {
 				bore.AddBlock(block_id,reinterpret_cast<const char*>(&tcal), sizeof( tcal[0])*1024);
 			}
 		}
-
-
 		std::cout << "Send event"<<std::endl;
 		// Send the event out:
 		SendEvent(bore);
