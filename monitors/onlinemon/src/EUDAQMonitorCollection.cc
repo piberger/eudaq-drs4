@@ -59,6 +59,9 @@ void EUDAQMonitorCollection::bookHistograms(const SimpleStandardEvent & /*simpev
     string performance_folder_name="EUDAQ Monitor";
     _mon->getOnlineMon()->registerTreeItem((performance_folder_name+"/Number of Planes"));
     _mon->getOnlineMon()->registerHisto( (performance_folder_name+"/Number of Planes"),mymonhistos->getPlanes_perEventHisto());
+    cout<<"Add Number of Waveforms:" << endl;
+    _mon->getOnlineMon()->registerTreeItem((performance_folder_name+"/Number of Waveforms"));
+    _mon->getOnlineMon()->registerHisto( (performance_folder_name+"/Number of Waveforms"),mymonhistos->getWaveforms_perEventHisto());
     _mon->getOnlineMon()->registerTreeItem((performance_folder_name+"/Hits vs. Plane"));
     _mon->getOnlineMon()->registerHisto( (performance_folder_name+"/Hits vs. Plane"),mymonhistos->getHits_vs_PlaneHisto());
     _mon->getOnlineMon()->registerTreeItem((performance_folder_name+"/Hits vs. Event"));
@@ -71,7 +74,6 @@ void EUDAQMonitorCollection::bookHistograms(const SimpleStandardEvent & /*simpev
 
     _mon->getOnlineMon()->makeTreeItemSummary(performance_folder_name.c_str()); //make summary page
 
-    stringstream namestring;
     string name_root=performance_folder_name+"/Planes";
     for (unsigned int i=0; i<mymonhistos->getNplanes(); i++)
     {
@@ -83,10 +85,23 @@ void EUDAQMonitorCollection::bookHistograms(const SimpleStandardEvent & /*simpev
       _mon->getOnlineMon()->registerHisto(namestring_hits.str(),mymonhistos->getHits_vs_Events(i));
       _mon->getOnlineMon()->registerTreeItem(namestring_tlu.str());
       _mon->getOnlineMon()->registerHisto(namestring_tlu.str(),mymonhistos->getTLUdelta_perEventHisto(i));
-    }
+    } //end plane loop
     _mon->getOnlineMon()->makeTreeItemSummary(name_root.c_str()); //make summary page
 
-  }
+
+    name_root=performance_folder_name+"Waveforms";
+    for (unsigned int i=0; i<mymonhistos->getNwaveforms(); i++)
+    {
+      stringstream namestring_raw;
+      stringstream namestring_amp;
+      namestring_raw<<name_root<<"/Raw Waveforms "<<i;
+      namestring_amp<<name_root<<"/Amplitude Difference"<<i;
+
+      _mon->getOnlineMon()->registerTreeItem(namestring_amp.str());
+      _mon->getOnlineMon()->registerHisto(namestring_amp.str(),mymonhistos->getWaveforms_AmplitudeHisto(i));
+//      _mon->getOnlineMon()->registerGraph(namestring_raw.str(),new TGraph(0),"APL",0);
+    } //end waveform loop
+  }// end if (_mon != NULL)
 }
 
 EUDAQMonitorHistos *EUDAQMonitorCollection::getEUDAQMonitorHistos()
