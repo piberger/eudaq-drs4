@@ -47,6 +47,7 @@ public:
 	float getIntegral() const{return !calculated?-1e9:_integral;}
 	void setNSamples(unsigned int n_samples){_nsamples = n_samples;}
 	unsigned int getNSamples() const{return _nsamples;}
+	float* getData() const{return _data;}
 private:
 	bool calculated;
 	float *_data;
