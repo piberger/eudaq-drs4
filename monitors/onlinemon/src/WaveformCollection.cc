@@ -20,7 +20,7 @@ bool WaveformCollection::isWaveformRegistered(SimpleStandardWaveform p)
 
 void WaveformCollection::fillHistograms(const SimpleStandardWaveform &simpWaveform)
 {
-//	cout<<"WaveformCollection::fillHistograms "<<simpWaveform.getName()<<" "<<simpWaveform.getID()<<endl;
+	//	cout<<"WaveformCollection::fillHistograms "<<simpWaveform.getName()<<" "<<simpWaveform.getID()<<endl;
 	/*
      section_counter[0] = 0;
      section_counter[1] = 0;
@@ -86,13 +86,13 @@ void WaveformCollection::Write(TFile *file)
 
 void WaveformCollection::Calculate(const unsigned int currentEventNumber)
 {
-//	cout<<"WaveformCollection::Calculate"<< currentEventNumber<<" "<<_reduce<<" "<< (currentEventNumber % 1000*_reduce == 0)<<endl;
+	//	cout<<"WaveformCollection::Calculate"<< currentEventNumber<<" "<<_reduce<<" "<< (currentEventNumber % 1000*_reduce == 0)<<endl;
 	if (( true))//currentEventNumber % _reduce == 0))
 	{
 		std::map<SimpleStandardWaveform,WaveformHistos*>::iterator it;
 		for (it = _map.begin(); it != _map.end(); ++it)
 		{
-//			std::cout << "WaveformCollection::Calculating "<< currentEventNumber<<std::endl;
+			//			std::cout << "WaveformCollection::Calculating "<< currentEventNumber<<std::endl;
 			it->second->Calculate(currentEventNumber/_reduce);
 		}
 	}
@@ -110,7 +110,7 @@ void WaveformCollection::Reset()
 
 void WaveformCollection::Fill(const SimpleStandardEvent &simpev)
 {
-//	cout<<"WaveformCollection::Fill\t"<<simpev.getNPlanes()<<" "<<simpev.getNWaveforms()<<endl;
+	//	cout<<"WaveformCollection::Fill\t"<<simpev.getNPlanes()<<" "<<simpev.getNWaveforms()<<endl;
 	for (int Waveform = 0; Waveform < simpev.getNWaveforms(); Waveform++) {
 		const SimpleStandardWaveform&  simpWaveform = simpev.getWaveform(Waveform);
 		fillHistograms(simpWaveform);
@@ -145,6 +145,9 @@ void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
 		_mon->getOnlineMon()->registerTreeItem(tree);
 		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getFullIntegralVoltageHisto(), "",0);
 
+		sprintf(tree,"%s/Sensor %i/RawWaveform",p.getName().c_str(),p.getID());
+		_mon->getOnlineMon()->registerTreeItem(tree);
+		_mon->getOnlineMon()->registerGraph(tree,getWaveformHistos(p.getName(),p.getID())->getWaveformGraph(0), "APL",0);
 
 		sprintf(folder,"%s",p.getName().c_str());
 #ifdef DEBUG
