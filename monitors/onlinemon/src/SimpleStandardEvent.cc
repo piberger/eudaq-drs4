@@ -82,10 +82,10 @@ void SimpleStandardEvent::doClustering() {
 		_planes.at(plane).doClustering();
 		//std::cout << "Found " << _planes.at(plane).getNClusters() << " on Plane " << _planes.at(plane).getName() << " " << _planes.at(plane).getID() << std::endl;
 	}
-//	for (int wf = 0 ; wf < getNWaveforms(); wf++) {
-//			_waveforms.at(wf).Calculate();
-//			//std::cout << "Found " << _planes.at(plane).getNClusters() << " on Plane " << _planes.at(plane).getName() << " " << _planes.at(plane).getID() << std::endl;
-//		}
+	for (int wf = 0 ; wf < getNWaveforms(); wf++) {
+			_waveforms.at(wf).Calculate();
+			//std::cout << "Found " << _planes.at(plane).getNClusters() << " on Plane " << _planes.at(plane).getName() << " " << _planes.at(plane).getID() << std::endl;
+		}
 
 }
 
