@@ -38,7 +38,6 @@ private:
 	std::string m_verbosity, m_producerNamem,m_event_type, m_producerName;
 	bool m_terminated, m_running, triggering,m_self_triggering;;
 	int m_n_self_trigger;
-	unsigned NumOfChan, NumOfSil, NumOfADC;
 	eudaq::Configuration m_config;
 	std::uint64_t m_timestamp;
 	DRS *m_drs;
