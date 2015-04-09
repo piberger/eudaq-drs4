@@ -5,8 +5,7 @@
 #  DRS_LIBRARIES - The libraries needed to use DRS
 #  DRS_DEFINITIONS - Compiler switches required for using DRS
 
-MESSAGE(STATUS "Looking for DRS Board dependencies: DRS...")
-
+MESSAGE(STATUS "Looking for DRS Board dependencies: DRS... DRS_PATH: " ${DRS_PATH})
 find_path(DRS_INCLUDE_DIR DRS.h
   HINTS "${DRS_PATH}/include" "$ENV{DRS_PATH}/include")
 IF (DRS_INCLUDE_DIR)
