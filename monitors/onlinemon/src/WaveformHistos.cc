@@ -13,15 +13,15 @@ WaveformHistos::WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon): _n_
 {
 	char out[1024], out2[1024];
 	_mon=mon;
-//	std::cout << "WaveformHistos::Sensorname: " << _sensor << " "<< _id<< std::endl;
+	//	std::cout << "WaveformHistos::Sensorname: " << _sensor << " "<< _id<< std::endl;
 	this->InitHistos();
 }
 
 void WaveformHistos::InitHistos() {
 	float minVolt = -2000;
 	float maxVolt = +2000;
-//	for (int i = 0; i < _n_wfs; i++)
-//		_Waveforms.push_back(new TGraph());
+	//	for (int i = 0; i < _n_wfs; i++)
+	//		_Waveforms.push_back(new TGraph());
 	TString hName = TString::Format("h_minVoltage_%s_%d",_sensor.c_str(),_id);
 	TString hTitle = TString::Format("%s %d: min Voltage",_sensor.c_str(),_id);
 	h_minVoltage = new TH1F(hName,hTitle,2000,minVolt,maxVolt);
@@ -52,18 +52,24 @@ void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 	h_minVoltage->Fill(min);
 	h_maxVoltage->Fill(max);
 	h_deltaVoltage->Fill(delta);
-//	cout<<"Name: "<<wf.getName()<<" ID: "<<wf.getID()<<endl;
-	TString name = TString::Format("wf_%s_%d_%d",wf.getName().c_str(),wf.getID());
+	//	cout<<"Name: "<<wf.getName()<<" ID: "<<wf.getID()<<endl;
+//	TString name = TString::Format("wf_%s_%d_%d",wf.getName().c_str(),wf.getID());
 	TGraph* gr = _Waveforms[n_fills%_n_wfs];
-	cout<<"Set Data in Graph "<<n_fills%_n_wfs<<endl;
 	for (int n = 0; n < wf.getNSamples();n++)
 		gr->SetPoint(n,n,wf.getData()[n]);
-	if (n_fills==0){
+	n_fills++;
+	if (!gr->GetN())
+		return;
+//	if (gr->GetXaxis())
+//		gr->GetXaxis()->SetTitle("n");
+//	if (gr->GetYaxis())
+//		gr->GetYaxis()->SetTitle("Signal / mV");
+
+	if (n_fills<=1){
 		gr->Draw("APL");
 		gr->GetXaxis()->SetTitle("n");
 		gr->GetYaxis()->SetTitle("Signal / mV");
 	}
-	n_fills++;
 }
 
 void WaveformHistos::Reset() {
@@ -80,7 +86,7 @@ void WaveformHistos::Reset() {
 void WaveformHistos::Calculate(const int currentEventNum)
 {
 	_wait = true;
-//	cout<<"WaveformHistos::Calculate"<<currentEventNum<<endl;
+	//	cout<<"WaveformHistos::Calculate"<<currentEventNum<<endl;
 	_wait = false;
 }
 
