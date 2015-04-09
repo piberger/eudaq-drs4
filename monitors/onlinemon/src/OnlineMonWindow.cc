@@ -443,7 +443,6 @@ void OnlineMonWindow::actor(TGListTreeItem* item, Int_t /*btn*/) {
 	fCanvas->SetLogy(bool(_logScaleMap[tree] & 1));
 	fCanvas->SetLogz(bool(_logScaleMap[tree] & 2));
 
-
 	_activeHistos.clear();
 	if(_hitmapMap.find(tree) != _hitmapMap.end()){
 		if (_hitmapMap[tree] != NULL)
