@@ -245,6 +245,7 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf) {
 		m_serialno = m_config.Get("serialno",-1);
 
 		float trigger_level = m_config.Get("trigger_level",-0.05);
+		float trigger_delay = m_config.Get("trigger_delay",500);
 		bool trigger_polarity = m_config.Get("trigger_polarity",false);
 		int nBoards = m_drs->GetNumberOfBoards();
 		m_self_triggering = m_config.Get("self_triggering",false);
@@ -301,7 +302,11 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf) {
 		m_b->SetInputRange(0);
 
 		/* use following line to turn on the internal 100 MHz clock connected to all channels  */
-		m_b->EnableTcal(1);
+		if (m_config.Get("enable_calibration_clock",false)){
+			cout<<" turn on the internal 100 MHz clock connected to all channels "<<endl;
+			m_b->EnableTcal(1);
+		}
+
 
 		/* use following lines to enable hardware trigger on CH1 at 50 mV positive edge */
 		if (m_b->GetBoardType() >= 8) {        // Evaluation Board V4&5
@@ -312,13 +317,20 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf) {
 			m_b->SetTriggerSource(0);           // use CH1 as source
 		}
 		m_b->SetTriggerLevel(trigger_level);            // 0.05 V
-		EUDAQ_INFO(string("Set Trigger Level to: "+std::to_string(trigger_level)));
+		EUDAQ_INFO(string("Set Trigger Level to: "+std::to_string(trigger_level) + " mV"));
+
+		m_b->SetTriggerDelayNs(trigger_delay);
+		EUDAQ_INFO(string("Set Trigger Delay to: "+std::to_string(trigger_delay)+" ns"));
 
 		m_b->SetTriggerPolarity(trigger_polarity);        // positive edge
 		if (trigger_polarity)
 			EUDAQ_INFO(string("Set Trigger Polarity to negative edge"));
 		else
 			EUDAQ_INFO(string("Set Trigger Polarity to positive edge"));
+
+		unsigned short trigger_source = m_config.Get("trigger_source",1);
+		m_b->SetTriggerSource(trigger_source);
+		EUDAQ_INFO(string("Set Trigger Source to: "+std::to_string(trigger_delay)));
 	}catch ( ... ){
 		EUDAQ_ERROR(string("Unknown exception."));
 		SetStatus(eudaq::Status::LVL_ERROR, "Unknown exception.");
