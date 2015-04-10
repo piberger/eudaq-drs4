@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <map>
 
 #include "strlcpy.h"
 #include "DRS.h"
@@ -38,6 +39,7 @@ private:
 	std::string m_verbosity, m_producerNamem,m_event_type, m_producerName;
 	bool m_terminated, m_running, triggering,m_self_triggering;;
 	int m_n_self_trigger;
+	float m_inputRange;
 	eudaq::Configuration m_config;
 	std::uint64_t m_timestamp;
 	DRS *m_drs;
@@ -47,7 +49,9 @@ private:
 	unsigned short raw_wave_array[8][1024];
 	float wave_array[8][1024];
 	int n_channels;
-	bool     m_chnOn[4]; //todo fill with active channels
+	bool m_chnOn[8]; //todo fill with active channels
+	std::map<int,std::string> names;
+	unsigned char activated_channels;
 };
 int main(int /*argc*/, const char ** argv);
 #endif /*DRS4PRODUCER_HH*/

@@ -27,20 +27,22 @@ DRS4Producer::DRS4Producer(const std::string & name, const std::string & runcont
 		m_ev(0),
 		m_producerName(name),
 		m_event_type(EVENT_TYPE),
-		m_self_triggering(false){
+		m_self_triggering(false),
+		m_inputRange(0.){
 	n_channels = 4;
 	cout<<"Started DRS4Producer with Name: "<<name<<endl;
 	m_b = 0;
 	m_drs = 0;
-	cout<<"Type:"<<m_event_type<<endl;
+	cout<<"Event Type:"<<m_event_type<<endl;
 
 	cout<<"Get DRS() ..."<<endl;
 	if (m_drs)
 		delete m_drs;
 	m_drs = new DRS();
+	cout <<" DRS: "<<m_drs<<endl;
 	int nBoards = m_drs->GetNumberOfBoards();
 	cout <<" NBoards :"<<nBoards<<endl;
-	for (int ch =0; ch < 4; ch++) m_chnOn[ch] = true; //set all channels on per default
+	for (int ch =0; ch < 8; ch++) m_chnOn[ch] = false; //set all channels on per default
 
 }
 
@@ -53,32 +55,34 @@ void DRS4Producer::OnStartRun(unsigned runnumber) {
 		std::cout<<"Create event"<<m_event_type<<" "<<m_run<<std::endl;
 		eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
 		std::cout << "drs4 board"<<std::endl;
+		bore.SetTag("DRS4_n_channels", n_channels);
 		bore.SetTag("DRS4_serial_no", std::to_string(m_b->GetBoardSerialNumber()));
 
 		// Set Firmware name
 		std::cout << "Set tag fw"<<std::endl;
 		bore.SetTag("DRS4_FW", std::to_string(m_b->GetFirmwareVersion()));
+		bore.SetTag("actived_channels",std::to_string(activated_channels));
+		bore.SetTag("device_name",(string)"DRS4");
 		// Set Names for different channels
 		for (int ch = 0; ch < n_channels; ch++){
-			continue;
-			string tag = "CH_%d"+std::to_string(ch);
-			std::cout << "Set tag"<<tag<<std::endl;
+			string tag = "CH_"+std::to_string(ch+1);
 			string value;
 			if (!m_chnOn[ch])
 				value = "OFF";
 			else
-				value = "NAME";//todo fill with name of DUT
+				value = m_config.Get(tag, tag);
 			bore.SetTag(tag, value);
+			cout<<"\tBore tag: "<<tag<<"\t"<<value<<endl;
 		}
 
-		bore.SetTag("DRS4_n_channels", n_channels);
 		bore.SetTag("DRS4_Board_type",std::to_string(m_b->GetBoardType()));
+		bore.SetTag("input_Range",std::to_string(m_inputRange));
 		unsigned char *buffer = (unsigned char *)malloc(10);
 		unsigned char *p = buffer;
 		int block_id = 0;
 		int waveDepth = m_b->GetChannelDepth();
 		cout<<"WaveformDepth: "<<waveDepth<<endl;
-		for (int i=0 ; i<4 ; i++) {
+		for (int i=0 ; i<n_channels ; i++) {
 			if (m_chnOn[i]) {
 				cout<<"TimeCalibration CH"<<i+1<<":"<<endl;
 				float tcal[2048];
@@ -91,7 +95,8 @@ void DRS4Producer::OnStartRun(unsigned runnumber) {
 					}
 				cout<<endl;
 				cout<<"Add block"<<endl;
-				sprintf((char *)p, "C%03d", i+1);
+				char buffer [4];
+				sprintf((char *)buffer, "C%03d", i+1);
 				//				bore.AddBlock(block_id,reinterpret_cast<const char*>(&i),sizeof(i));
 				bore.AddBlock(block_id,reinterpret_cast<const char*>(buffer),sizeof(*buffer)*4);
 				block_id++;
@@ -174,52 +179,6 @@ void DRS4Producer::ReadoutLoop() {
 			}
 			// Trying to get the next event, daqGetRawEvent throws exception if none is available:
 			try {
-				/* Set Time stamp */
-				SetTimeStamp();
-				/* read all waveforms */
-				m_b->TransferWaves(0, 8);
-
-				for (int ch = 0; ch < n_channels; ch++){
-					/* read time (X) array of  channel in ns
-					   Note: On the evaluation board input #1 is connected to channel 0 and 1 of
-					   the DRS chip, input #2 is connected to channel 2 and 3 and so on. So to
-					   get the input #2 we have to read DRS channel #2, not #1. */
-					//					m_b->GetTime(0, ch*2, m_b->GetTriggerCell(0), time_array[ch*2]);
-					/* decode waveform (Y) array of first channel in mV */
-					m_b->GetWave(0, ch*2, wave_array[ch]);
-				}
-				int trigger_cell = m_b->GetTriggerCell(0);
-				float min_wave[8];
-				float max_wave[8];
-				for (int ch = 0; ch < n_channels; ch++){
-					min_wave[ch] = 1e9;
-					max_wave[ch] = 1e9;
-					min_wave[ch] = *std::min_element(wave_array[ch],wave_array[ch]+1024);
-					max_wave[ch] = *std::max_element(wave_array[ch],wave_array[ch]+1024);
-					cout<<"Channel "<<ch<<": "<<min_wave[ch]<<" - "<<max_wave[ch]<<endl;
-				}
-				cout<<"Trigger cell: "<<trigger_cell<<endl;
-
-				/* Restart Readout */
-				m_b->StartDomino();
-				/* print some progress indication */
-				printf("\rEvent #%6d read successfully\n",m_ev);
-
-				eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
-				unsigned int block_no = 0;
-				ev.AddBlock(block_no, reinterpret_cast<const char*>(&trigger_cell), sizeof( trigger_cell));				//				ev.AddBlock(block_no,"EHDR");
-				block_no++;
-				ev.AddBlock(block_no, reinterpret_cast<const char*>(&m_timestamp), sizeof( m_timestamp));				//				ev.AddBlock(block_no,"EHDR");
-				block_no++;
-				for (int ch = 0; ch < n_channels; ch++){
-					/* Set time block of ch */
-					/* Set data block of ch */
-					ev.AddBlock(block_no, reinterpret_cast<const char*>(&wave_array[ch]), sizeof( wave_array[ch][0])*1024);
-					block_no++;
-				}
-				cout<<"Send Event"<<m_ev<<" "<<m_self_triggering<<endl;
-				SendEvent(ev);
-				m_ev++;
 				SendRawEvent();
 
 				if(m_ev%1000 == 0) {
@@ -239,22 +198,19 @@ void DRS4Producer::ReadoutLoop() {
 void DRS4Producer::OnConfigure(const eudaq::Configuration& conf) {
 	cout << "Configure DRS4 board"<<endl;
 	m_config = conf;
+	while (!m_drs){
+		cout<<"wait for configure"<<endl;
+		usleep(10);
+	}
 
 	try {
 		/* do initial scan */
 		m_serialno = m_config.Get("serialno",-1);
 
-		float trigger_level = m_config.Get("trigger_level",-0.05);
-		float trigger_delay = m_config.Get("trigger_delay",500);
-		bool trigger_polarity = m_config.Get("trigger_polarity",false);
 		int nBoards = m_drs->GetNumberOfBoards();
 		m_self_triggering = m_config.Get("self_triggering",false);
 		m_n_self_trigger = m_config.Get("n_self_trigger",1e5);
 		cout<<"Config: "<<endl;
-		cout<<"\tserial no:       "<<m_serialno<<endl;
-		cout<<"\ttrigger_level:   "<<trigger_level<<endl;
-		cout<<"\ttrigger_polarity:"<<trigger_polarity<<endl<<endl;
-		cout<<"\tself_triggering: "<<m_self_triggering<<endl;
 		cout<<"Show boards..."<<endl;
 		cout<<"There are "<<nBoards<<" DRS4-Evaluation-Board(s) connected:"<<endl;
 		/* show any found board(s) */
@@ -293,13 +249,13 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf) {
 		m_b->SetTranspMode(1);
 
 		/* set input range to -0.5V ... +0.5V */
-		double input_range_center =  m_config.Get("input_range_center",0);
-		if (std::abs(input_range_center)>.5){
+		m_inputRange =  m_config.Get("input_range_center",0);
+		if (std::abs(m_inputRange)>.5){
 			EUDAQ_WARN(string("Could not set valid input range,choose input range center to be 0V"));
-			input_range_center = 0;
+			m_inputRange = 0;
 		}
-		EUDAQ_INFO(string("Set Input Range to: "+std::to_string(input_range_center-0.5) + "V - "+std::to_string(input_range_center-0.5) + "V"));
-		m_b->SetInputRange(0);
+		EUDAQ_INFO(string("Set Input Range to: "+std::to_string(m_inputRange-0.5) + "V - "+std::to_string(m_inputRange-0.5) + "V"));
+		m_b->SetInputRange(m_inputRange);
 
 		/* use following line to turn on the internal 100 MHz clock connected to all channels  */
 		if (m_config.Get("enable_calibration_clock",false)){
@@ -316,6 +272,11 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf) {
 			m_b->EnableTrigger(0, 1);           // lemo off, analog trigger on
 			m_b->SetTriggerSource(0);           // use CH1 as source
 		}
+
+		float trigger_level = m_config.Get("trigger_level",-0.05);
+		float trigger_delay = m_config.Get("trigger_delay",500);
+		bool trigger_polarity = m_config.Get("trigger_polarity",false);
+
 		m_b->SetTriggerLevel(trigger_level);            // 0.05 V
 		EUDAQ_INFO(string("Set Trigger Level to: "+std::to_string(trigger_level) + " mV"));
 
@@ -331,6 +292,19 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf) {
 		unsigned short trigger_source = m_config.Get("trigger_source",1);
 		m_b->SetTriggerSource(trigger_source);
 		EUDAQ_INFO(string("Set Trigger Source to: "+std::to_string(trigger_delay)));
+
+		activated_channels = m_config.Get("activated_channels",255);
+		for (int i = 0; i< 8; i++){
+			m_chnOn[i] = ((activated_channels)&(1<<i))==1<<i;
+			cout<<"CH"<<i+1<<": ";
+			if (m_chnOn[i])
+				cout<<"ON"<<endl;
+			else
+				cout<<"OFF"<<endl;
+		}
+
+		SetStatus(eudaq::Status::LVL_OK, "Configured (" + m_config.Name() + ")");
+
 	}catch ( ... ){
 		EUDAQ_ERROR(string("Unknown exception."));
 		SetStatus(eudaq::Status::LVL_ERROR, "Unknown exception.");
@@ -372,13 +346,56 @@ int main(int /*argc*/, const char ** argv) {
 
 
 void DRS4Producer::SendRawEvent() {
+	/* Set Time stamp */
+	SetTimeStamp();
+	/* read all waveforms */
+	m_b->TransferWaves(0, 8);//todo: ist das anpassbar?
 
+	for (int ch = 0; ch < n_channels; ch++){
+		/* read time (X) array of  channel in ns
+						   Note: On the evaluation board input #1 is connected to channel 0 and 1 of
+						   the DRS chip, input #2 is connected to channel 2 and 3 and so on. So to
+						   get the input #2 we have to read DRS channel #2, not #1. */
+		//					m_b->GetTime(0, ch*2, m_b->GetTriggerCell(0), time_array[ch*2]);
+		/* decode waveform (Y) array of first channel in mV */
+		m_b->GetWave(0, ch*2, wave_array[ch]);
+//		m_b->GetRawWave(0,ch*2,raw_wave_array[ch]);
+
+	}
+	int trigger_cell = m_b->GetTriggerCell(0);
+
+	cout<<"Trigger cell: "<<trigger_cell<<endl;
+
+	/* Restart Readout */
+	m_b->StartDomino();
+	/* print some progress indication */
+	printf("\rEvent #%6d read successfully\n",m_ev);
+
+	eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
+	unsigned int block_no = 0;
+	ev.AddBlock(block_no, reinterpret_cast<const char*>(&trigger_cell), sizeof( trigger_cell));				//				ev.AddBlock(block_no,"EHDR");
+	block_no++;
+	ev.AddBlock(block_no, reinterpret_cast<const char*>(&m_timestamp), sizeof( m_timestamp));				//				ev.AddBlock(block_no,"EHDR");
+	block_no++;
+	for (int ch = 0; ch < n_channels; ch++){
+		if (!m_chnOn[ch])
+			continue;
+		char buffer [4];
+		sprintf(buffer, "C%03d", ch+1);
+		ev.AddBlock(block_no++, reinterpret_cast<const char*>(buffer),sizeof(buffer));
+		/* Set data block of ch */
+		unsigned short raw_wave_array[1024];
+		for (int i =0; i<1024; i++)
+			raw_wave_array[i] = (unsigned short)((wave_array[ch][i]/1000.0 - m_inputRange + 0.5) * 65535);
+		ev.AddBlock(block_no++, reinterpret_cast<const char*>(&raw_wave_array), sizeof( raw_wave_array[0])*1024);
+	}
+	cout<<"Send Event"<<m_ev<<" "<<m_self_triggering<<endl;
+	SendEvent(ev);
+	m_ev++;
 	//				if(daqEvent.data.size() > 1) { m_ev_filled++; m_ev_runningavg_filled++; }
-
 }
 
 void DRS4Producer::SetTimeStamp() {
-
 	std::chrono::high_resolution_clock::time_point epoch;
 	auto now = std::chrono::high_resolution_clock::now();
 	auto elapsed = now - epoch;
