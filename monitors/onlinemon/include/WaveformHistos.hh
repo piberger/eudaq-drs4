@@ -38,6 +38,7 @@ class WaveformHistos {
     TH1F* h_FullIntegral;
     TH1F* h_SignalIntegral;
     TH1F* h_PedestalIntegral;
+    TH1F* h_DeltaIntegral;
     TH2F* h_DeltaVsEvent;
     TH2F* h_FullIntegralVsEvent;
     TProfile *h_ProfileDelta;
@@ -61,6 +62,7 @@ class WaveformHistos {
     TH1F* getFullIntegralVoltageHisto() const { return h_FullIntegral;};
     TH1F* getSignalIntegralVoltageHisto() const {return h_SignalIntegral;};
     TH1F* getPedestalIntegralVoltageHisto() const {return h_PedestalIntegral;};
+    TH1F* getDeltaIntegralVoltageHisto() const {return h_DeltaIntegral;};
     TProfile* getProfileDelta() const { return h_ProfileDelta;};
     void SetMaxRangeX(std::string,float minx, float maxx);
     void SetMaxRangeY(std::string,float min, float max);

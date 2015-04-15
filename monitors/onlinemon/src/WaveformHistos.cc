@@ -48,12 +48,17 @@ void WaveformHistos::InitHistos() {
 	hName = TString::Format("h_SignalIntegral_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: SignalIntegral; signal integral/mV; number of entries",_sensor.c_str(),_id);
 	h_SignalIntegral = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
-	SetMaxRangeX((string)hName,-50,50);
+	SetMaxRangeX((string)hName,-5,200);
 
 	hName = TString::Format("h_PedestalIntegral_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: PedestalIntegral; pedestal integral/mV; number of entries",_sensor.c_str(),_id);
 	h_PedestalIntegral = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
-	SetMaxRangeX((string)hName,-50,50);
+	SetMaxRangeX((string)hName,-30,100);
+
+	hName = TString::Format("h_DeltaIntegral_%s_%d",_sensor.c_str(),_id);
+	hTitle = TString::Format("%s %d: DeltaIntegral; signal integral/mV; number of entries",_sensor.c_str(),_id);
+	h_DeltaIntegral = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
+	SetMaxRangeX((string)hName,-5,200);
 
 	hName = TString::Format("h_ProfileDelta_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: Profile Delta; event number / 1000events; signal/mV",_sensor.c_str(),_id);
@@ -64,10 +69,13 @@ void WaveformHistos::InitHistos() {
 	hTitle = TString::Format("%s %d: Profile FullIntegral; event number / 1000events; signal/mV",_sensor.c_str(),_id);
 	profiles["FullIntegral"] = new TProfile(hName,hTitle,1,0,1000);
 
-	hName = TString::Format("h_ProfileRegionalIntegral_%s_%d",_sensor.c_str(),_id);
-	hTitle = TString::Format("%s %d: Profile RegionalIntegral; event number / 1000events; signal/mV",_sensor.c_str(),_id);
-	profiles["RegionalIntegral"] = new TProfile(hName,hTitle,1,0,1000);
+	hName = TString::Format("h_ProfileSignalIntegral_%s_%d",_sensor.c_str(),_id);
+	hTitle = TString::Format("%s %d: Profile SignalIntegral; event number / 1000events; signal/mV",_sensor.c_str(),_id);
+	profiles["SignalIntegral"] = new TProfile(hName,hTitle,1,0,1000);
 
+	hName = TString::Format("h_ProfilePedestalIntegral_%s_%d",_sensor.c_str(),_id);
+	hTitle = TString::Format("%s %d: Profile PedestalIntegral; event number / 1000events; signal/mV",_sensor.c_str(),_id);
+	profiles["PedestalIntegral"] = new TProfile(hName,hTitle,1,0,1000);
 
 	for (int i = 0; i < _n_wfs; i++){
 		hName = TString::Format("Waveform_%d_%d",_id,i);
@@ -82,6 +90,10 @@ void WaveformHistos::InitHistos() {
 		if (_Waveforms.back()->GetYaxis())
 			_Waveforms.back()->GetYaxis()->SetTitle("Signal / mV");
 	}
+
+	for (std::map<std::string, TH1*>::iterator it = profiles.begin();it!=profiles.end();it++){
+		it->second->SetMinimum(0);
+	}
 }
 
 void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
@@ -94,9 +106,10 @@ void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 	float pedestal_integral = wf.getIntegral(0,200);
 	int sign = wf.getSign();
 	int event_no = wf.getEvent();
-	h_FullIntegral->Fill(integral);
-	h_SignalIntegral->Fill(signal_integral);
-	h_PedestalIntegral->Fill(pedestal_integral);
+	h_FullIntegral->Fill(sign*integral);
+	h_SignalIntegral->Fill(sign*signal_integral);
+	h_PedestalIntegral->Fill(sign*pedestal_integral);
+	h_DeltaIntegral->Fill((signal_integral-pedestal_integral)*sign);
 	h_minVoltage->Fill(sign*min);
 	h_maxVoltage->Fill(sign*max);
 	h_deltaVoltage->Fill(delta);
@@ -105,13 +118,15 @@ void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 			int bins = (event_no+1000)/1000;
 			int max = (bins)*1000;
 			it->second->SetBins(bins,0,max);
-			cout<<it->first<<": Extend Profile "<<bins<<" "<<max<<endl;
+//			cout<<it->first<<": Extend Profile "<<bins<<" "<<max<<endl;
 		}
 		if (it->first == "deltaVoltage")
 			it->second->Fill(event_no,delta);
 		else if (it->first == "FullIntegral")
 			it->second->Fill(event_no,integral);
-		else if (it->first == "RegionalIntegral")
+		else if (it->first == "SignalIntegral")
+			it->second->Fill(event_no,signal_integral);
+		else if (it->first == "PedestalIntegral")
 			it->second->Fill(event_no,signal_integral);
 	}
 	UpdateRanges();
@@ -209,7 +224,9 @@ void WaveformHistos::SetMaxRangeY(std::string name, float min, float max) {
 
 void WaveformHistos::UpdateRanges() {
 	UpdateRange(this->h_FullIntegral);
-//	UpdateRange(this->h_RegionalIntegral);
+	UpdateRange(this->h_SignalIntegral);
+	UpdateRange(this->h_PedestalIntegral);
+	UpdateRange(this->h_DeltaIntegral);
 	UpdateRange(this->h_deltaVoltage);
 	UpdateRange(this->h_maxVoltage);
 	UpdateRange(this->h_minVoltage);
@@ -235,6 +252,7 @@ void WaveformHistos::UpdateRanges() {
 		//	cout<<"Range: "<<min<<" "<<max<<endl;
 		_Waveforms[0]->GetYaxis()->SetRangeUser(min,max);
 	}
+
 }
 
 
