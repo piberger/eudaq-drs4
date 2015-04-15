@@ -154,6 +154,14 @@ void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
 		_mon->getOnlineMon()->registerTreeItem(tree);
 		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getSignalIntegralVoltageHisto(), "",0);
 
+		sprintf(tree,"%s/Ch %i - %s/PedestalIntegral",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+		_mon->getOnlineMon()->registerTreeItem(tree);
+		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getPedestalIntegralVoltageHisto(), "",0);
+
+		sprintf(tree,"%s/Ch %i - %s/DeltaIntegral",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+		_mon->getOnlineMon()->registerTreeItem(tree);
+		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getDeltaIntegralVoltageHisto(), "",0);
+
 		sprintf(tree,"%s/Ch %i - %s/DeltaVoltageProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
 		_mon->getOnlineMon()->registerTreeItem(tree);
 		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getProfileDelta(), "",0);
