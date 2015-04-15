@@ -10,6 +10,7 @@
 //ROOT
 //#include <TGraph.h>
 #include <TH1F.h>
+#include <TH2F.h>
 #include <TFile.h>
 #include <TString.h>
 #include <TGraph.h>
@@ -29,12 +30,20 @@ class WaveformHistos {
     std::string _sensor;
     int _id;
     bool _wait;
-    std::vector<TGraph*> _Waveforms;
+    std::vector<TH1F*> _Waveforms;
     int _n_wfs;
     TH1F* h_minVoltage;
     TH1F* h_maxVoltage;
     TH1F* h_deltaVoltage;
     TH1F* h_FullIntegral;
+    TH1F* h_SignalIntegral;
+    TH1F* h_PedestalIntegral;
+    TH2F* h_DeltaVsEvent;
+    TH2F* h_FullIntegralVsEvent;
+    TProfile *h_ProfileDelta;
+    std::map<std::string, TH1*> profiles;
+    std::map<std::string, std::pair<float,float> > rangesX;
+    std::map<std::string, std::pair<float,float> > rangesY;
   public:
     WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon);
     virtual ~WaveformHistos(){}
@@ -44,20 +53,29 @@ class WaveformHistos {
     void Calculate(const int currentEventNum);
     void Write();
     unsigned GetNWaveforms() const {return _n_wfs;};
-    TGraph * getWaveformGraph(int i) { return _Waveforms[i%_n_wfs]; }
+    TH1F * getWaveformGraph(int i) { return _Waveforms[i%_n_wfs]; }
     void setRootMonitor(RootMonitor *mon)  {_mon = mon; };
     TH1F* getDeltaVoltageHisto() const { return h_deltaVoltage;};
     TH1F* getMinVoltageHisto() const { return h_minVoltage;};
     TH1F* getMaxVoltageHisto() const { return h_maxVoltage;};
     TH1F* getFullIntegralVoltageHisto() const { return h_FullIntegral;};
+    TH1F* getSignalIntegralVoltageHisto() const {return h_SignalIntegral;};
+    TH1F* getPedestalIntegralVoltageHisto() const {return h_PedestalIntegral;};
+    TProfile* getProfileDelta() const { return h_ProfileDelta;};
+    void SetMaxRangeX(std::string,float minx, float maxx);
+    void SetMaxRangeY(std::string,float min, float max);
 
   private:
     unsigned int n_fills;
     void InitHistos();
+    void UpdateRanges();
+    void UpdateRange(TH1* histo);
     int SetHistoAxisLabelx(TH1* histo,std::string xlabel);
     int SetHistoAxisLabely(TH1* histo,std::string ylabel);
     int SetHistoAxisLabels(TH1* histo,std::string xlabel, std::string ylabel);
     RootMonitor * _mon;
+    float min_wf;
+    float max_wf;
 };
 
 #ifdef __CINT__
