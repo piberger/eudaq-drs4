@@ -34,7 +34,6 @@
 #include <TGNumberEntry.h>
 #include <TH1.h>
 #include <TH2I.h>
-//#include <TMultiGraph.h>
 #include <TGraph.h>
 #include <vector>
 #include <map>
@@ -52,6 +51,7 @@ static const unsigned int kLogZ = 4;
 #else
 class TGWindow;
 class TH1;
+class TGraph;
 class TGListTreeItem;
 class BaseCollection;
 class RootMonitor;
@@ -90,7 +90,6 @@ class OnlineMonWindow : public TGMainFrame{
     std::map<TGListTreeItem*, std::string> _treeBackMap;
     std::map<std::string, TH1*> _hitmapMap;
     std::map<std::string, TGraph*> _graphMap;
-//    std::map<std::string, TMultiGraph*> _mgMap;
     std::map<std::string, std::vector<std::string> > _summaryMap;
     std::map<std::string,std::string> _hitmapOptions;
     std::map<std::string,std::string> _graphOptions;
@@ -127,7 +126,7 @@ class OnlineMonWindow : public TGMainFrame{
 
     void registerHisto(std::string tree,TH1* h, std::string op = "", const unsigned int = kLin);
 //    void registerMultiGraph(std::string tree,TMultiGraph* mg, std::string op = "", const unsigned int = kLin);
-    void registerGraph(std::string tree,TGraph* mg, std::string op = "", const unsigned int = kLin);
+    void registerGraph(std::string tree,TGraph* gr, std::string op = "", const unsigned int = kLin);
 
     void actor(TGListTreeItem* item, Int_t btn);
     void actorMenu(TGListTreeItem* item, Int_t btn, Int_t x, Int_t y);
