@@ -62,7 +62,7 @@ public:
 	// Again, this is just an example, adapted it for the actual data layout.
 	virtual bool GetStandardSubEvent(StandardEvent & sev,
 			const Event & ev) const {
-		std::cout<<"\nDRS4::GetStandardSubEvent"<<std::endl;
+//		std::cout<<"\nDRS4::GetStandardSubEvent"<<std::endl;
 		const RawDataEvent & in_raw = dynamic_cast<const RawDataEvent &>(ev);
 		int nblocks = in_raw.NumBlocks();
 //		std::cout<<"Number of Blocks: "<<nblocks<<std::endl;
@@ -81,43 +81,44 @@ public:
 		float min_waves[m_n_channels];
 		float max_waves[m_n_channels];
 		//Get Raw data
-		std::cout<<"Read Event: "<<nblocks<<" "<<m_n_channels<<" @ "<<timestamp<<std::endl;
+//		std::cout<<"Read Event: "<<nblocks<<" "<<m_n_channels<<" @ "<<timestamp<<std::endl;
 		for (id = id; id < nblocks;){
 			// Get Header
-			std::cout<<"Get Header:"<<std::endl;
+//			std::cout<<"Get Header:"<<std::endl;
 			data = in_raw.GetBlock(id++);
 			char buffer [5];
 			std::memcpy(&buffer,&(data[0]), 4);
 			buffer[4]='\0';
 			int ch = atoi(&buffer[1])-1;
-			std::cout<<"buffer: "<<buffer<<"\t=> ch:"<<ch<<std::endl;
-			std::cout<<"Get Event Data of CH_"<<ch+1<<" - "<<m_channel_names.at(ch)<<std::endl;
+//			std::cout<<"buffer: "<<buffer<<"\t=> ch:"<<ch<<std::endl;
+//			std::cout<<"Get Event Data of CH_"<<ch+1<<" - "<<m_channel_names.at(ch)<<std::endl;
 
 			//Get Waveform
 			data = in_raw.GetBlock(id++);
 			int wave_size = data.size();
 			int n_samples =  wave_size/sizeof(unsigned short);
-			std::cout<<"CH: "<<ch<<" with "
-					<<data.size()<<" -> "<<n_samples<<"  .";//<<std::endl;
-			std::cout<<"Trigger cell "<<trigger_cell<<", ";
+//			std::cout<<"CH: "<<ch<<" with "
+//					<<data.size()<<" -> "<<n_samples<<"  .";//<<std::endl;
+//			std::cout<<"Trigger cell "<<trigger_cell<<", ";
 
 			unsigned short *raw_wave_array = (unsigned short*) &data[0];
 			float wave_array[n_samples];
 			//Conversion of raw data to voltage data
 			for (int i = 0; i < n_samples; i++)
 				wave_array[i] = (raw_wave_array[i] / 65536. + range/1000.0 - 0.5)*1000.;
-			min_waves[ch] = *std::min_element(wave_array,wave_array+n_samples);
-			max_waves[ch] = *std::max_element(wave_array,wave_array+n_samples);
-			std::cout<<"From: "<< min_waves[ch] << " mV to " << max_waves[ch] << " mV"<<std::endl;
+//			min_waves[ch] = *std::min_element(wave_array,wave_array+n_samples);
+//			max_waves[ch] = *std::max_element(wave_array,wave_array+n_samples);
+//			std::cout<<"From: "<< min_waves[ch] << " mV to " << max_waves[ch] << " mV"<<std::endl;
 			//conversion of time:
 //			 for (j=0,time[chn_index][i]=0 ; j<i ; j++)
 //			               time[chn_index][i] += bin_width[chn_index][(j+eh.trigger_cell) % 1024];
 			//add Waveform to standard event
 			StandardWaveform wf(ch,EVENT_TYPE,m_dut_name+(std::string)"_"+m_channel_names.at(ch));
+			wf.SetChannelName(m_channel_names.at(ch));
+			wf.SetChannelNumber(ch);
 			wf.SetNSamples(n_samples);
 			wf.SetWaveform((float*) wave_array);
 			sev.AddWaveform(wf);
-
 //			std::cout<<"CH"<<ch<<": "<<wf<<std::endl;
 			// Indicate that data was successfully converted
 		}
