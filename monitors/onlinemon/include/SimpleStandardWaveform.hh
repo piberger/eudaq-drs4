@@ -50,7 +50,7 @@ public:
 	void Calculate();
 	float getMax() const{return !calculated?-1e9:_max;};
 	float getMin()const{return !calculated?-1e9:_min;};
-	float getIntegral() const{return !calculated?-1e9:_sign*_integral;}
+	float getIntegral() const{return !calculated?getIntegral(0,_nsamples):_integral;}
 	float getIntegral(float min, float max) const;
 	void setNSamples(unsigned int n_samples){_nsamples = n_samples;}
 	unsigned int getNSamples() const{return _nsamples;}
