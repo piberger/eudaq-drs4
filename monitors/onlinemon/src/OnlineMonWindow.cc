@@ -290,6 +290,8 @@ void OnlineMonWindow::makeTreeItemSummary(std::string item) {
 		}
 	}
 	for (std::map<std::string, TGraph*>::iterator it = _graphMap.begin(); it != _graphMap.end(); ++it) {
+		if (!it->second)
+			continue;
 		std::string c = std::string(it->first,0,item.length());
 		if (c == item) {
 			cout << "c is: " << c << " compared to "<< item <<endl;
@@ -362,9 +364,9 @@ void OnlineMonWindow::autoUpdate() {
 		if (activeHistoSize !=0) { //&&_hitmapMap[_activeHisto]!=NULL) {
 			TCanvas *fCanvas = ECvs_right->GetCanvas();
 			if (activeHistoSize == 1)fCanvas->cd();
-			cout<<"OnlineMonWindow::autoUpdate"<<endl;
+//			cout<<"OnlineMonWindow::autoUpdate"<<endl;
 			for (unsigned int i = 0; i< activeHistoSize;++i) {
-				cout<<" -> "<<_activeHistos.at(i)<<endl;
+//				cout<<" -> "<<_activeHistos.at(i)<<endl;
 				if (activeHistoSize > 1) fCanvas->cd(i+1);
 				if (_hitmapMap.find(_activeHistos.at(i)) != _hitmapMap.end())
 				{
@@ -372,12 +374,12 @@ void OnlineMonWindow::autoUpdate() {
 						_hitmapMap[_activeHistos.at(i)]->Draw(_hitmapOptions[_activeHistos.at(i)].c_str());
 
 				}
-				if (_graphMap.find(_activeHistos.at(i)) != _graphMap.end())
-				{
-					if (_graphMap[_activeHistos.at(i)] != NULL)
-						_graphMap[_activeHistos.at(i)]->Draw(_graphOptions[_activeHistos.at(i)].c_str());
-
-				}
+//				if (_graphMap.find(_activeHistos.at(i)) != _graphMap.end())
+//				{
+//					if (_graphMap[_activeHistos.at(i)] != NULL)
+//						_graphMap[_activeHistos.at(i)]->Draw(_graphOptions[_activeHistos.at(i)].c_str());
+//
+//				}
 				if (activeHistoSize > 1)
 				{
 					fCanvas->GetPad(i+1)->Modified();
