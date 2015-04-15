@@ -5,6 +5,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Configuration.hh"
+#include "config.h" // Version symbols
 
 #include "api.h"
 #include "ConfigParameters.hh"
@@ -35,6 +36,7 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_ev_filled(0),
     m_ev_runningavg_filled(0),
     m_tlu_waiting_time(4000),
+    m_roc_resetperiod(0),
     m_terminated(false),
     m_running(false),
     m_api(NULL),
@@ -104,6 +106,10 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   power_settings.push_back( std::make_pair("ia",config.Get("ia",1.10)) );
   power_settings.push_back( std::make_pair("id",config.Get("id",1.10)) );
 
+  // Periodic ROC resets:
+  m_roc_resetperiod = config.Get("rocresetperiod", 0);
+  if(m_roc_resetperiod > 0) { EUDAQ_USER("Sending periodic ROC resets every " + eudaq::to_string(m_roc_resetperiod) + "ms\n"); }
+
   // Pattern Generator:
   bool testpulses = config.Get("testpulses", false);
   if(testpulses) {
@@ -164,12 +170,7 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     else EUDAQ_INFO(string("Analog current: " + std::to_string(1000*m_api->getTBia()) + "mA"));
 
     // Send a single RESET to the ROC to initialize its status:
-    if(!m_api->daqSingleSignal("resetroc")) {
-      throw InvalidConfig("Unable to send ROC reset signal!");
-    }
-    else {
-      EUDAQ_INFO(string("ROC Reset signal issued."));
-    }
+    if(!m_api->daqSingleSignal("resetroc")) { throw InvalidConfig("Unable to send ROC reset signal!"); }
 
     // Switching to external clock if requested and check if DTB returns TRUE status:
     if(!m_api->setExternalClock(config.Get("external_clock",1) != 0 ? true : false)) {
@@ -192,12 +193,25 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     }
 
     // Output the configured signal to the probes:
-    m_api->SignalProbe("d1", config.Get("signalprobe_d1","ctr"));
-    EUDAQ_USER("Setting scope output D1 to \"" + config.Get("signalprobe_d1","ctr") + "\"\n");
-    m_api->SignalProbe("d2", config.Get("signalprobe_d2","tout"));
-    EUDAQ_USER("Setting scope output D2 to \"" + config.Get("signalprobe_d2","tout") + "\"\n");
+    std::string signal_d1 = config.Get("signalprobe_d1","off");
+    std::string signal_d2 = config.Get("signalprobe_d2","off");
+    std::string signal_a1 = config.Get("signalprobe_a1","off");
+    std::string signal_a2 = config.Get("signalprobe_a2","off");
+    
+    if(m_api->SignalProbe("d1", signal_d1) && signal_d1 != "off") {
+      EUDAQ_USER("Setting scope output D1 to \"" + signal_d1 + "\"\n");
+    }
+    if(m_api->SignalProbe("d2", signal_d2) && signal_d2 != "off") {
+      EUDAQ_USER("Setting scope output D2 to \"" + signal_d2 + "\"\n");
+    }
+    if(m_api->SignalProbe("a1", signal_a1) && signal_a1 != "off") {
+      EUDAQ_USER("Setting scope output A1 to \"" + signal_a1 + "\"\n");
+    }
+    if(m_api->SignalProbe("a2", signal_a2) && signal_a2 != "off") {
+      EUDAQ_USER("Setting scope output A2 to \"" + signal_a2 + "\"\n");
+    }
 
-    EUDAQ_USER("API set up succesfully...\n");
+    EUDAQ_USER(m_api->getVersion() + string(" API set up successfully...\n"));
 
     // All on!
     m_api->_dut->maskAllPixels(false);
@@ -218,13 +232,11 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     m_api->_dut->printDACs(0);
 
     if(!m_trimmingFromConf)
-      SetStatus(eudaq::Status::LVL_WARN, "Couldn't read all trimming parameters from config file " + config.Name() + ".");
+      SetStatus(eudaq::Status::LVL_WARN, "Couldn't read trim parameters from \"" + config.Name() + "\".");
     else
       SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
     std::cout << "=============================\nCONFIGURED\n=============================" << std::endl;
-
   }
-
   catch (pxar::InvalidConfig &e){
     EUDAQ_ERROR(string("Invalid configuration settings: " + string(e.what())));
     SetStatus(eudaq::Status::LVL_ERROR, string("Invalid configuration settings: ") + e.what());
@@ -270,6 +282,11 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     // Set the detector for correct plane assignment:
     bore.SetTag("DETECTOR", m_detector);
 
+    // Store the pxarCore version this has been recorded with:
+    bore.SetTag("PXARCORE", m_api->getVersion());
+    // Store eudaq library version:
+    bore.SetTag("EUDAQ", PACKAGE_VERSION);
+
     // Send the event out:
     SendEvent(bore);
 
@@ -292,7 +309,10 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
       triggering = true;
     }
 
-    SetStatus(eudaq::Status::LVL_OK, "Running");
+    // Start the timer for period ROC reset:
+    m_reset_timer = new eudaq::Timer;
+
+    SetStatus(eudaq::Status::LVL_USER, "Running - HV ON!");
     m_running = true;
   }
   catch (...) {
@@ -402,6 +422,12 @@ void CMSPixelProducer::ReadoutLoop() {
 	m_api->daqStatus(m_perFull);
 	m_t->Restart();
 	std::cout << "DAQ buffer is " << int(m_perFull) << "\% full." << std::endl; 
+      }
+
+      // Send periodic ROC Reset
+      if(m_roc_resetperiod > 0 && m_reset_timer->mSeconds() > m_roc_resetperiod) {
+	if(!m_api->daqSingleSignal("resetroc")) { EUDAQ_ERROR(string("Unable to send ROC reset signal!\n")); }
+	m_reset_timer->Restart();
       }
 
       // Trying to get the next event, daqGetRawEvent throws exception if none is available:
