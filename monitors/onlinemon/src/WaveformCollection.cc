@@ -110,16 +110,17 @@ void WaveformCollection::Reset()
 
 void WaveformCollection::Fill(const SimpleStandardEvent &simpev)
 {
-	//	cout<<"WaveformCollection::Fill\t"<<simpev.getNPlanes()<<" "<<simpev.getNWaveforms()<<endl;
+//	cout<<"WaveformCollection::Fill\t"<<simpev.getNPlanes()<<" "<<simpev.getNWaveforms()<<endl;
 	for (int Waveform = 0; Waveform < simpev.getNWaveforms(); Waveform++) {
 		const SimpleStandardWaveform&  simpWaveform = simpev.getWaveform(Waveform);
+//		cout<<Waveform<<"\t"<<simpWaveform.getChannelName()<<endl;
 		fillHistograms(simpWaveform);
 	}
 
 }
 
 void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
-	cout<<"WaveformCollection::registerWaveform \t"<<p.getName()<<" "<<p.getID()<<" mon:"<<_mon<<endl;
+//	cout<<"WaveformCollection::registerWaveform \t\""<<p.getName()<<"\" "<<p.getID()<<" \""<<p.getChannelName()<<"\" mon:"<<_mon<<endl;
 	WaveformHistos *tmphisto = new WaveformHistos(p,_mon);
 	_map[p] = tmphisto;
 	//std::cout << "Registered Waveform: " << p.getName() << " " << p.getID() << std::endl;
@@ -130,24 +131,36 @@ void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
 		{
 			return; // don't register items
 		}
-		//cout << "WaveformCollection:: Monitor running in online-mode" << endl;
+//		cout << "WaveformCollection:: Monitor running in online-mode" << endl;
 		char tree[1024], folder[1024];
-		sprintf(tree,"%s/Sensor %i/MinVoltage",p.getName().c_str(),p.getID());
+
+		sprintf(tree,"%s/Ch %i - %s/MinVoltage",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
 		_mon->getOnlineMon()->registerTreeItem(tree);
 		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getMinVoltageHisto(), "",0);
-		sprintf(tree,"%s/Sensor %i/MaxVoltage",p.getName().c_str(),p.getID());
+
+		sprintf(tree,"%s/Ch %i - %s/MaxVoltage",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
 		_mon->getOnlineMon()->registerTreeItem(tree);
 		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getMaxVoltageHisto(), "",0);
-		sprintf(tree,"%s/Sensor %i/DeltaVoltage",p.getName().c_str(),p.getID());
+
+		sprintf(tree,"%s/Ch %i - %s/DeltaVoltage",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
 		_mon->getOnlineMon()->registerTreeItem(tree);
 		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getDeltaVoltageHisto(), "",0);
-		sprintf(tree,"%s/Sensor %i/FullIntegral",p.getName().c_str(),p.getID());
+
+		sprintf(tree,"%s/Ch %i - %s/FullIntegral",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
 		_mon->getOnlineMon()->registerTreeItem(tree);
 		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getFullIntegralVoltageHisto(), "",0);
 
-		sprintf(tree,"%s/Sensor %i/RawWaveform",p.getName().c_str(),p.getID());
+		sprintf(tree,"%s/Ch %i - %s/SignalIntegral",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
 		_mon->getOnlineMon()->registerTreeItem(tree);
-		_mon->getOnlineMon()->registerGraph(tree,getWaveformHistos(p.getName(),p.getID())->getWaveformGraph(0), "APL",0);
+		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getSignalIntegralVoltageHisto(), "",0);
+
+		sprintf(tree,"%s/Ch %i - %s/DeltaVoltageProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+		_mon->getOnlineMon()->registerTreeItem(tree);
+		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getProfileDelta(), "",0);
+
+		sprintf(tree,"%s/Ch %i - %s/RawWaveform",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+		_mon->getOnlineMon()->registerTreeItem(tree);
+		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getWaveformGraph(0), "L",0);
 
 		sprintf(folder,"%s",p.getName().c_str());
 #ifdef DEBUG
