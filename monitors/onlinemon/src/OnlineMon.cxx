@@ -92,6 +92,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
 	//initialize with default configuration
 	mon_configdata.SetDefaults();
 	configfilename.assign(conffile);
+	cout << "Read Configfile: \""<<configfilename<<endl;
 
 	if (configfilename.length()>1)
 	{
@@ -108,6 +109,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
 
 	// print the configuration
 	mon_configdata.PrintConfiguration();
+
 
 
 	cout << "Datafile: " << datafile << endl;
@@ -277,17 +279,28 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 		for (unsigned int i = 0; i < nwf;i++){
 			const eudaq::StandardWaveform & waveform = ev.GetWaveform(i);
 #ifdef DEBUG
-			cout << "Waveform ID         " << waveform.ID()<<endl;
-			cout << "Waveform Size       " << sizeof(waveform) <<endl;
-			cout << "Waveform Frames     " << waveform.NumFrames() <<endl;
-			cout << i << " "<<plane.TLUEvent() << " "<< plane.PivotPixel() <<endl;
+			cout << "Waveform ID          " << waveform.ID()<<endl;
+			cout << "Waveform Size        " << sizeof(waveform) <<endl;
+//			cout << "Waveform Frames      " << waveform.NumFrames() <<endl;
+			cout << "Waveform Channel no. " << waveform.GetChannelNumber()<<endl;
+			cout << "Waveform Channelname " << waveform.GetChannelName()<<endl;
+			cout << "Waveform Sensor      " << waveform.GetSensor()<<endl;
+			cout << "Waveform Type        " << waveform.GetType() << endl;
 #endif
 			std::string sensorname;
-			sensorname = "DUT";
+			sensorname = waveform.GetType();
 			SimpleStandardWaveform simpWaveform(sensorname,waveform.ID(),&mon_configdata);//,plane.XSize(),plane.YSize(), plane.TLUEvent(),plane.PivotPixel(),&mon_configdata);
 			simpWaveform.setNSamples(waveform.GetNSamples());
 			simpWaveform.addData(&(*waveform.GetData())[0]);
 			simpWaveform.Calculate();
+			simpWaveform.setTimestamp(ev.GetTimestamp());
+			simpWaveform.setEvent(ev.GetEventNumber());
+			simpWaveform.setChannelName(waveform.GetChannelName());
+			simpWaveform.setChannelNumber(waveform.GetChannelNumber());
+//			waveform.GetNSamples();
+//			cout<<"simpWaveform no"<<i<<" name \""<<simpWaveform.getName()
+//					<<"\" ID: "<<simpWaveform.getID()
+//					<<" ch name \""<<simpWaveform.getChannelName()<<"\""<<endl;//<<"\" mon:"<<_mon<<endl;
 			simpEv.addWaveform(simpWaveform);
 		}
 
