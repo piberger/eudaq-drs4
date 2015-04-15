@@ -96,11 +96,11 @@ void EUDAQMonitorCollection::bookHistograms(const SimpleStandardEvent & /*simpev
       stringstream namestring_amp;
       namestring_raw<<name_root<<"/Raw Waveforms "<<i;
       namestring_amp<<name_root<<"/Amplitude Difference"<<i;
-
-      _mon->getOnlineMon()->registerTreeItem(namestring_amp.str());
-      _mon->getOnlineMon()->registerHisto(namestring_amp.str(),mymonhistos->getWaveforms_AmplitudeHisto(i));
+//      _mon->getOnlineMon()->registerTreeItem(namestring_amp.str());
+//      _mon->getOnlineMon()->registerHisto(namestring_amp.str(),mymonhistos->getWaveforms_AmplitudeHisto(i));
 //      _mon->getOnlineMon()->registerGraph(namestring_raw.str(),new TGraph(0),"APL",0);
     } //end waveform loop
+    _mon->getOnlineMon()->makeTreeItemSummary(name_root.c_str()); //make summary page
   }// end if (_mon != NULL)
 }
 
