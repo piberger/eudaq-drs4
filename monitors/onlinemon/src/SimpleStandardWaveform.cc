@@ -8,7 +8,7 @@
 #include "include/SimpleStandardWaveform.hh"
 
 SimpleStandardWaveform::SimpleStandardWaveform(const std::string & name,  const int id, OnlineMonConfiguration* mymon) :
-	_name(name), _id(id), calculated(false),_nsamples(1024), _sign(1),_channelnumber(-1)
+	_name(name), _id(id), calculated(false),_nsamples(1024), _sign(-1),_channelnumber(-1)
 {
 
 }
@@ -44,7 +44,7 @@ void SimpleStandardWaveform::Calculate() {
 float SimpleStandardWaveform::getIntegral(float min, float max) const {
 	float integral = 0;
 	int i;
-	for (i = min; i <= int(max+1);i++){
+	for (i = min; i <= int(max+1) && i < _nsamples;i++){
 		integral += _data[i];
 	}
 	return integral/(float)(i-(int)min);
