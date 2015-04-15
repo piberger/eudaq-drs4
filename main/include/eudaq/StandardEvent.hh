@@ -5,6 +5,7 @@
 //#include "eudaq/StandardWaveform.hh"
 #include <vector>
 #include <string>
+//#include <TString.h>
 
 namespace eudaq {
 
@@ -29,11 +30,19 @@ public:
 	unsigned int GetTriggerCell() const{return m_trigger_cell;}
 	unsigned ID() const;
 	void Print(std::ostream &) const;
+	std::string GetType() const {return m_type;}
+	std::string GetSensor() const {return m_sensor;}
+	std::string GetChannelName() const {return m_channelname;};
+	void SetChannelName(std::string channelname){m_channelname = channelname;}
+	int GetChannelNumber() const {return m_channelnumber;};
+	void SetChannelNumber(int channelnumber){m_channelnumber = channelnumber;}
+//	std::string GetName() const {return m_sensor+(std::string)"_"+m_type+(std::string)to_string(m_id);}
 private:
 	int m_n_samples;
+	int m_channelnumber;
 	mutable std::vector<float> m_samples;
 	unsigned m_id;
-	std::string m_type, m_sensor;
+	std::string m_type, m_sensor,m_channelname;
 	unsigned int m_trigger_cell;
 };
 

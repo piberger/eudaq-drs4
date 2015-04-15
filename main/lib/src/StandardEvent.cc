@@ -8,24 +8,26 @@ EUDAQ_DEFINE_EVENT(StandardEvent, str2id("_STD"));
 
 
 eudaq::StandardWaveform::StandardWaveform(unsigned id, const std::string& type,
-		const std::string& sensor) {
+		const std::string& sensor):m_channelnumber(-1){
 	m_id = id;
 	m_type = type;
 	m_sensor = sensor;
 }
 
-eudaq::StandardWaveform::StandardWaveform(Deserializer& ds): m_samples(0) {
+eudaq::StandardWaveform::StandardWaveform(Deserializer& ds): m_samples(0),m_channelnumber(-1) {
 	ds.read(m_type);
 	ds.read(m_sensor);
 	ds.read(m_id);
+	ds.read(m_channelnumber);
 }
 
-eudaq::StandardWaveform::StandardWaveform():m_id(0),m_sensor(0),m_type(0) {}
+eudaq::StandardWaveform::StandardWaveform():m_id(0),m_sensor(0),m_type(0),m_channelnumber(-1) {}
 
 void eudaq::StandardWaveform::Serialize(Serializer& ser) const {
 	ser.write(m_type);
 	ser.write(m_sensor);
 	ser.write(m_id);
+	ser.write(m_channelnumber);
 }
 void eudaq::StandardWaveform::SetNSamples(unsigned n_samples){
 	m_n_samples = n_samples;
