@@ -144,7 +144,7 @@ void CorrelationCollection::Fill(const SimpleStandardEvent &simpev)
   }
   if (nPlanes-nPlanes_disabled<2)
   {
-	if(nPlanes>0)
+	if(nPlanes>1)
 		std::cout << "CorrelationCollection : Too Many Planes Disabled ..." <<endl;
   }
   else
@@ -240,7 +240,7 @@ unsigned int CorrelationCollection::FillWithTracks(const SimpleStandardEvent &si
   }
   if (nPlanes-nPlanes_disabled<2)
   {
-	if (nPlanes>0)
+	if (nPlanes>1)
 		std::cout << "CorrelationCollection : Too Many Planes Disabled ..." <<endl;
   }
   else
