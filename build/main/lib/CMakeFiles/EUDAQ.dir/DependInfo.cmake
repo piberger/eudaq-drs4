@@ -1,0 +1,116 @@
+# The set of languages for which implicit dependencies are needed:
+SET(CMAKE_DEPENDS_LANGUAGES
+  "CXX"
+  )
+# The set of files for implicit dependencies of each language:
+SET(CMAKE_DEPENDS_CHECK_CXX
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/APIX-CT-ConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/APIX-CT-ConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/AltroUSBConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/AltroUSBConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/DEPFETConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/DEPFETConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/DRS4ConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/DRS4ConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/DataConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/DataConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/EUDRBConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/EUDRBConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/ExampleConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/ExampleConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/ExplorerConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/ExplorerConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/FORTISConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/FORTISConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/MVDConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/MVDConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/MimosaConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/MimosaConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/Mupix2ConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/Mupix2ConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/Mupix3ConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/Mupix3ConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/Mupix4ConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/Mupix4ConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/NIConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/NIConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/PyBARConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/PyBARConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/SCTUpgradeConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/SCTUpgradeConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/TAKIConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/TAKIConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/TLUConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/TLUConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/TestConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/TestConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/TimepixConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/TimepixConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/USBPixI4ConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/USBPixI4ConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/USBpixConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/USBpixConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/plugins/V1730ConverterPlugin.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/plugins/V1730ConverterPlugin.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/AidaFileReader.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/AidaFileReader.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/AidaFileWriter.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/AidaFileWriter.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/AidaIndexData.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/AidaIndexData.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/AidaPacket.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/AidaPacket.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/BufferSerializer.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/BufferSerializer.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/CommandReceiver.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/CommandReceiver.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/Configuration.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/Configuration.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/DEPFETEvent.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/DEPFETEvent.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/DataCollector.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/DataCollector.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/DataSender.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/DataSender.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/DetectorEvent.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/DetectorEvent.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/DummyProducer.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/DummyProducer.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/EUDRBEvent.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/EUDRBEvent.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/Event.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/Event.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/EventSynchronisationBase.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/EventSynchronisationBase.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/ExampleHardware.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/ExampleHardware.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/Exception.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/Exception.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/FileNamer.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/FileNamer.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/FileReader.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/FileReader.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/FileSerializer.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/FileSerializer.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/FileWriter.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/FileWriter.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/FileWriterDetectorEvents.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/FileWriterDetectorEvents.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/FileWriterLCIO.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/FileWriterLCIO.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/FileWriterMimoloop.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/FileWriterMimoloop.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/FileWriterNative.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/FileWriterNative.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/FileWriterNative2.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/FileWriterNative2.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/FileWriterNull.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/FileWriterNull.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/FileWriterRoot.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/FileWriterRoot.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/FileWriterRootC.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/FileWriterRootC.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/FileWriterStandard.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/FileWriterStandard.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/FileWriterText.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/FileWriterText.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/FileWriterTextCompact.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/FileWriterTextCompact.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/FileWriterTree.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/FileWriterTree.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/IndexReader.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/IndexReader.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/LogCollector.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/LogCollector.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/LogMessage.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/LogMessage.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/LogSender.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/LogSender.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/Logger.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/Logger.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/MetaData.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/MetaData.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/Monitor.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/Monitor.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/MultiFileReader.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/MultiFileReader.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/Mutex.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/Mutex.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/OptionParser.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/OptionParser.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/PluginManager.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/PluginManager.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/Producer.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/Producer.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/RawDataEvent.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/RawDataEvent.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/RunControl.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/RunControl.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/Serializable.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/Serializable.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/StandardEvent.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/StandardEvent.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/Status.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/Status.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/StringEvent.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/StringEvent.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/TLU2Packet.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/TLU2Packet.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/TLUEvent.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/TLUEvent.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/Time.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/Time.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/TransportBase.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/TransportBase.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/TransportClient.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/TransportClient.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/TransportFactory.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/TransportFactory.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/TransportNULL.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/TransportNULL.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/TransportServer.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/TransportServer.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/TransportTCP.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/TransportTCP.cc.o"
+  "/home/testbeam/sdvlp/eudaq-drs4/main/lib/src/Utils.cc" "/home/testbeam/sdvlp/eudaq-drs4/build/main/lib/CMakeFiles/EUDAQ.dir/src/Utils.cc.o"
+  )
+SET(CMAKE_CXX_COMPILER_ID "GNU")
+
+# Preprocessor definitions for this target.
+SET(CMAKE_TARGET_DEFINITIONS
+  "CPP11=1"
+  "EUDAQ_FUNC=__PRETTY_FUNCTION__"
+  "EUDAQ_PLATFORM=PF_LINUX"
+  "ROOT_FOUND"
+  )
+
+# Targets to which this target links.
+SET(CMAKE_TARGET_LINKED_INFO_FILES
+  )
+
+# The include file search paths:
+SET(CMAKE_C_TARGET_INCLUDE_PATH
+  "."
+  ".././main/include"
+  ".././extern/jsoncons-0.93/src"
+  "/home/testbeam/sdvlp/root/include"
+  )
+SET(CMAKE_CXX_TARGET_INCLUDE_PATH ${CMAKE_C_TARGET_INCLUDE_PATH})
+SET(CMAKE_Fortran_TARGET_INCLUDE_PATH ${CMAKE_C_TARGET_INCLUDE_PATH})
+SET(CMAKE_ASM_TARGET_INCLUDE_PATH ${CMAKE_C_TARGET_INCLUDE_PATH})
