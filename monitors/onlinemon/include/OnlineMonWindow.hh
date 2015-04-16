@@ -89,11 +89,12 @@ class OnlineMonWindow : public TGMainFrame{
     std::map<std::string,TGListTreeItem*> _treeMap;
     std::map<TGListTreeItem*, std::string> _treeBackMap;
     std::map<std::string, TH1*> _hitmapMap;
+    std::map<std::string, THStack*> _stackMap;
     std::map<std::string, TGraph*> _graphMap;
     std::map<std::string, std::vector<std::string> > _summaryMap;
     std::map<std::string,std::string> _hitmapOptions;
-    std::map<std::string,std::string> _graphOptions;
-    std::map<std::string,std::string> _mgOptions;
+//    std::map<std::string,std::string> _graphOptions;
+//    std::map<std::string,std::string> _mgOptions;
     std::map<std::string,unsigned int> _logScaleMap;
     TGListTreeItem * Itm_Eudet;
     TGListTreeItem * Itm_DUT;
@@ -127,6 +128,7 @@ class OnlineMonWindow : public TGMainFrame{
     void registerHisto(std::string tree,TH1* h, std::string op = "", const unsigned int = kLin);
 //    void registerMultiGraph(std::string tree,TMultiGraph* mg, std::string op = "", const unsigned int = kLin);
     void registerGraph(std::string tree,TGraph* gr, std::string op = "", const unsigned int = kLin);
+    void registerHistoStack(std::string tree,THStack* gr, std::string op = "nostack", const unsigned int = kLin);
 
     void actor(TGListTreeItem* item, Int_t btn);
     void actorMenu(TGListTreeItem* item, Int_t btn, Int_t x, Int_t y);

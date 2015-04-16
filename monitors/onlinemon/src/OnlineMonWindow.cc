@@ -299,6 +299,15 @@ void OnlineMonWindow::makeTreeItemSummary(std::string item) {
 		}
 	}
 
+	for (std::map<std::string, THStack*>::iterator it = _stackMap.begin(); it != _stackMap.end(); ++it) {
+		if (!it->second)
+			continue;
+		std::string c = std::string(it->first,0,item.length());
+		if (c == item) {
+			cout << "c is: " << c << " compared to "<< item <<endl;
+			v.push_back(it->first);
+		}
+	}
 	cout << "Setting up summary map for item " << item << endl;
 	_summaryMap[item] = v;
 }
@@ -341,10 +350,10 @@ void OnlineMonWindow::registerGraph(std::string tree,TGraph* g, std::string op, 
 		cout << "OnlineMonWindow::registerGraph Null pointer for entry "<<op<<endl;
 	}
 	_graphMap[tree] = g;
-	_graphOptions[tree]= op;
+	_hitmapOptions[tree]= op;
 	_logScaleMap[tree] = l;
 #ifdef DEBUG
-	cout << "OnlineMonWindow::registerGraph Registering : " << h->GetName()<<" "<< l<<" " << tree <<" "<< endl;
+	cout << "OnlineMonWindow::registerGraph Registering : " << g->GetName()<<" "<< l<<" " << tree <<" "<< endl;
 #endif
 	if (op == "") {
 		const TGPicture *thp = gClient->GetPicture("h2_t.xpm");
@@ -354,6 +363,27 @@ void OnlineMonWindow::registerGraph(std::string tree,TGraph* g, std::string op, 
 		_treeMap[tree]->SetPictures(thp,thp);
 	}
 }
+
+void OnlineMonWindow::registerHistoStack(std::string tree,THStack* stack, std::string op, const unsigned int l) {
+	if (stack==NULL)// check if valid histogram
+	{
+		cout << "OnlineMonWindow::registerStack Null pointer for entry "<<op<<endl;
+	}
+	_stackMap[tree] = stack;
+	_hitmapOptions[tree]= op;
+	_logScaleMap[tree] = l;
+#ifdef DEBUG
+	cout << "OnlineMonWindow::registerGraph Registering : " << stack->GetName()<<" "<< l<<" " << tree <<" "<< endl;
+#endif
+	if (op == "") {
+		const TGPicture *thp = gClient->GetPicture("h2_t.xpm");
+		_treeMap[tree]->SetPictures(thp,thp);
+	} else {
+		const TGPicture *thp = gClient->GetPicture("h3_t.xpm");
+		_treeMap[tree]->SetPictures(thp,thp);
+	}
+}
+
 
 void OnlineMonWindow::autoUpdate() {
 
@@ -377,9 +407,15 @@ void OnlineMonWindow::autoUpdate() {
 //				if (_graphMap.find(_activeHistos.at(i)) != _graphMap.end())
 //				{
 //					if (_graphMap[_activeHistos.at(i)] != NULL)
-//						_graphMap[_activeHistos.at(i)]->Draw(_graphOptions[_activeHistos.at(i)].c_str());
+//						_graphMap[_activeHistos.at(i)]->Draw(_hitmapOptions[_activeHistos.at(i)].c_str());
 //
 //				}
+				if (_stackMap.find(_activeHistos.at(i)) != _stackMap.end())
+				{
+					if (_stackMap[_activeHistos.at(i)] != NULL)
+						_stackMap[_activeHistos.at(i)]->Draw(_hitmapOptions[_activeHistos.at(i)].c_str());
+
+				}
 				if (activeHistoSize > 1)
 				{
 					fCanvas->GetPad(i+1)->Modified();
@@ -456,7 +492,14 @@ void OnlineMonWindow::actor(TGListTreeItem* item, Int_t /*btn*/) {
 	if(_graphMap.find(tree) != _graphMap.end()){
 		if (_graphMap[tree] != NULL)
 		{
-			_graphMap[tree]->Draw(_graphOptions[tree].c_str());
+			_graphMap[tree]->Draw(_hitmapOptions[tree].c_str());
+			_activeHistos.push_back(tree);
+		}
+	}
+	if(_stackMap.find(tree) != _stackMap.end()){
+		if (_stackMap[tree] != NULL)
+		{
+			_stackMap[tree]->Draw(_hitmapOptions[tree].c_str());
 			_activeHistos.push_back(tree);
 		}
 	}
@@ -487,6 +530,8 @@ void OnlineMonWindow::actor(TGListTreeItem* item, Int_t /*btn*/) {
 			fCanvas->GetPad(i+1)->SetLogz(bool(_logScaleMap[v.at(i)] & 2));
 			if(_hitmapMap.find(v.at(i)) != _hitmapMap.end())
 				_hitmapMap[v.at(i)]->Draw(_hitmapOptions[v.at(i)].c_str());
+			if(_stackMap.find(v.at(i)) != _stackMap.end())
+				_stackMap[v.at(i)]->Draw(_hitmapOptions[v.at(i)].c_str());
 		}
 
 	}
