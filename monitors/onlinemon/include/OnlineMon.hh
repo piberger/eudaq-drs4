@@ -84,7 +84,7 @@ class RootMonitor : private eudaq::Holder<int>,
     public:
       RootMonitor(const std::string & runcontrol, const std::string & datafile, int x, int y,
           int w, int h, int argc, int offline, const unsigned lim, const unsigned skip_,
-          const unsigned int skip_with_counter, const std::string & conffile="");
+          const unsigned int skip_with_counter, const std::string & conffile="../conf/onlinemonconf.xml");
       ~RootMonitor() {gApplication->Terminate();}
       void registerSensorInGUI(std::string name, int id);
       HitmapCollection *hmCollection;
