@@ -9,12 +9,15 @@
 #include "OnlineMon.hh"
 #include <math.h>
 
-WaveformHistos::WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon): _n_wfs(1),_sensor(p.getName()), _id(p.getID()),n_fills(0)
+WaveformHistos::WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon): _n_wfs(10),_sensor(p.getName()), _id(p.getID()),n_fills(0)
 {
 	char out[1024], out2[1024];
 	_mon=mon;
 	min_wf = 1e9;
 	max_wf = -1e9;
+
+	signal_integral_range = make_pair(500.,800.);
+    pedestal_integral_range = make_pair(1,250);
 	//	std::cout << "WaveformHistos::Sensorname: " << _sensor << " "<< _id<< std::endl;
 	this->InitHistos();
 }
@@ -33,7 +36,7 @@ void WaveformHistos::InitHistos() {
 	hName = TString::Format("h_maxVoltage_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: max Voltage; max Volt/mV; number of entries",_sensor.c_str(),_id);
 	h_maxVoltage = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
-	SetMaxRangeX((string)hName,-250,50);
+	SetMaxRangeX((string)hName,0,300);
 
 	hName = TString::Format("h_deltaVoltage_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: delta Voltage; delta Volt/mV; number of entries",_sensor.c_str(),_id);
@@ -70,13 +73,27 @@ void WaveformHistos::InitHistos() {
 	profiles["FullIntegral"] = new TProfile(hName,hTitle,1,0,1000);
 
 	hName = TString::Format("h_ProfileSignalIntegral_%s_%d",_sensor.c_str(),_id);
-	hTitle = TString::Format("%s %d: Profile SignalIntegral; event number / 1000events; signal/mV",_sensor.c_str(),_id);
+	hTitle = TString::Format("%s %d: Profile SignalIntegral (%5.1f - %5.1f); event number / 1000events; signal/mV",
+			pedestal_integral_range.first,
+			pedestal_integral_range.second,
+			_sensor.c_str(),_id);
 	profiles["SignalIntegral"] = new TProfile(hName,hTitle,1,0,1000);
 
 	hName = TString::Format("h_ProfilePedestalIntegral_%s_%d",_sensor.c_str(),_id);
-	hTitle = TString::Format("%s %d: Profile PedestalIntegral; event number / 1000events; signal/mV",_sensor.c_str(),_id);
+	hTitle = TString::Format("%s %d: Profile PedestalIntegral (%5.1f - %5.1f); event number / 1000events; signal/mV",
+			pedestal_integral_range.first,
+			pedestal_integral_range.second,
+			_sensor.c_str(),_id);
 	profiles["PedestalIntegral"] = new TProfile(hName,hTitle,1,0,1000);
 
+	hName = TString::Format("h_ProfileDeltaIntegral_%s_%d",_sensor.c_str(),_id);
+	hTitle = TString::Format("%s %d: Profile DeltaIntegral; event number / 1000events; signal/mV",_sensor.c_str(),_id);
+	profiles["DeltaIntegral"] = new TProfile(hName,hTitle,1,0,1000);
+
+
+	hName = TString::Format("h_wf_stack_%s_%d",_sensor.c_str(),_id);
+	hTitle = TString::Format("%s %d: Waveform Stack;time; signal/mV",_sensor.c_str(),_id);
+	h_wf_stack = new THStack(hName,hTitle);
 	for (int i = 0; i < _n_wfs; i++){
 		hName = TString::Format("Waveform_%d_%d",_id,i);
 		hTitle = TString::Format("Waveform ID %d - %d",_id,i);
@@ -89,6 +106,7 @@ void WaveformHistos::InitHistos() {
 			_Waveforms.back()->GetXaxis()->SetTitle("n");
 		if (_Waveforms.back()->GetYaxis())
 			_Waveforms.back()->GetYaxis()->SetTitle("Signal / mV");
+		h_wf_stack->Add(_Waveforms.back());
 	}
 
 	for (std::map<std::string, TH1*>::iterator it = profiles.begin();it!=profiles.end();it++){
@@ -102,16 +120,16 @@ void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 	float max = wf.getMax();
 	float delta = fabs(max-min);
 	float integral = wf.getIntegral();
-	float signal_integral = wf.getIntegral(500,800);
-	float pedestal_integral = wf.getIntegral(0,200);
+	float signal_integral = wf.getIntegral(signal_integral_range.first,signal_integral_range.second);
+	float pedestal_integral = wf.getIntegral(pedestal_integral_range.first,pedestal_integral_range.second);
 	int sign = wf.getSign();
 	int event_no = wf.getEvent();
 	h_FullIntegral->Fill(sign*integral);
 	h_SignalIntegral->Fill(sign*signal_integral);
 	h_PedestalIntegral->Fill(sign*pedestal_integral);
 	h_DeltaIntegral->Fill((signal_integral-pedestal_integral)*sign);
-	h_minVoltage->Fill(sign*min);
-	h_maxVoltage->Fill(sign*max);
+	h_minVoltage->Fill(sign<0?sign*max:sign*min);
+	h_maxVoltage->Fill(sign<0?sign*min:sign*max);
 	h_deltaVoltage->Fill(delta);
 	for (std::map<std::string, TH1*>::iterator it = profiles.begin();it!=profiles.end();it++){
 		if (it->second->GetXaxis()->GetXmax() < event_no){
@@ -123,11 +141,13 @@ void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 		if (it->first == "deltaVoltage")
 			it->second->Fill(event_no,delta);
 		else if (it->first == "FullIntegral")
-			it->second->Fill(event_no,integral);
+			it->second->Fill(event_no,sign*integral);
 		else if (it->first == "SignalIntegral")
-			it->second->Fill(event_no,signal_integral);
+			it->second->Fill(event_no,sign*signal_integral);
 		else if (it->first == "PedestalIntegral")
-			it->second->Fill(event_no,signal_integral);
+			it->second->Fill(event_no,sign*signal_integral);
+		else if (it->first == "DeltaIntegral")
+			it->second->Fill(event_no,sign*(signal_integral-pedestal_integral));
 	}
 	UpdateRanges();
 	//	cout<<"Name: "<<wf.getName()<<" ID: "<<wf.getID()<<endl;
@@ -135,6 +155,8 @@ void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 	TH1F* gr = _Waveforms[n_fills%_n_wfs];
 	for (int n = 0; n < wf.getNSamples();n++)
 		gr->SetBinContent(n+1,wf.getData()[n]);
+	for (int i = 0; i < _n_wfs; i++)
+		_Waveforms[(n_fills-i)%_n_wfs]->SetLineColor(kAzure+i);
 	gr->SetEntries(event_no);
 	n_fills++;
 	//	if (!gr->GetN())
@@ -187,7 +209,19 @@ int WaveformHistos::SetHistoAxisLabelx(TH1* histo,string xlabel)
 	return 0;
 }
 
+void WaveformHistos::SetPedestalIntegralRange(float min, float max) {
+	pedestal_integral_range = make_pair(min,max);
+	TString hTitle = TString::Format("%s %d: Profile PedestalIntegral (%5.1f - %5.1f)",
+			min,max,_sensor.c_str(),_id);
+	profiles["PedestalIntegral"]->SetTitle(hTitle);
+}
 
+void WaveformHistos::SetSignalIntegralRange(float min, float max) {
+	signal_integral_range = make_pair(min,max);
+	TString hTitle = TString::Format("%s %d: Profile PedestalIntegral (%5.1f - %5.1f)",
+			min,max,_sensor.c_str(),_id);
+	profiles["SignalIntegral"]->SetTitle(hTitle);
+}
 
 int WaveformHistos::SetHistoAxisLabels(TH1* histo,string xlabel, string ylabel)
 {

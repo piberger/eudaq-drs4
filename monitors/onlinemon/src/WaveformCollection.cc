@@ -164,11 +164,19 @@ void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
 
 		sprintf(tree,"%s/Ch %i - %s/DeltaVoltageProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
 		_mon->getOnlineMon()->registerTreeItem(tree);
-		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getProfileDelta(), "",0);
+		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getProfileDeltaVoltage(), "",0);
 
-		sprintf(tree,"%s/Ch %i - %s/RawWaveform",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+		sprintf(tree,"%s/Ch %i - %s/DeltaIntegralProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
 		_mon->getOnlineMon()->registerTreeItem(tree);
-		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getWaveformGraph(0), "L",0);
+		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getProfileDeltaIntegral(), "",0);
+//
+//		sprintf(tree,"%s/Ch %i - %s/RawWaveform",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+//		_mon->getOnlineMon()->registerTreeItem(tree);
+//		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getWaveformGraph(0), "L",0);
+
+		sprintf(tree,"%s/Ch %i - %s/RawWaveformStack",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+		_mon->getOnlineMon()->registerTreeItem(tree);
+		_mon->getOnlineMon()->registerHistoStack(tree,getWaveformHistos(p.getName(),p.getID())->getWaveformStack(), "nostack",0);
 
 		sprintf(folder,"%s",p.getName().c_str());
 #ifdef DEBUG
@@ -176,5 +184,9 @@ void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
 		cout << "DEBUG "<< folder << " "<<tree<<  endl;
 #endif
 		_mon->getOnlineMon()->addTreeItemSummary(folder,tree);
+
+
+        sprintf(tree,"%s/Ch %i - %s",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+        _mon->getOnlineMon()->makeTreeItemSummary(tree); //make summary page
 	}
 }

@@ -13,6 +13,7 @@
 #include <TH2F.h>
 #include <TFile.h>
 #include <TString.h>
+#include <THStack.h>
 #include <TGraph.h>
 //std
 #include <map>
@@ -31,6 +32,7 @@ class WaveformHistos {
     int _id;
     bool _wait;
     std::vector<TH1F*> _Waveforms;
+    THStack* h_wf_stack;
     int _n_wfs;
     TH1F* h_minVoltage;
     TH1F* h_maxVoltage;
@@ -55,6 +57,7 @@ class WaveformHistos {
     void Write();
     unsigned GetNWaveforms() const {return _n_wfs;};
     TH1F * getWaveformGraph(int i) { return _Waveforms[i%_n_wfs]; }
+    THStack* getWaveformStack(){return h_wf_stack;}
     void setRootMonitor(RootMonitor *mon)  {_mon = mon; };
     TH1F* getDeltaVoltageHisto() const { return h_deltaVoltage;};
     TH1F* getMinVoltageHisto() const { return h_minVoltage;};
@@ -63,11 +66,18 @@ class WaveformHistos {
     TH1F* getSignalIntegralVoltageHisto() const {return h_SignalIntegral;};
     TH1F* getPedestalIntegralVoltageHisto() const {return h_PedestalIntegral;};
     TH1F* getDeltaIntegralVoltageHisto() const {return h_DeltaIntegral;};
-    TProfile* getProfileDelta() const { return h_ProfileDelta;};
+    TProfile* getProfileDeltaVoltage() const { return h_ProfileDelta;};
+    TProfile* getProfileDeltaIntegral() const { return (TProfile*)profiles.at("DeltaIntegral");};
+    TProfile* getProfileSignalIntegral() const { return (TProfile*)profiles.at("SignalIntegral");};
+    TProfile* getProfilePedestalIntegral() const { return (TProfile*)profiles.at("PedestalIntegral");};
     void SetMaxRangeX(std::string,float minx, float maxx);
     void SetMaxRangeY(std::string,float min, float max);
+    void SetPedestalIntegralRange(float min, float max);
+    void SetSignalIntegralRange(float min, float max);
 
   private:
+    std::pair<float,float> pedestal_integral_range;
+    std::pair<float,float> signal_integral_range;
     unsigned int n_fills;
     void InitHistos();
     void UpdateRanges();
