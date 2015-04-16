@@ -30,66 +30,69 @@ void WaveformHistos::InitHistos() {
 	//		_Waveforms.push_back(new TGraph());
 	TString hName = TString::Format("h_minVoltage_%s_%d",_sensor.c_str(),_id);
 	TString hTitle = TString::Format("%s %d: min Voltage",_sensor.c_str(),_id);
-	h_minVoltage = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
+	histos["MinVoltage"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
 	SetMaxRangeX((string)hName,-50,50);
 
 	hName = TString::Format("h_maxVoltage_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: max Voltage; max Volt/mV; number of entries",_sensor.c_str(),_id);
-	h_maxVoltage = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
+	histos["MaxVoltage"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
 	SetMaxRangeX((string)hName,0,300);
 
 	hName = TString::Format("h_deltaVoltage_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: delta Voltage; delta Volt/mV; number of entries",_sensor.c_str(),_id);
-	h_deltaVoltage = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
+	histos["DeltaVoltage"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
 	SetMaxRangeX((string)hName,0,300);
 
 	hName = TString::Format("h_FullIntegral_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: FullIntegral; full integral/mV; number of entries",_sensor.c_str(),_id);
-	h_FullIntegral = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
+	histos["FullIntegral"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
 	SetMaxRangeX((string)hName,-50,50);
 
 	hName = TString::Format("h_SignalIntegral_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: SignalIntegral; signal integral/mV; number of entries",_sensor.c_str(),_id);
-	h_SignalIntegral = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
+	histos["SignalIntegral"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
 	SetMaxRangeX((string)hName,-5,200);
 
 	hName = TString::Format("h_PedestalIntegral_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: PedestalIntegral; pedestal integral/mV; number of entries",_sensor.c_str(),_id);
-	h_PedestalIntegral = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
+	histos["PedestalIntegral"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
 	SetMaxRangeX((string)hName,-30,100);
 
 	hName = TString::Format("h_DeltaIntegral_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: DeltaIntegral; signal integral/mV; number of entries",_sensor.c_str(),_id);
-	h_DeltaIntegral = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
+	histos["DeltaIntegral"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
 	SetMaxRangeX((string)hName,-5,200);
 
 	hName = TString::Format("h_ProfileDelta_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: Profile Delta; event number / 1000events; signal/mV",_sensor.c_str(),_id);
-	h_ProfileDelta = new TProfile(hName,hTitle,1,0,1000);
-	profiles["deltaVoltage"] = h_ProfileDelta;
+	profiles["DeltaVoltage"] = new TProfile(hName,hTitle,1,0,1000);
+	profiles["DeltaVoltage"]->SetStats(false);
 
 	hName = TString::Format("h_ProfileFullIntegral_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: Profile FullIntegral; event number / 1000events; signal/mV",_sensor.c_str(),_id);
 	profiles["FullIntegral"] = new TProfile(hName,hTitle,1,0,1000);
+	profiles["FullIntegral"]->SetStats(false);
 
 	hName = TString::Format("h_ProfileSignalIntegral_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: Profile SignalIntegral (%5.1f - %5.1f); event number / 1000events; signal/mV",
+			_sensor.c_str(),_id,
 			pedestal_integral_range.first,
-			pedestal_integral_range.second,
-			_sensor.c_str(),_id);
+			pedestal_integral_range.second);
 	profiles["SignalIntegral"] = new TProfile(hName,hTitle,1,0,1000);
+	profiles["SignalIntegral"]->SetStats(false);
 
 	hName = TString::Format("h_ProfilePedestalIntegral_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: Profile PedestalIntegral (%5.1f - %5.1f); event number / 1000events; signal/mV",
+			_sensor.c_str(),_id,
 			pedestal_integral_range.first,
-			pedestal_integral_range.second,
-			_sensor.c_str(),_id);
+			pedestal_integral_range.second);
 	profiles["PedestalIntegral"] = new TProfile(hName,hTitle,1,0,1000);
+	profiles["PedestalIntegral"]->SetStats(false);
 
 	hName = TString::Format("h_ProfileDeltaIntegral_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: Profile DeltaIntegral; event number / 1000events; signal/mV",_sensor.c_str(),_id);
 	profiles["DeltaIntegral"] = new TProfile(hName,hTitle,1,0,1000);
-
+	profiles["DeltaIntegral"]->SetStats(false);
 
 	hName = TString::Format("h_wf_stack_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: Waveform Stack;time; signal/mV",_sensor.c_str(),_id);
@@ -124,13 +127,13 @@ void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 	float pedestal_integral = wf.getIntegral(pedestal_integral_range.first,pedestal_integral_range.second);
 	int sign = wf.getSign();
 	int event_no = wf.getEvent();
-	h_FullIntegral->Fill(sign*integral);
-	h_SignalIntegral->Fill(sign*signal_integral);
-	h_PedestalIntegral->Fill(sign*pedestal_integral);
-	h_DeltaIntegral->Fill((signal_integral-pedestal_integral)*sign);
-	h_minVoltage->Fill(sign<0?sign*max:sign*min);
-	h_maxVoltage->Fill(sign<0?sign*min:sign*max);
-	h_deltaVoltage->Fill(delta);
+	histos["FullIntegral"]->Fill(sign*integral);
+	histos["SignalIntegral"]->Fill(sign*signal_integral);
+	histos["PedestalIntegral"]->Fill(sign*pedestal_integral);
+	histos["DeltaIntegral"]->Fill((signal_integral-pedestal_integral)*sign);
+	histos["MinVoltage"]->Fill(sign<0?sign*max:sign*min);
+	histos["MaxVoltage"]->Fill(sign<0?sign*min:sign*max);
+	histos["DeltaVoltage"]->Fill(delta);
 	for (std::map<std::string, TH1*>::iterator it = profiles.begin();it!=profiles.end();it++){
 		if (it->second->GetXaxis()->GetXmax() < event_no){
 			int bins = (event_no+1000)/1000;
@@ -138,7 +141,7 @@ void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 			it->second->SetBins(bins,0,max);
 //			cout<<it->first<<": Extend Profile "<<bins<<" "<<max<<endl;
 		}
-		if (it->first == "deltaVoltage")
+		if (it->first == "DeltaVoltage")
 			it->second->Fill(event_no,delta);
 		else if (it->first == "FullIntegral")
 			it->second->Fill(event_no,sign*integral);
@@ -179,11 +182,12 @@ void WaveformHistos::Reset() {
 	for (int i = 0; i < _Waveforms.size(); i++)
 		_Waveforms[i]->Reset();
 	// we have to reset the aux array as well
-	h_FullIntegral->Reset();
-//	h_ReginoalIntegral->Reset();
-	h_minVoltage->Reset();
-	h_maxVoltage->Reset();
-	h_deltaVoltage->Reset();
+	std::map<std::string, TH1*>::iterator it;
+	for (it = histos.begin(); it != histos.end();it++)
+		it->second->Reset();
+	for (it = profiles.begin(); it != profiles.end();it++)
+			it->second->Reset();
+
 	n_fills = 0;
 }
 
@@ -212,14 +216,14 @@ int WaveformHistos::SetHistoAxisLabelx(TH1* histo,string xlabel)
 void WaveformHistos::SetPedestalIntegralRange(float min, float max) {
 	pedestal_integral_range = make_pair(min,max);
 	TString hTitle = TString::Format("%s %d: Profile PedestalIntegral (%5.1f - %5.1f)",
-			min,max,_sensor.c_str(),_id);
+			_sensor.c_str(),_id,min,max);
 	profiles["PedestalIntegral"]->SetTitle(hTitle);
 }
 
 void WaveformHistos::SetSignalIntegralRange(float min, float max) {
 	signal_integral_range = make_pair(min,max);
 	TString hTitle = TString::Format("%s %d: Profile PedestalIntegral (%5.1f - %5.1f)",
-			min,max,_sensor.c_str(),_id);
+			_sensor.c_str(),_id,min,max);
 	profiles["SignalIntegral"]->SetTitle(hTitle);
 }
 
@@ -257,13 +261,11 @@ void WaveformHistos::SetMaxRangeY(std::string name, float min, float max) {
 
 
 void WaveformHistos::UpdateRanges() {
-	UpdateRange(this->h_FullIntegral);
-	UpdateRange(this->h_SignalIntegral);
-	UpdateRange(this->h_PedestalIntegral);
-	UpdateRange(this->h_DeltaIntegral);
-	UpdateRange(this->h_deltaVoltage);
-	UpdateRange(this->h_maxVoltage);
-	UpdateRange(this->h_minVoltage);
+
+	std::map<std::string, TH1*>::iterator it;
+	for (it = histos.begin(); it != histos.end();it++)
+		UpdateRange(it->second);
+
 	float min = _Waveforms[0]->GetBinContent(_Waveforms[0]->GetMinimumBin());
 	float max = _Waveforms[0]->GetBinContent(_Waveforms[0]->GetMaximumBin());
 	bool changed = false;

@@ -22,6 +22,7 @@
 //eudaq
 #include "SimpleStandardEvent.hh"
 #include "TGraphSet.hh"
+#include "WaveformOptions.hh"
 
 
 class RootMonitor;
@@ -34,24 +35,17 @@ class WaveformHistos {
     std::vector<TH1F*> _Waveforms;
     THStack* h_wf_stack;
     int _n_wfs;
-    TH1F* h_minVoltage;
-    TH1F* h_maxVoltage;
-    TH1F* h_deltaVoltage;
-    TH1F* h_FullIntegral;
-    TH1F* h_SignalIntegral;
-    TH1F* h_PedestalIntegral;
-    TH1F* h_DeltaIntegral;
-    TH2F* h_DeltaVsEvent;
-    TH2F* h_FullIntegralVsEvent;
-    TProfile *h_ProfileDelta;
     std::map<std::string, TH1*> profiles;
+    std::map<std::string, TH1*> histos;
     std::map<std::string, std::pair<float,float> > rangesX;
     std::map<std::string, std::pair<float,float> > rangesY;
   public:
     WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon);
+    std::string getName() const {return (std::string)TString::Format("%s_%d",_sensor.c_str(),_id);};
     virtual ~WaveformHistos(){}
     void Fill(const SimpleStandardWaveform & wf);
     void Reset();
+    void SetOptions(WaveformOptions* options){std::cout<<"Setting Options for "<<getName()<<std::endl;};
 
     void Calculate(const int currentEventNum);
     void Write();
@@ -59,14 +53,14 @@ class WaveformHistos {
     TH1F * getWaveformGraph(int i) { return _Waveforms[i%_n_wfs]; }
     THStack* getWaveformStack(){return h_wf_stack;}
     void setRootMonitor(RootMonitor *mon)  {_mon = mon; };
-    TH1F* getDeltaVoltageHisto() const { return h_deltaVoltage;};
-    TH1F* getMinVoltageHisto() const { return h_minVoltage;};
-    TH1F* getMaxVoltageHisto() const { return h_maxVoltage;};
-    TH1F* getFullIntegralVoltageHisto() const { return h_FullIntegral;};
-    TH1F* getSignalIntegralVoltageHisto() const {return h_SignalIntegral;};
-    TH1F* getPedestalIntegralVoltageHisto() const {return h_PedestalIntegral;};
-    TH1F* getDeltaIntegralVoltageHisto() const {return h_DeltaIntegral;};
-    TProfile* getProfileDeltaVoltage() const { return h_ProfileDelta;};
+    TH1F* getDeltaVoltageHisto() const { return (TH1F*)histos.at("DeltaVoltage");};
+    TH1F* getMinVoltageHisto() const { return (TH1F*)histos.at("MinVoltage");};
+    TH1F* getMaxVoltageHisto() const { return (TH1F*)histos.at("MaxVoltage");};
+    TH1F* getFullIntegralVoltageHisto() const { return (TH1F*)histos.at("FullIntegral");};
+    TH1F* getSignalIntegralVoltageHisto() const{ return (TH1F*)histos.at("SignalIntegral");};
+    TH1F* getPedestalIntegralVoltageHisto() const { return (TH1F*)histos.at("PedestalIntegral");};
+    TH1F* getDeltaIntegralVoltageHisto() const { return (TH1F*)histos.at("DeltaIntegral");};
+    TProfile* getProfileDeltaVoltage() const { return (TProfile*)profiles.at("DeltaVoltage");};
     TProfile* getProfileDeltaIntegral() const { return (TProfile*)profiles.at("DeltaIntegral");};
     TProfile* getProfileSignalIntegral() const { return (TProfile*)profiles.at("SignalIntegral");};
     TProfile* getProfilePedestalIntegral() const { return (TProfile*)profiles.at("PedestalIntegral");};
