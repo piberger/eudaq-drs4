@@ -38,6 +38,8 @@ set(OnlineMon_HEADERS
   SimpleStandardWaveform.hh
   OnlineMonConfiguration.hh
   CheckEOF.hh
+  TGraph.h
+  THStack.h
 )
 
 SET(MY_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/monitors/onlinemon/include/ ${PROJECT_SOURCE_DIR}/monitors/onlinemon ${PROJECT_SOURCE_DIR}/main/include ${ROOT_INCLUDE_DIR} )

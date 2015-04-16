@@ -11,11 +11,7 @@
 #include <RQ_OBJECT.h>
 #include "Rtypes.h"
 
-
-
 //#include "OnlineHistograms.hh"
-
-
 
 
 #ifndef __CINT__
@@ -52,6 +48,8 @@ static const unsigned int kLogZ = 4;
 class TGWindow;
 class TH1;
 class TGraph;
+class THStack;
+class TMultiGraph;
 class TGListTreeItem;
 class BaseCollection;
 class RootMonitor;

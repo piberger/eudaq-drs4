@@ -88,5 +88,6 @@ class WaveformHistos {
 #pragma link C++ class WaveformHistos-;
 #endif
 
+
 #endif /* WaveformHISTOS_HH_ */
 

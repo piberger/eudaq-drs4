@@ -175,11 +175,13 @@ ENDIF(WIN32)
   ###########################################
 
 MACRO (ROOT_GENERATE_DICTIONARY_OLD )
- 
-   set(INFILES "")    
+  MESSAGE("****************************")
+  MESSAGE("ROOT_GENERATE_DICTIONARY_OLD")
+  MESSAGE("****************************")
+  set(INFILES "")    
 
    foreach (_current_FILE ${ARGN})
-
+     MESSAGE(" ${_current_FILE}")
      IF (${_current_FILE} MATCHES "^.*\\.h$")
        IF (${_current_FILE} MATCHES "^.*Link.*$")
          set(LINKDEF_FILE ${_current_FILE})
@@ -202,20 +204,22 @@ MACRO (ROOT_GENERATE_DICTIONARY_OLD )
      
    endforeach (_current_FILE ${ARGN})
    
-#  MESSAGE("INFILES: ${INFILES}")
-#  MESSAGE("OutFILE: ${OUTFILE}")
-#  MESSAGE("LINKDEF_FILE: ${LINKDEF_FILE}")
-#  MESSAGE("INCLUDE_DIRS: ${INCLUDE_DIRS}")
+  MESSAGE("INFILES: ${INFILES}")
+  MESSAGE("OutFILE: ${OUTFILE}")
+  MESSAGE("LINKDEF_FILE: ${LINKDEF_FILE}")
+  MESSAGE("INCLUDE_DIRS: ${INCLUDE_DIRS}")
 
    STRING(REGEX REPLACE "(^.*).cxx" "\\1.h" bla "${OUTFILE}")
-#   MESSAGE("BLA: ${bla}")
+   MESSAGE("BLA: ${bla}")
    SET (OUTFILES ${OUTFILE} ${bla})
+   MESSAGE("COMMAND: ${ROOT_CINT_EXECUTABLE}")
+   MESSAGE("ARGS:    -f ${OUTFILE} -c -p -DHAVE_CONFIG_H ${INCLUDE_DIRS} ${INFILES} ${LINKDEF_FILE} ")
 
    ADD_CUSTOM_COMMAND(OUTPUT ${OUTFILES}
       COMMAND ${ROOT_CINT_EXECUTABLE}
       ARGS -f ${OUTFILE} -c -p -DHAVE_CONFIG_H ${INCLUDE_DIRS} ${INFILES} ${LINKDEF_FILE} )
 
-#   MESSAGE("ROOT_CINT_EXECUTABLE has created the dictionary ${OUTFILE}")
+   MESSAGE("ROOT_CINT_EXECUTABLE has created the dictionary ${OUTFILE}")
 
 ENDMACRO (ROOT_GENERATE_DICTIONARY_OLD)
 
@@ -232,15 +236,16 @@ MACRO (ROOT_GENERATE_DICTIONARY INFILES LINKDEF_FILE OUTFILE INCLUDE_DIRS_IN)
   foreach (_current_FILE ${INCLUDE_DIRS_IN})
     set(INCLUDE_DIRS ${INCLUDE_DIRS} -I${_current_FILE})   
   endforeach (_current_FILE ${INCLUDE_DIRS_IN})
- 
-
-#  MESSAGE("INFILES: ${INFILES}")
-#  MESSAGE("OutFILE: ${OUTFILE}")
-#  MESSAGE("LINKDEF_FILE: ${LINKDEF_FILE}")
-#  MESSAGE("INCLUDE_DIRS: ${INCLUDE_DIRS}")
+  MESSAGE("****************************")
+  MESSAGE("ROOT_GENERATE_DICTIONARY")
+  MESSAGE("****************************")
+  MESSAGE("INFILES: ${INFILES}")
+  MESSAGE("OutFILE: ${OUTFILE}")
+  MESSAGE("LINKDEF_FILE: ${LINKDEF_FILE}")
+  MESSAGE("INCLUDE_DIRS: ${INCLUDE_DIRS}")
 
   STRING(REGEX REPLACE "^(.*)\\.(.*)$" "\\1.h" bla "${OUTFILE}")
-#  MESSAGE("BLA: ${bla}")
+  MESSAGE("BLA: ${bla}")
   SET (OUTFILES ${OUTFILE} ${bla})
 
 
@@ -265,10 +270,10 @@ MACRO (GENERATE_ROOT_TEST_SCRIPT SCRIPT_FULL_NAME)
   get_filename_component(file_name ${SCRIPT_FULL_NAME} NAME_WE)
   set(shell_script_name "${file_name}.sh")
 
-  #MESSAGE("PATH: ${path_name}")
-  #MESSAGE("Ext: ${file_extension}")
-  #MESSAGE("Name: ${file_name}")
-  #MESSAGE("Shell Name: ${shell_script_name}")
+  MESSAGE("PATH: ${path_name}")
+  MESSAGE("Ext: ${file_extension}")
+  MESSAGE("Name: ${file_name}")
+  MESSAGE("Shell Name: ${shell_script_name}")
 
   string(REPLACE ${PROJECT_SOURCE_DIR} 
          ${PROJECT_BINARY_DIR} new_path ${path_name}

@@ -164,9 +164,9 @@ void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
 		_mon->getOnlineMon()->registerTreeItem(tree);
 		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getProfileDeltaIntegral(), "",0);
 //
-//		sprintf(tree,"%s/Ch %i - %s/RawWaveform",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-//		_mon->getOnlineMon()->registerTreeItem(tree);
-//		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getWaveformGraph(0), "L",0);
+		sprintf(tree,"%s/Ch %i - %s/RawWaveform",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+		_mon->getOnlineMon()->registerTreeItem(tree);
+		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getWaveformGraph(0), "L",0);
 
 		sprintf(tree,"%s/Ch %i - %s/RawWaveformStack",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
 		_mon->getOnlineMon()->registerTreeItem(tree);
