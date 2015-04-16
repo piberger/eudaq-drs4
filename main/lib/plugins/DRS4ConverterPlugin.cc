@@ -35,7 +35,7 @@ public:
 	// and store it in member variables to use during the decoding later.
 	virtual void Initialize(const Event & bore,
 			const Configuration & cnf) {
-		std::cout<<"DRS4 Initialize"<<std::endl;
+		std::cout<<"Read DRS4 Bore Event"<<std::endl;
 #ifndef WIN32  //some linux Stuff //$$change
 		(void)cnf; // just to suppress a warning about unused parameter cnf
 #endif
@@ -45,14 +45,14 @@ public:
 		m_n_channels = bore.GetTag("DRS4_n_channels", (int)-1);
 		m_activated_channels = bore.GetTag("activated_channels",(unsigned char)0);
 		m_dut_name = bore.GetTag("device_name","DRS4");
-		std::cout<<"serial_no:  "<<m_serial_no<<std::endl;
-		std::cout<<"firmware:   "<<m_firmware<<std::endl;
-		std::cout<<"board_type: "<<m_board_type<<std::endl;
-		std::cout<<"n_channels: "<<m_n_channels<<std::endl;
+		std::cout<<"  serial_no:  "<<m_serial_no<<std::endl;
+		std::cout<<"  firmware:   "<<m_firmware<<std::endl;
+		std::cout<<"  board_type: "<<m_board_type<<std::endl;
+		std::cout<<"  n_channels: "<<m_n_channels<<":"<<std::endl;
 		for (int ch = 0; ch< m_n_channels;ch++){
 					std::string tag = "CH_"+std::to_string(ch+1);
 					m_channel_names[ch] = bore.GetTag(tag,tag);
-					std::cout<<tag<<": "<<m_channel_names[ch]<<std::endl;
+					std::cout<<"    "<<tag<<": "<<m_channel_names[ch]<<std::endl;
 				}
 		//todo set range
 	}
@@ -148,7 +148,7 @@ private:
 			m_dut_name(""),
 			range(0)
 	{
-		std::cout<<"DRS4ConverterPlugin Constructor"<<std::endl;
+//		std::cout<<"DRS4ConverterPlugin Constructor"<<std::endl;
 	}
 
 
