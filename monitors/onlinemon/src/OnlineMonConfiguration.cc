@@ -48,6 +48,7 @@ void OnlineMonConfiguration::setMimosa26_max_sections(unsigned int mimosa26_max_
 
 int OnlineMonConfiguration::ReadConfigurationFile()
 {
+	cout<<"OnlineMonConfiguration::ReadConfigurationFile: "<<ConfigurationFileName<<endl;
 	int retval=0;
 	ifstream conffile;
 	conffile.open(ConfigurationFileName.c_str());
@@ -61,11 +62,8 @@ int OnlineMonConfiguration::ReadConfigurationFile()
 	{
 #define SIZE_OF_BUFFER 1024
 		char buffer [SIZE_OF_BUFFER];
-		bool is_section_general=false;
-		bool is_section_correlations=false;
-		bool is_section_hotpixelfinder=false;
-		bool is_section_clusterizer=false;
-		bool is_section_mimosa26=false;
+		enum Sections {UNKNOWN, GENERAL, CORRELATIONS, HOTPIXELFINDER, CLUSTERIZER, MIMOSA26, WAVEFORMS};
+		Sections section = UNKNOWN;
 
 		while (!conffile.eof())
 		{
@@ -79,57 +77,44 @@ int OnlineMonConfiguration::ReadConfigurationFile()
 			if (stringbuffer.compare("[General]")==0)
 			{
 				cout << "General settings block found" << endl;
-				is_section_general=true;
-				is_section_correlations=false;
-				is_section_hotpixelfinder=false;
-				is_section_clusterizer=false;
-				is_section_mimosa26=false;
+				section = GENERAL;
 				continue;
 			}
 			else if (stringbuffer.compare("[Correlations]")==0)
 			{
 				cout << "Correlation settings block found" << endl;
-				is_section_general=false;
-				is_section_correlations=true;
-				is_section_hotpixelfinder=false;
-				is_section_clusterizer=false;
-				is_section_mimosa26=false;
+				section = CORRELATIONS;
 				continue;
 			}
 			else if (stringbuffer.compare("[Clusterizer]")==0)
 			{
 				cout << "Clusterizer settings block found" << endl;
-				is_section_general=false;
-				is_section_correlations=false;
-				is_section_hotpixelfinder=false;
-				is_section_clusterizer=true;
-				is_section_mimosa26=false;
+				section = CLUSTERIZER;
 				continue;
 			}
 			else if (stringbuffer.compare("[HotPixelFinder]")==0)
 			{
 				cout << "HotPixelFinder settings block found" << endl;
-				is_section_general=false;
-				is_section_correlations=false;
-				is_section_hotpixelfinder=true;
-				is_section_clusterizer=false;
-				is_section_mimosa26=false;
+				section = HOTPIXELFINDER;
 				continue;
 			}
 			else if (stringbuffer.compare("[Mimosa26]")==0)
 			{
 				cout << "Mimosa26 settings block found" << endl;
-				is_section_general=false;
-				is_section_correlations=false;
-				is_section_hotpixelfinder=false;
-				is_section_clusterizer=false;
-				is_section_mimosa26=true;
+				section = MIMOSA26;
+				continue;
+			}
+			else if (stringbuffer.compare("[Waveforms]")==0)
+			{
+				cout << "Waveforms settings block found" << endl;
+				section = WAVEFORMS;
 				continue;
 			}
 
 			if (stringbuffer.find('[')!=string::npos)
 			{
 				cerr << "Unknown Section " <<stringbuffer<< endl;
+				section = UNKNOWN;
 				continue;
 			}
 			//remove whitespaces
@@ -142,7 +127,7 @@ int OnlineMonConfiguration::ReadConfigurationFile()
 			string key=stringbuffer.substr(0,pos);
 			string value=stringbuffer.substr(pos+1);
 
-			if (is_section_general)
+			if (section == GENERAL)
 			{
 				if (key.compare("SnapShotDir")==0)
 				{
@@ -161,9 +146,8 @@ int OnlineMonConfiguration::ReadConfigurationFile()
 #ifdef DEBUG
 				cout << key << ": " << value<<endl;
 #endif
-
 			}
-			else if (is_section_correlations)
+			else if (section == CORRELATIONS)
 			{
 				if (key.compare("MinClusterSize")==0)
 				{
@@ -191,7 +175,7 @@ int OnlineMonConfiguration::ReadConfigurationFile()
 				cout << key << ": " << correl_minclustersize<<endl;
 #endif
 			}
-			else if (is_section_hotpixelfinder)
+			else if (section == HOTPIXELFINDER)
 			{
 				if (key.compare("HotPixelCut")==0)
 				{
@@ -207,11 +191,11 @@ int OnlineMonConfiguration::ReadConfigurationFile()
 				}
 
 			}
-			else if (is_section_clusterizer)
+			else if (section == CLUSTERIZER)
 			{
 
 			}
-			else if (is_section_mimosa26)
+			else if (section == MIMOSA26)
 			{
 				if (key.compare("Mimosa26_max_sections")==0)
 				{
@@ -237,8 +221,21 @@ int OnlineMonConfiguration::ReadConfigurationFile()
 				}
 
 			}
-
-
+			else if (section == WAVEFORMS)
+			{
+				if (key.compare("n_wfs")==0)
+				{
+//					mimosa26_section_boundary=StringToNumber<unsigned int>(value);
+//					if (mimosa26_section_boundary<=0)
+//					{
+//						cerr <<" Warning Illegal Mimosa26_section_boundary used "<< endl;
+//					}
+				}
+				else
+				{
+					cerr<< "Unknown Key "<< key << endl;
+				}
+			}
 		}
 	}
 	return retval;
@@ -246,6 +243,7 @@ int OnlineMonConfiguration::ReadConfigurationFile()
 
 OnlineMonConfiguration::OnlineMonConfiguration(string confname)
 {
+	_waveformoptions = new WaveformOptions();
 	this->ConfigurationFileName=confname;
 	SetDefaults();
 }
