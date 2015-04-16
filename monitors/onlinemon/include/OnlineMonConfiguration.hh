@@ -16,6 +16,8 @@
 #include <iostream>
 #include <sstream>
 
+#include "WaveformOptions.hh"
+
 class OnlineMonConfiguration
 {
   public:
@@ -52,7 +54,7 @@ class OnlineMonConfiguration
   void setPlanes_to_be_skipped(std::vector<int> planes_to_be_skipped);
 
   private:
-
+  	WaveformOptions* _waveformoptions;
     //general settings
     std::string ConfigurationFileName;
     std::string SnapShotDir;
