@@ -20,13 +20,6 @@ bool WaveformCollection::isWaveformRegistered(SimpleStandardWaveform p)
 
 void WaveformCollection::fillHistograms(const SimpleStandardWaveform &simpWaveform)
 {
-	//	cout<<"WaveformCollection::fillHistograms "<<simpWaveform.getName()<<" "<<simpWaveform.getID()<<endl;
-	/*
-     section_counter[0] = 0;
-     section_counter[1] = 0;
-     section_counter[2] = 0;
-     section_counter[3] = 0;
-	 */
 
 	if (!isWaveformRegistered(simpWaveform))
 	{
@@ -122,6 +115,7 @@ void WaveformCollection::Fill(const SimpleStandardEvent &simpev)
 void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
 //	cout<<"WaveformCollection::registerWaveform \t\""<<p.getName()<<"\" "<<p.getID()<<" \""<<p.getChannelName()<<"\" mon:"<<_mon<<endl;
 	WaveformHistos *tmphisto = new WaveformHistos(p,_mon);
+	tmphisto->SetOptions(_WaveformOptions);
 	_map[p] = tmphisto;
 	//std::cout << "Registered Waveform: " << p.getName() << " " << p.getID() << std::endl;
 	//WaveformRegistered(p.getName(),p.getID());

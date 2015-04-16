@@ -24,6 +24,7 @@
 #include "SimpleStandardEvent.hh"
 #include "WaveformHistos.hh"
 #include "BaseCollection.hh"
+#include "WaveformOptions.hh"
 
 class WaveformCollection : public BaseCollection
 {
@@ -33,8 +34,9 @@ protected:
 	std::map<SimpleStandardWaveform,WaveformHistos*> _map;
 	bool isWaveformRegistered(SimpleStandardWaveform p);
 	void fillHistograms(const SimpleStandardWaveform &simpWaveform);
+	WaveformOptions *_WaveformOptions;
 public:
-	WaveformCollection() : BaseCollection()
+	WaveformCollection() : BaseCollection(), _WaveformOptions(0)
 	{
 		std::cout << " Initialising Waveform Collection"<<std::endl;
 		isOneWaveformRegistered = false;
@@ -49,6 +51,7 @@ public:
 		SimpleStandardWaveform wf(sensor,id);
 		return _map[wf];
 	}
+	void SetWaveformOptions(WaveformOptions *options){_WaveformOptions = options;}
 	void Reset();
 	virtual void Write(TFile *file);
 	virtual void Calculate(const unsigned int currentEventNumber);
