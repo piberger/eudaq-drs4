@@ -25,6 +25,7 @@ SET (OnlineMon_SOURCES
   src/TGraphSet.cc
   src/WaveformCollection.cc
   src/WaveformHistos.cc
+  src/WaveformOptions.cc
 #  src/TreeHistoRelation.cc
   )
 
