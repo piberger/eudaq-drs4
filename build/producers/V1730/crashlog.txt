@@ -1,0 +1,28 @@
+===============================================
+Abnormal exit of V1730 Producer(0.0) at 2015-04-20 23:02:40.942
+Uncaught exception:
+Invalid response from RunControl server: 'OK EUDAQ LOG LogCollector'
+  From /home/testbeam/sdvlp/eudaq-drs4/main/lib/src/CommandReceiver.cc:55
+  In eudaq::CommandReceiver::CommandReceiver(const string&, const string&, const string&, bool)
+-----------------------------------------------
+===============================================
+Abnormal exit of V1730 Producer(0.0) at 2015-04-20 23:02:53.347
+Uncaught exception:
+Invalid response from RunControl server: 'OK EUDAQ LOG LogCollector'
+  From /home/testbeam/sdvlp/eudaq-drs4/main/lib/src/CommandReceiver.cc:55
+  In eudaq::CommandReceiver::CommandReceiver(const string&, const string&, const string&, bool)
+-----------------------------------------------
+===============================================
+Abnormal exit of V1730 Producer(0.0) at 2015-04-20 23:03:16.093
+Uncaught exception:
+Invalid response from RunControl server: 'OK EUDAQ LOG LogCollector'
+  From /home/testbeam/sdvlp/eudaq-drs4/main/lib/src/CommandReceiver.cc:55
+  In eudaq::CommandReceiver::CommandReceiver(const string&, const string&, const string&, bool)
+-----------------------------------------------
+===============================================
+Abnormal exit of V1730 Producer(0.0) at 2015-04-20 23:04:11.505
+Uncaught exception:
+Invalid response from RunControl server: 'OK EUDAQ LOG LogCollector'
+  From /home/testbeam/sdvlp/eudaq-drs4/main/lib/src/CommandReceiver.cc:55
+  In eudaq::CommandReceiver::CommandReceiver(const string&, const string&, const string&, bool)
+-----------------------------------------------

@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'euRun.ui'
 **
-** Created: Thu Apr 16 15:43:45 2015
+** Created: Mon Apr 20 10:32:19 2015
 **      by: Qt User Interface Compiler version 4.6.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!

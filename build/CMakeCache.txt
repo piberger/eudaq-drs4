@@ -26,30 +26,6 @@ BUILD_WITH_QT4:BOOL=OFF
 //Build all producers?
 BUILD_allproducer:BOOL=ON
 
-//Build producer in directory altro?
-BUILD_altro:BOOL=OFF
-
-//Build producer in directory altroUSB?
-BUILD_altroUSB:BOOL=OFF
-
-//Build producer in directory cmspixel?
-BUILD_cmspixel:BOOL=OFF
-
-//Build producer in directory depfet?
-BUILD_depfet:BOOL=OFF
-
-//Build producer in directory drs4?
-BUILD_drs4:BOOL=OFF
-
-//Build producer in directory eudrb?
-BUILD_eudrb:BOOL=OFF
-
-//Build producer in directory explorer?
-BUILD_explorer:BOOL=OFF
-
-//Build producer in directory fortis?
-BUILD_fortis:BOOL=OFF
-
 //Compile GUI executables (requires QT4/5)?
 BUILD_gui:BOOL=ON
 
@@ -58,21 +34,6 @@ BUILD_main:BOOL=ON
 
 //Generate user's manual as PDF? (requires LaTeX)?
 BUILD_manual:BOOL=OFF
-
-//Build producer in directory mimoroma?
-BUILD_mimoroma:BOOL=OFF
-
-//Build producer in directory mimosa32?
-BUILD_mimosa32:BOOL=OFF
-
-//Build producer in directory miniTLU?
-BUILD_miniTLU:BOOL=OFF
-
-//Build producer in directory mvd?
-BUILD_mvd:BOOL=OFF
-
-//Build producer in directory ni?
-BUILD_ni:BOOL=OFF
 
 //Compile native reader shared library (requires LCIO/EUTelescope)?
 BUILD_nreader:BOOL=OFF
@@ -83,26 +44,8 @@ BUILD_offlinemon:BOOL=OFF
 //Compile Online Monitor executable (requires ROOT)?
 BUILD_onlinemon:BOOL=ON
 
-//Build producer in directory pixelmanproducer?
-BUILD_pixelmanproducer:BOOL=OFF
-
 //Compile Python EUDAQ binding library?
 BUILD_python:BOOL=OFF
-
-//Build producer in directory root?
-BUILD_root:BOOL=OFF
-
-//Build producer in directory taki?
-BUILD_taki:BOOL=OFF
-
-//Build producer in directory timepix3?
-BUILD_timepix3:BOOL=OFF
-
-//Build producer in directory timepixdummy?
-BUILD_timepixdummy:BOOL=OFF
-
-//Build producer in directory tlu?
-BUILD_tlu:BOOL=OFF
 
 //Path to a program.
 BZRCOMMAND:FILEPATH=BZRCOMMAND-NOTFOUND
@@ -292,15 +235,6 @@ DOXYGEN_DOT_PATH:FILEPATH=/usr/bin
 
 //Doxygen documentation generation tool (http://www.doxygen.org)
 DOXYGEN_EXECUTABLE:FILEPATH=/usr/bin/doxygen
-
-//Path to a file.
-DRS_INCLUDE_DIR:PATH=DRS_INCLUDE_DIR-NOTFOUND
-
-//Path to a library.
-DRS_LIBRARY:FILEPATH=DRS_LIBRARY-NOTFOUND
-
-//Path to a file.
-DRS_SRC_DIR:PATH=DRS_SRC_DIR-NOTFOUND
 
 //Value Computed by CMake
 EUDAQ_BINARY_DIR:STATIC=/home/testbeam/sdvlp/eudaq-drs4/build
@@ -998,7 +932,7 @@ ROOT_CONFIG_EXECUTABLE:FILEPATH=/home/testbeam/sdvlp/root/bin/root-config
 SCPCOMMAND:FILEPATH=/usr/bin/scp
 
 //Name of the computer/site where compile is being run
-SITE:STRING=sbchits.cern.ch
+SITE:STRING=localhost
 
 //Path to the SLURM sbatch executable
 SLURM_SBATCH_COMMAND:FILEPATH=SLURM_SBATCH_COMMAND-NOTFOUND
@@ -1023,15 +957,6 @@ V1730Producer_SOURCE_DIR:STATIC=/home/testbeam/sdvlp/eudaq-drs4/producers/V1730
 
 //Path to a library.
 VMERCC_LIB:FILEPATH=/ATLAS/lib/libvme_rcc.so
-
-//Path to a file.
-ZESTSC1_INCLUDE_DIR:PATH=ZESTSC1_INCLUDE_DIR-NOTFOUND
-
-//Path to a library.
-ZESTSC1_LIBRARY:FILEPATH=ZESTSC1_LIBRARY-NOTFOUND
-
-//Dependencies for target
-vmelib_LIB_DEPENDS:STATIC=
 
 
 ########################
@@ -1206,10 +1131,6 @@ DOXYGEN_DOT_EXECUTABLE-ADVANCED:INTERNAL=1
 DOXYGEN_DOT_PATH-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: DOXYGEN_EXECUTABLE
 DOXYGEN_EXECUTABLE-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: DRS_INCLUDE_DIR
-DRS_INCLUDE_DIR-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: DRS_LIBRARY
-DRS_LIBRARY-ADVANCED:INTERNAL=1
 //Details about finding Doxygen
 FIND_PACKAGE_MESSAGE_DETAILS_Doxygen:INTERNAL=[/usr/bin/doxygen][v1.6.1()]
 //Details about finding PythonInterp

@@ -11,7 +11,7 @@ BuildDirectory: /home/testbeam/sdvlp/eudaq-drs4/build
 CostDataFile: 
 
 # Site is something like machine.domain, i.e. pragmatic.crd
-Site: sbchits.cern.ch
+Site: localhost
 
 # Build name is osname-revision-compiler, i.e. Linux-2.4.2-2smp-c++
 BuildName: Linux-c++
