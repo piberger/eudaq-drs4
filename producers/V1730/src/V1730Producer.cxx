@@ -122,41 +122,44 @@ void V1730Producer::ReadoutLoop() {
     if(!m_running){
       sched_yield();} //if not running deprioritize thread
 
+
   while(m_running){
     try{
-      std::cout << "Readout loop running.." << std::endl;
-      //CAEN event:
-      v1730_event event;
-      //generate a raw event
-      eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
-
-      V1730_handle->SoftwareTrigger();
-      sleep(1);
+      //std::cout << "Readout loop running.." << std::endl;
+      //V1730_handle->SoftwareTrigger();
+      //sleep(1);
 
       if(V1730_handle->isEventReady()){
+        //CAEN event:
+        v1730_event event;
+        //generate a raw event
+        eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
+
         V1730_handle->ReadEvent_D32(event);
 
         unsigned int block_no = 0;
-
-
         size_t arraylen = event.SamplesPerChannel();
         uint16_t *payload = new uint16_t[arraylen];
         unsigned int chan = 0;
-
-
         event.getChannelData(chan, payload, arraylen);
-        ev.AddBlock(block_no, reinterpret_cast<const char*>(&payload), arraylen);
+        ev.AddBlock(block_no, reinterpret_cast<const char*>(payload), arraylen);
         SendEvent(ev);
 
+
+
+        
+
+        //V1730_handle->clearBuffer();
+        m_ev++;
+        std::cout << "Event counter (loop): " << m_ev << std::endl;
+        
 
         //print WF data
         for(int i = 0; i<arraylen; i++){
           std::cout << payload[i] << ", ";}
-          std::cout << std::endl;
-        
+          std::cout << std::endl;    
 
-        V1730_handle->clearBuffer();
-        
+        delete payload; 
 
 
       std::cout << "Event valid: "          << event.isValid()       << std::endl;
@@ -168,7 +171,7 @@ void V1730Producer::ReadoutLoop() {
 
 
       std::cout << std::endl << std::endl; 
-      delete payload;       
+            
       }//end if
       
 
@@ -201,8 +204,8 @@ void V1730Producer::OnConfigure(const eudaq::Configuration& conf) {
 
     //enable external trigger
     caen_v1730::trigger_mask t_mask = V1730_handle->getTriggerSourceMask();
-    t_mask.external = 0;
-    t_mask.software = 1;
+    t_mask.external = 1;
+    t_mask.software = 0;
     V1730_handle->setTriggerSourceMask(t_mask);
     V1730_handle->printTriggerMask(V1730_handle->getTriggerSourceMask());
 
@@ -224,6 +227,9 @@ void V1730Producer::OnConfigure(const eudaq::Configuration& conf) {
         //std::cout << " [OK] - Temp: " << V1730_handle->getChannel_Temperature(ch) << std::endl;
       }
     }
+
+    //all samples are pre-triggered
+    V1730_handle->setPostTriggerSamples(0);
 
   std::cout << "V1730: Configured! Ready to take data." << std::endl;
 

@@ -1,0 +1,15 @@
+-I/home/testbeam/sdvlp/eudaq-drs4/build
+-I/home/testbeam/sdvlp/eudaq-drs4/./main/include
+-I/home/testbeam/sdvlp/eudaq-drs4/./extern/jsoncons-0.93/src
+-I/usr/include
+-I/usr/include/QtGui
+-I/usr/include/QtCore
+-DCPP11=1
+-DEUDAQ_PLATFORM=PF_LINUX
+-DEUDAQ_FUNC=__PRETTY_FUNCTION__
+-DQT_NO_DEBUG
+-DQT_GUI_LIB
+-DQT_CORE_LIB
+-o
+/home/testbeam/sdvlp/eudaq-drs4/build/gui/include/moc_euLog.cxx
+/home/testbeam/sdvlp/eudaq-drs4/gui/include/euLog.hh

@@ -3,6 +3,7 @@
 #include "eudaq/Utils.hh"
 #include <string.h>
 #include <stdio.h>
+#include <algorithm>
 
 
 namespace eudaq{
@@ -31,18 +32,25 @@ public:
 
 
 	//get waveform:
-	int data_size = data.size(); //size in 32bit words
+	int data_size = data.size(); 
 	std::cout << "Size of data (waveform): " << data_size << std::endl;
-	int n_samples =  (data_size-4)*2; //2 samples per 32bit word, -4 wegen header
+	int n_samples =  data_size/sizeof(uint16_t);
 	std::cout << "Number of samples in waveform: " << n_samples << std::endl;
 
+	uint16_t wave_array[n_samples];
 
 
 	uint16_t *raw_wave_array = (uint16_t*) &data[0];
-	uint16_t wave_array[n_samples];
+	
+	for (int i = 0; i < n_samples; i++){
+	  wave_array[i] = raw_wave_array[i];
+	  std::cout << "rohdaten arary: " << raw_wave_array[i] << std::endl;
+	  //wave_array[i] = (uint16_t) data[i];
 
-	for (int i = 0; i < n_samples; i++)
-	  wave_array[i] = (raw_wave_array[i]);
+	  //std::cout << "sample at " << i << " is: " << wave_array[i] << std::endl;
+	}
+	std::cout << "min: " << std::min_element(wave_array, wave_array+1000) << std::endl;
+	std::cout << "mx: " << std::max_element(wave_array, wave_array+1000) << std::endl;
 
 	//for(int i=0; i<n_samples;i++){
 	//  std::cout << "data @" << i << ": " << data[i] << std::endl;
@@ -54,7 +62,7 @@ public:
 	wf.SetChannelName("CH0");
 	wf.SetChannelNumber(ch);
 	wf.SetNSamples(n_samples);
-	wf.SetWaveform((float*) wave_array);
+	wf.SetWaveform((uint16_t*) wave_array);
 	sev.AddWaveform(wf);
 
 	return true;}
