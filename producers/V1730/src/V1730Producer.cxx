@@ -194,6 +194,9 @@ void V1730Producer::OnConfigure(const eudaq::Configuration& conf) {
   std::cout << "###Configure V1730 board:" << std::endl;  
   m_config = conf;
 
+  m_trigger_source = m_config.Get("trigger_source", 1); //default 1 for external trigger
+  m_active_channels = m_config.Get("active_channels", 1); //default 1 only for ch1
+
   try{
     if(V1730_handle->isRunning()){
       V1730_handle->Stop();}
@@ -202,19 +205,23 @@ void V1730Producer::OnConfigure(const eudaq::Configuration& conf) {
     V1730_handle->SoftwareReset();
     sleep(1);
 
-    //enable external trigger
+    //set trigger source
     caen_v1730::trigger_mask t_mask = V1730_handle->getTriggerSourceMask();
-    t_mask.external = 1;
-    t_mask.software = 0;
+    if (m_trigger_source == 1){
+      t_mask.external = 1;
+      t_mask.software = 0;}
+    else{
+      t_mask.external = 0;
+      t_mask.software = 1;}
     V1730_handle->setTriggerSourceMask(t_mask);
     V1730_handle->printTriggerMask(V1730_handle->getTriggerSourceMask());
 
-    //enable channel 1
-    //caen_v1730::channel_enable_mask c_enable_mask = V1730_handle->getChannelEnableMask();
+    //enable channels
     caen_v1730::channel_enable_mask c_enable_mask = caen_v1730::channel_enable_mask(0);
-    c_enable_mask.ch0 = 1;
+    c_enable_mask.raw = m_active_channels;
     V1730_handle->setChannelEnableMask(c_enable_mask);
     V1730_handle->printChannelEnableMask(V1730_handle->getChannelEnableMask());
+
 
     //set channel voltage range
     for(int ch = 0; ch < V1730_handle->GROUPS; ch++){
@@ -230,6 +237,7 @@ void V1730Producer::OnConfigure(const eudaq::Configuration& conf) {
 
     //all samples are pre-triggered
     V1730_handle->setPostTriggerSamples(0);
+
 
   std::cout << "V1730: Configured! Ready to take data." << std::endl;
 
