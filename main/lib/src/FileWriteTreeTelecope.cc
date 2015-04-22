@@ -49,13 +49,13 @@ typedef pair<vector<unsigned char>::iterator,unsigned int> datablock_t;
 
 namespace eudaq {
 
-  class FileWriterTree : public FileWriter {
+  class FileWriterTreeTelescope : public FileWriter {
   public:
-    FileWriterTree(const std::string &);
+    FileWriterTreeTelescope(const std::string &);
     virtual void StartRun(unsigned);
     virtual void WriteEvent(const DetectorEvent &);
     virtual uint64_t FileBytes() const;
-    virtual ~FileWriterTree();
+    virtual ~FileWriterTreeTelescope();
   private:
     TFile * m_tfile; // book the pointer to a file (to store the otuput)
     TTree * m_ttree; // book the tree (to store the needed event info)
@@ -78,10 +78,10 @@ namespace eudaq {
   };
 
   namespace {
-    static RegisterFileWriter<FileWriterTree> reg("tree");
+    static RegisterFileWriter<FileWriterTreeTelescope> reg("telescopetree");
   }
 
-  FileWriterTree::FileWriterTree(const std::string & /*param*/)
+  FileWriterTreeTelescope::FileWriterTreeTelescope(const std::string & /*param*/)
     : m_tfile(0), m_ttree(0),m_noe(0),chan(4),n_pixels(90*90+60*60)
   {
 
@@ -93,8 +93,8 @@ namespace eudaq {
 
   }
 
-  void FileWriterTree::StartRun(unsigned runnumber) {
-    EUDAQ_INFO("Converting the inputfile into a TTree(felix format) " );
+  void FileWriterTreeTelescope::StartRun(unsigned runnumber) {
+    EUDAQ_INFO("Converting the inputfile into a Telescope TTree(felix format) " );
     std::string foutput(FileNamer(m_filepattern).Set('X', ".root").Set('R', runnumber));
     EUDAQ_INFO("Preparing the outputfile: " + foutput);
     m_tfile = new TFile(foutput.c_str(), "RECREATE");
@@ -112,7 +112,7 @@ namespace eudaq {
 
   }
 
-  void FileWriterTree::WriteEvent(const DetectorEvent & ev) {
+  void FileWriterTreeTelescope::WriteEvent(const DetectorEvent & ev) {
 
     if (ev.IsBORE()) {
       eudaq::PluginManager::Initialize(ev);
@@ -153,13 +153,13 @@ namespace eudaq {
   }
 
 
-  FileWriterTree::~FileWriterTree() {
+  FileWriterTreeTelescope::~FileWriterTreeTelescope() {
     std::cout<<"Tree has " << m_ttree->GetEntries() << " entries" << std::endl;
     m_ttree->Write();
     if(m_tfile->IsOpen()) m_tfile->Close();
   }
 
-  uint64_t FileWriterTree::FileBytes() const { return 0; }
+  uint64_t FileWriterTreeTelescope::FileBytes() const { return 0; }
 
 }
 #endif // ROOT_FOUND
