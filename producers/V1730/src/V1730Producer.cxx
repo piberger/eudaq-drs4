@@ -72,9 +72,9 @@ void V1730Producer::OnStartRun(unsigned runnumber){
     //create event:
     std::cout<<"V1730: Create " << m_event_type << " EVENT for run " << m_run <<  " @time: " << m_timestamp << "." << std::endl;
     eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
-    bore.SetTag("V1730_timestamp", std::to_string(m_timestamp));
-    bore.SetTag("V1730_serial_no", std::to_string(m_serialno));
-    bore.SetTag("V1730_firmware_v", std::to_string(m_firmware));
+    bore.SetTag("V1730_timestamp", m_timestamp);
+    bore.SetTag("V1730_serial_no", m_serialno);
+    bore.SetTag("V1730_firmware_v", m_firmware);
     //set number of channels to be implemented
     //set tags for the channel numbers
 
