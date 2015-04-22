@@ -130,57 +130,62 @@ void V1730Producer::ReadoutLoop() {
       //sleep(1);
 
       if(V1730_handle->isEventReady()){
-        //CAEN event:
-        v1730_event event;
-        //generate a raw event
-        eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
+        //set time stamp:
+        this->SetTimeStamp();
+        
+        bool event_valid = true;
+        v1730_event event; //CAEN event:
+        eudaq::RawDataEvent ev(m_event_type, m_run, m_ev); //generate a raw event
+
 
         V1730_handle->ReadEvent_D32(event);
+        if(!event.isValid()){
+          event_valid = false;
+        }
+
+        std::cout << "Event valid: "          << event.isValid()       << std::endl;
+        std::cout << "Event size(32b words): "<< event.EventSize()     << std::endl;
+        std::cout << "Channel mask: "         << event.ChannelMask()   << std::endl;
+        std::cout << "Event Counter: "        << event.EventCounter()       << std::endl;
+        std::cout << "Samples per channel: "  << event.SamplesPerChannel()  << std::endl;
+        std::cout << "Channels: "             << event.Channels()       << std::endl;  
+
 
         unsigned int block_no = 0;
-        size_t arraylen = event.SamplesPerChannel();
-        uint16_t *payload = new uint16_t[arraylen];
-        unsigned int chan = 0;
-        event.getChannelData(chan, payload, arraylen);
-        ev.AddBlock(block_no, reinterpret_cast<const char*>(payload), arraylen);
+        ev.AddBlock(block_no, reinterpret_cast<const char*>(&event_valid), sizeof(bool)); //valid bit
+        block_no++;
+
+        ev.AddBlock(block_no, reinterpret_cast<const char*>(&m_timestamp), sizeof(m_timestamp)); //timestamp
+        block_no++;
+
+        uint32_t m_ev = event.EventCounter();
+        ev.AddBlock(block_no, reinterpret_cast<const char*>(&m_ev), sizeof(uint32_t)); //event counter
+        block_no++;
+
+
+        //get information regarding the number and size of the events
+        uint32_t n_channels = event.Channels();
+        std::cout << "Number of Channels: " << n_channels << std::endl;
+        size_t n_samples = event.SamplesPerChannel();
+
+        //read out all channels
+        for(uint32_t ch = 0; ch < n_channels; ch++){
+          uint16_t *payload = new uint16_t[n_samples];
+          event.getChannelData(ch, payload, n_samples);
+          ev.AddBlock(block_no, reinterpret_cast<const char*>(payload), n_samples);
+          block_no++;
+          delete payload;
+        }
+        
         SendEvent(ev);
 
-
-
-        
-
-        //V1730_handle->clearBuffer();
-        m_ev++;
-        std::cout << "Event counter (loop): " << m_ev << std::endl;
-        
-
-        //print WF data
-        for(int i = 0; i<arraylen; i++){
-          std::cout << payload[i] << ", ";}
-          std::cout << std::endl;    
-
-        delete payload; 
-
-
-      std::cout << "Event valid: "          << event.isValid()       << std::endl;
-      std::cout << "Event size(32b words): "<< event.EventSize()     << std::endl;
-      std::cout << "Channel mask: "         << event.ChannelMask()   << std::endl;
-      std::cout << "Event Counter: "        << event.EventCounter()       << std::endl;
-      std::cout << "Samples per channel: "  << event.SamplesPerChannel()  << std::endl;
-      std::cout << "Channels: "             << event.Channels()       << std::endl;  
-
-
-      std::cout << std::endl << std::endl; 
-            
+        std::cout << "Event counter (loop): " << m_ev << std::endl;      
       }//end if
       
-
     }  
     catch (...){
     EUDAQ_ERROR(std::string("Readout error................"));
     SetStatus(eudaq::Status::LVL_ERROR, "Readout error................");}
-
-
 
     }//running
   
