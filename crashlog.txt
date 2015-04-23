@@ -1,0 +1,14 @@
+===============================================
+Abnormal exit of EUDAQ File Converter(1.0) at 2015-04-22 15:28:24.300
+Uncaught exception:
+Unable to open file: ../data/run000050.raw
+  From /home/testbeam/sdvlp/eudaq-drs4/main/lib/src/FileSerializer.cc:49
+  In eudaq::FileDeserializer::FileDeserializer(const string&, bool, size_t)
+-----------------------------------------------
+===============================================
+Abnormal exit of EUDAQ File Converter(1.0) at 2015-04-22 15:29:00.977
+Uncaught exception:
+Unable to open file: ../data/run000015.raw
+  From /home/testbeam/sdvlp/eudaq-drs4/main/lib/src/FileSerializer.cc:49
+  In eudaq::FileDeserializer::FileDeserializer(const string&, bool, size_t)
+-----------------------------------------------

@@ -201,6 +201,7 @@ void V1730Producer::OnConfigure(const eudaq::Configuration& conf) {
 
   m_trigger_source = m_config.Get("trigger_source", 1); //default 1 for external trigger
   m_active_channels = m_config.Get("active_channels", 1); //default 1 only for ch1
+  m_trigger_threshold = m_config.Get("trigger_threshold", 1); //default 1
 
   try{
     if(V1730_handle->isRunning()){
@@ -212,12 +213,7 @@ void V1730Producer::OnConfigure(const eudaq::Configuration& conf) {
 
     //set trigger source
     caen_v1730::trigger_mask t_mask = V1730_handle->getTriggerSourceMask();
-    if (m_trigger_source == 1){
-      t_mask.external = 1;
-      t_mask.software = 0;}
-    else{
-      t_mask.external = 0;
-      t_mask.software = 1;}
+    t_mask.raw = m_trigger_source;
     V1730_handle->setTriggerSourceMask(t_mask);
     V1730_handle->printTriggerMask(V1730_handle->getTriggerSourceMask());
 
@@ -227,10 +223,10 @@ void V1730Producer::OnConfigure(const eudaq::Configuration& conf) {
     V1730_handle->setChannelEnableMask(c_enable_mask);
     V1730_handle->printChannelEnableMask(V1730_handle->getChannelEnableMask());
 
-
     //set channel voltage range
     for(int ch = 0; ch < V1730_handle->GROUPS; ch++){
       V1730_handle->setChannel_Gain(ch, caen_v1730::GAIN_4); //set input range to +/-0.5V
+      V1730_handle->setChannel_Thres(ch, m_trigger_threshold); //set trigger threshold
       std::cout << "Calibrating channel " << ch << "..";
       V1730_handle->doChannel_Calibration(ch);
       caen_v1730::channel_status status = V1730_handle->getChannel_Status(ch);

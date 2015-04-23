@@ -79,6 +79,7 @@ public:
 	  wf.SetNSamples(n_samples);
 	  wf.SetWaveform((uint16_t*) wave_array);
 	  sev.AddWaveform(wf);
+	  id++;
 	}//end ch loop
 
 	return true;

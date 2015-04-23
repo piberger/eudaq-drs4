@@ -28,11 +28,12 @@ private:
 
   std::string m_producerName, m_event_type;
   eudaq::Configuration m_config;
-  uint32_t m_serialno, m_active_channels, m_ev;
+  uint32_t m_serialno, m_active_channels, m_ev, m_trigger_source;
   float m_firmware;
   uint64_t m_timestamp;
-  int m_run, m_trigger_source;
+  int m_run;
   bool m_running, m_terminated;
+  uint16_t m_trigger_threshold;
 
   //to be implemented: int n_channels;
 
