@@ -61,7 +61,7 @@ if (WIN32)
 	HINTS "${extern_lib_path}/macosx/Lib" ${arg})
     else()
       find_library(ZESTSC1_LIBRARY NAMES ZestSC1
-	HINTS "${extern_lib_path}/linux/Lib" ${arg})
+	HINTS "${extern_lib_path}/Lib" ${arg})
     endif()
   else()
     MESSAGE( "WARNING: Platform not defined in FindZestSC1.txt -- assuming Unix/Linux (good luck)." )

@@ -100,7 +100,7 @@ void WaveformHistos::InitHistos() {
 	for (int i = 0; i < _n_wfs; i++){
 		hName = TString::Format("Waveform_%d_%d",_id,i);
 		hTitle = TString::Format("Waveform ID %d - %d",_id,i);
-		_Waveforms.push_back(new TH1F(hName,hTitle,1024,0,1024));
+		_Waveforms.push_back(new TH1F(hName,hTitle,2560,0,2560));
 		//		FixRangeY(string)
 		////		_Waveforms.back()->SetPoint(0,0,0);
 		//		_Waveforms.back()->SetPoint(1,1,1);

@@ -35,6 +35,9 @@ echo '        DataCollector'
 ./TestDataCollector.exe -r tcp://$HOSTNAME:$RCPORT &
 sleep 2
 
+echo '        TLU'
+./TLUProducer.exe -r tcp://$HOSTNAME:$RCPORT &
+
 #echo '        OnlineMonitor'
 #./OnlineMon.exe -tc 0 -r tcp://$HOSTNAME:$RCPORT  &
 

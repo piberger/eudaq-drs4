@@ -1,0 +1,7 @@
+===============================================
+Abnormal exit of EUDAQ Root Monitor(1.0) at 2015-04-23 11:05:47.596
+Uncaught exception:
+Unable to open file: ../data/run000070.raw
+  From /home/testbeam/sdvlp/eudaq-drs4/main/lib/src/FileSerializer.cc:49
+  In eudaq::FileDeserializer::FileDeserializer(const string&, bool, size_t)
+-----------------------------------------------
