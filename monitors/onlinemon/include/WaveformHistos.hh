@@ -35,6 +35,7 @@ class WaveformHistos {
     std::vector<TH1F*> _Waveforms;
     THStack* h_wf_stack;
     int _n_wfs;
+    unsigned int _n_samples;
     std::map<std::string, TH1*> profiles;
     std::map<std::string, TH1*> histos;
     std::map<std::string, std::pair<float,float> > rangesX;
@@ -44,6 +45,7 @@ class WaveformHistos {
     std::string getName() const {return (std::string)TString::Format("%s_%d",_sensor.c_str(),_id);};
     virtual ~WaveformHistos(){}
     void Fill(const SimpleStandardWaveform & wf);
+    unsigned int getNSamples() const {return _n_samples;}
     void Reset();
     void SetOptions(WaveformOptions* options){std::cout<<"Setting Options for "<<getName()<<std::endl;};
 
@@ -74,6 +76,7 @@ class WaveformHistos {
     std::pair<float,float> signal_integral_range;
     unsigned int n_fills;
     void InitHistos();
+    void Reinitialize_Waveforms();
     void UpdateRanges();
     void UpdateRange(TH1* histo);
     int SetHistoAxisLabelx(TH1* histo,std::string xlabel);
