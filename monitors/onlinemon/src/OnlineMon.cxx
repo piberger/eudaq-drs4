@@ -281,8 +281,11 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 			cout << "Waveform Sensor      " << waveform.GetSensor()<<endl;
 			cout << "Waveform Type        " << waveform.GetType() << endl;
 #endif
+			cout << "Waveform NSamples    " << waveform.GetNSamples() <<endl; // gives 2560 for V1730
+            // cout << " 
 			std::string sensorname;
 			sensorname = waveform.GetType();
+            // cout << "sensorname " << sensorname << endl; // this gives V1730 or drs4
 			SimpleStandardWaveform simpWaveform(sensorname,waveform.ID(),&mon_configdata);//,plane.XSize(),plane.YSize(), plane.TLUEvent(),plane.PivotPixel(),&mon_configdata);
 			simpWaveform.setNSamples(waveform.GetNSamples());
 			simpWaveform.addData(&(*waveform.GetData())[0]);
