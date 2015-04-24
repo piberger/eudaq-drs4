@@ -16,16 +16,17 @@ WaveformHistos::WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon): _n_
 	min_wf = 1e9;
 	max_wf = -1e9;
 
-	signal_integral_range = make_pair(500.,800.);
-    pedestal_integral_range = make_pair(1,250);
+	// signal_integral_range = make_pair(500.,800.);
+	signal_integral_range = make_pair(1075.,1150.);
+    pedestal_integral_range = make_pair(100,800);
 	//	std::cout << "WaveformHistos::Sensorname: " << _sensor << " "<< _id<< std::endl;
 	this->InitHistos();
 }
 
 void WaveformHistos::InitHistos() {
-	float minVolt = -1000;
-	float maxVolt = +1000;
-	int nbins = 2000;
+	float minVolt = -100; //-1000;
+	float maxVolt = 1300; //+1000;
+	int nbins =  700; //2000;
 	//	for (int i = 0; i < _n_wfs; i++)
 	//		_Waveforms.push_back(new TGraph());
 	TString hName = TString::Format("h_minVoltage_%s_%d",_sensor.c_str(),_id);
@@ -61,7 +62,7 @@ void WaveformHistos::InitHistos() {
 	hName = TString::Format("h_DeltaIntegral_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: DeltaIntegral; signal integral/mV; number of entries",_sensor.c_str(),_id);
 	histos["DeltaIntegral"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
-	SetMaxRangeX((string)hName,-5,200);
+	//SetMaxRangeX((string)hName,-5,200);
 
 	hName = TString::Format("h_ProfileDelta_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: Profile Delta; event number / 1000events; signal/mV",_sensor.c_str(),_id);
@@ -125,6 +126,11 @@ void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 	float integral = wf.getIntegral();
 	float signal_integral = wf.getIntegral(signal_integral_range.first,signal_integral_range.second);
 	float pedestal_integral = wf.getIntegral(pedestal_integral_range.first,pedestal_integral_range.second);
+
+    cout << "first and second: " << signal_integral_range.first << " " << signal_integral_range.second << endl;
+    cout << "this is the signal   integral: " << signal_integral << endl;
+    cout << "this is the pedestal integral: " << pedestal_integral << endl;
+    cout << "this is the delta integral: " << signal_integral - pedestal_integral << endl;
 	int sign = wf.getSign();
 	int event_no = wf.getEvent();
 	histos["FullIntegral"]->Fill(sign*integral);
