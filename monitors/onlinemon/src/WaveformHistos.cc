@@ -160,10 +160,10 @@ void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 	float signal_integral = wf.getIntegral(signal_integral_range.first,signal_integral_range.second);
 	float pedestal_integral = wf.getIntegral(pedestal_integral_range.first,pedestal_integral_range.second);
 
-    cout << "first and second: " << signal_integral_range.first << " " << signal_integral_range.second << endl;
-    cout << "this is the signal   integral: " << signal_integral << endl;
-    cout << "this is the pedestal integral: " << pedestal_integral << endl;
-    cout << "this is the delta integral: " << signal_integral - pedestal_integral << endl;
+    // cout << "first and second: " << signal_integral_range.first << " " << signal_integral_range.second << endl;
+    // cout << "this is the signal   integral: " << signal_integral << endl;
+    // cout << "this is the pedestal integral: " << pedestal_integral << endl;
+    // cout << "this is the delta integral: " << signal_integral - pedestal_integral << endl;
 	int sign = wf.getSign();
 	int event_no = wf.getEvent();
 	histos["FullIntegral"]->Fill(sign*integral);
