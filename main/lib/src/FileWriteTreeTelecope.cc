@@ -114,7 +114,7 @@ namespace eudaq {
     m_ttree->Branch("adc", &f_adc);
     m_ttree->Branch("charge", &f_charge);
     m_ttree->Branch("waveforms", &f_charge);
-    m_ttree->Branch("nwfs", &nwfs,"n_waveforms/I");
+    m_ttree->Branch("nwfs", &f_nwfs,"n_waveforms/I");
   }
 
   void FileWriterTreeTelescope::WriteEvent(const DetectorEvent & ev) {
