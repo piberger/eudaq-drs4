@@ -77,6 +77,8 @@ ENDIF()
 # include directories
 INCLUDE_DIRECTORIES( ./main/include )
 INCLUDE_DIRECTORIES( ./extern/jsoncons-0.93/src )
+#next line added by marc
+INCLUDE_DIRECTORIES( ./monitors/onlinemon/ )
 
 # additional packages to be searched for by cmake
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
