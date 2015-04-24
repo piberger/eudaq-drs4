@@ -283,7 +283,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 #endif
 			std::string sensorname;
 			sensorname = waveform.GetType();
-			SimpleStandardWaveform simpWaveform(sensorname,waveform.ID(),&mon_configdata);//,plane.XSize(),plane.YSize(), plane.TLUEvent(),plane.PivotPixel(),&mon_configdata);
+			SimpleStandardWaveform simpWaveform(sensorname,waveform.ID(),waveform.GetNSamples(),&mon_configdata);//,plane.XSize(),plane.YSize(), plane.TLUEvent(),plane.PivotPixel(),&mon_configdata);
 			simpWaveform.setNSamples(waveform.GetNSamples());
 			simpWaveform.addData(&(*waveform.GetData())[0]);
 			simpWaveform.Calculate();
