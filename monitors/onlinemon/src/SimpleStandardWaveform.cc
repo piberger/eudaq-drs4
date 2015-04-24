@@ -7,13 +7,14 @@
 
 #include "include/SimpleStandardWaveform.hh"
 
-SimpleStandardWaveform::SimpleStandardWaveform(const std::string & name,  const int id, OnlineMonConfiguration* mymon) :
-	_name(name), _id(id), calculated(false),_nsamples(1024), _sign(-1),_channelnumber(-1)
+SimpleStandardWaveform::SimpleStandardWaveform(const std::string & name,  const int id, unsigned int nsamples, OnlineMonConfiguration* mymon ) :
+	_name(name), _id(id), calculated(false),_nsamples(nsamples), _sign(-1),_channelnumber(-1)
 {
 
 }
 
-SimpleStandardWaveform::SimpleStandardWaveform(const std::string & name, const int id) : _name(name), _id(id), calculated(false),_sign(1),_channelnumber(-1)
+SimpleStandardWaveform::SimpleStandardWaveform(const std::string & name, const int id, unsigned int nsamples) :
+		_name(name), _id(id), calculated(false),_nsamples(nsamples),_sign(1),_channelnumber(-1)
 {
 
 }

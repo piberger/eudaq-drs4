@@ -9,7 +9,7 @@
 #include "OnlineMon.hh"
 #include <math.h>
 
-WaveformHistos::WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon): _n_wfs(10),_sensor(p.getName()), _id(p.getID()),n_fills(0)
+WaveformHistos::WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon): _n_wfs(10),_sensor(p.getName()), _id(p.getID()),n_fills(0),_n_samples(1024)
 {
 	char out[1024], out2[1024];
 	_mon=mon;
@@ -101,7 +101,7 @@ void WaveformHistos::InitHistos() {
 	for (int i = 0; i < _n_wfs; i++){
 		hName = TString::Format("Waveform_%d_%d",_id,i);
 		hTitle = TString::Format("Waveform ID %d - %d",_id,i);
-		_Waveforms.push_back(new TH1F(hName,hTitle,2560,0,2560));
+		_Waveforms.push_back(new TH1F(hName,hTitle,_n_samples,0,_n_samples));
 		//		FixRangeY(string)
 		////		_Waveforms.back()->SetPoint(0,0,0);
 		//		_Waveforms.back()->SetPoint(1,1,1);
@@ -118,8 +118,41 @@ void WaveformHistos::InitHistos() {
 	}
 }
 
+void WaveformHistos::Reinitialize_Waveforms() {
+//	if (h_wf_stack){
+//		delete h_wf_stack;
+//	}
+	cout<<"WaveformHistos::Reinitialize_Waveforms of "<<_sensor.c_str()<<"_"<<_id<<" with "<<getNSamples()<<" Samples."<<endl;
+//	TString hName = TString::Format("h_wf_stack_%s_%d",_sensor.c_str(),_id);
+//	TString hTitle = TString::Format("%s %d: Waveform Stack;time; signal/mV",_sensor.c_str(),_id);
+////	h_wf_stack = new THStack(hName,hTitle);
+	for (int i = 0; i < _n_wfs; i++){
+//		hName = TString::Format("Waveform_%d_%d",_id,i);
+//		hTitle = TString::Format("Waveform ID %d - %d",_id,i);
+		TH1F* histo = _Waveforms.at(i);
+		histo->SetBins(_n_samples,0,_n_samples);
+//		_Waveforms.push_back(new TH1F(hName,hTitle,_n_samples,0,_n_samples));
+		//		FixRangeY(string)
+		////		_Waveforms.back()->SetPoint(0,0,0);
+		//		_Waveforms.back()->SetPoint(1,1,1);
+		//		_Waveforms.back()->Draw("APL");
+//		if (_Waveforms.back()->GetXaxis())
+//			_Waveforms.back()->GetXaxis()->SetTitle("n");
+//		if (_Waveforms.back()->GetYaxis())
+//			_Waveforms.back()->GetYaxis()->SetTitle("Signal / mV");
+//		h_wf_stack->Add(_Waveforms.back());
+	}
+
+
+
+}
+
 void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 {
+	if (wf.getNSamples() > this->getNSamples()){
+		_n_samples = wf.getNSamples();
+		Reinitialize_Waveforms();
+	}
 	float min = wf.getMin();
 	float max = wf.getMax();
 	float delta = fabs(max-min);
@@ -145,7 +178,7 @@ void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 			int bins = (event_no+1000)/1000;
 			int max = (bins)*1000;
 			it->second->SetBins(bins,0,max);
-//			cout<<it->first<<": Extend Profile "<<bins<<" "<<max<<endl;
+			//			cout<<it->first<<": Extend Profile "<<bins<<" "<<max<<endl;
 		}
 		if (it->first == "DeltaVoltage")
 			it->second->Fill(event_no,delta);
@@ -192,7 +225,7 @@ void WaveformHistos::Reset() {
 	for (it = histos.begin(); it != histos.end();it++)
 		it->second->Reset();
 	for (it = profiles.begin(); it != profiles.end();it++)
-			it->second->Reset();
+		it->second->Reset();
 
 	n_fills = 0;
 }
@@ -232,6 +265,7 @@ void WaveformHistos::SetSignalIntegralRange(float min, float max) {
 			_sensor.c_str(),_id,min,max);
 	profiles["SignalIntegral"]->SetTitle(hTitle);
 }
+
 
 int WaveformHistos::SetHistoAxisLabels(TH1* histo,string xlabel, string ylabel)
 {

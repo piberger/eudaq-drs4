@@ -143,12 +143,14 @@ void V1730Producer::ReadoutLoop() {
           event_valid = false;
         }
 
+        std::cout << "#######" << std::endl;
         std::cout << "Event valid: "          << event.isValid()       << std::endl;
         std::cout << "Event size(32b words): "<< event.EventSize()     << std::endl;
         std::cout << "Channel mask: "         << event.ChannelMask()   << std::endl;
         std::cout << "Event Counter: "        << event.EventCounter()       << std::endl;
         std::cout << "Samples per channel: "  << event.SamplesPerChannel()  << std::endl;
-        std::cout << "Channels: "             << event.Channels()       << std::endl;  
+        std::cout << "Channels: "             << event.Channels()       << std::endl; 
+        std::cout << std::endl << std::endl; 
 
 
         unsigned int block_no = 0;
@@ -241,6 +243,8 @@ void V1730Producer::OnConfigure(const eudaq::Configuration& conf) {
 
 
   std::cout << "V1730: Configured! Ready to take data." << std::endl;
+  
+  SetStatus(eudaq::Status::LVL_OK, "Configured V1730");
 
   }catch ( ... ){
   EUDAQ_ERROR(std::string("Error in the V1730 configuration procedure."));

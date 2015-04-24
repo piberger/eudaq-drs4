@@ -50,7 +50,7 @@ class SimpleStandardEvent {
     SimpleStandardEvent();
 
     void addPlane(SimpleStandardPlane &plane);
-    void addWaveform(SimpleStandardWaveform &plane);
+    void addWaveform(SimpleStandardWaveform &wf);
     SimpleStandardPlane getPlane (const int i) const {return _planes.at(i);}
     SimpleStandardWaveform getWaveform (const int i) const {return _waveforms.at(i);}
     int getNPlanes() const {return _planes.size(); }

@@ -77,6 +77,18 @@ void WaveformCollection::Write(TFile *file)
 	}
 }
 
+WaveformHistos* WaveformCollection::getWaveformHistos(std::string sensor, int id) {
+//in the past:
+//	SimpleStandardWaveform wf(sensor,id,1024);
+//	return _map[wf];
+	std::map<SimpleStandardWaveform,WaveformHistos*>::iterator it;
+	for (it = _map.begin(); it != _map.end(); ++it)
+		if (it->first.getID() == id && it->first.getName()== sensor)
+			return it->second;
+	return 0;
+}
+
+
 void WaveformCollection::Calculate(const unsigned int currentEventNumber)
 {
 	//	cout<<"WaveformCollection::Calculate"<< currentEventNumber<<" "<<_reduce<<" "<< (currentEventNumber % 1000*_reduce == 0)<<endl;

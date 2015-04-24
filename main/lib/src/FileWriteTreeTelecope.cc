@@ -74,6 +74,8 @@ namespace eudaq {
     std::vector<int> * f_row;
     std::vector<int> * f_adc;
     std::vector<int> * f_charge;  
+    std::vector< std::vector<float>> * f_waveforms;
+    int f_nwfs;
     
   };
 
@@ -90,6 +92,8 @@ namespace eudaq {
     f_row    = new std::vector<int>;	  
     f_adc    = new std::vector<int>;	  
     f_charge = new std::vector<int>;  
+    f_waveforms = new std::vector< std::vector<float> >;
+
 
   }
 
@@ -109,7 +113,8 @@ namespace eudaq {
     m_ttree->Branch("row", &f_row);
     m_ttree->Branch("adc", &f_adc);
     m_ttree->Branch("charge", &f_charge);
-
+    m_ttree->Branch("waveforms", &f_charge);
+    m_ttree->Branch("nwfs", &f_nwfs,"n_waveforms/I");
   }
 
   void FileWriterTreeTelescope::WriteEvent(const DetectorEvent & ev) {

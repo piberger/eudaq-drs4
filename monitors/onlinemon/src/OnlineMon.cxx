@@ -287,6 +287,9 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 			sensorname = waveform.GetType();
             // cout << "sensorname " << sensorname << endl; // this gives V1730 or drs4
 			SimpleStandardWaveform simpWaveform(sensorname,waveform.ID(),&mon_configdata);//,plane.XSize(),plane.YSize(), plane.TLUEvent(),plane.PivotPixel(),&mon_configdata);
+// felix' stuff =======
+// felix' stuff 			SimpleStandardWaveform simpWaveform(sensorname,waveform.ID(),waveform.GetNSamples(),&mon_configdata);//,plane.XSize(),plane.YSize(), plane.TLUEvent(),plane.PivotPixel(),&mon_configdata);
+// felix' stuff >>>>>>> 5c4c4105d2ff97f1fe47fcca7de812c7f7c997f2
 			simpWaveform.setNSamples(waveform.GetNSamples());
 			simpWaveform.addData(&(*waveform.GetData())[0]);
 			simpWaveform.Calculate();
