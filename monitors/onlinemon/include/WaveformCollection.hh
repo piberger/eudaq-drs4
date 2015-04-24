@@ -47,10 +47,7 @@ public:
 	void bookHistograms(const SimpleStandardEvent &simpev);
 	void setRootMonitor(RootMonitor *mon)  {_mon = mon; }
 	void Fill(const SimpleStandardEvent &simpev);
-	WaveformHistos * getWaveformHistos(std::string sensor, int id){
-		SimpleStandardWaveform wf(sensor,id);
-		return _map[wf];
-	}
+	WaveformHistos * getWaveformHistos(std::string sensor, int id);
 	void SetWaveformOptions(WaveformOptions *options){_WaveformOptions = options;}
 	void Reset();
 	virtual void Write(TFile *file);
