@@ -121,7 +121,12 @@ namespace eudaq {
         tmp = true;
       }
     }
-
+    if (m_eventnumber < 30 || m_eventnumber%100==0){
+    	std::cout<<"\rWaiting Buffers: "<< m_numwaiting << " out of " << m_buffer.size()<<":";
+    	for (unsigned i = 0; i< m_buffer.size(); i++)
+    		std::cout<<" "<<m_buffer.at(i).events.size();
+        std::cout<<std::flush;;
+    }
     //std::cout << "Waiting buffers: " << m_numwaiting << " out of " << m_buffer.size() << std::endl;
     if (tmp)
       OnCompleteEvent();
