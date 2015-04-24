@@ -26,28 +26,28 @@ public:
 }
 
   virtual bool GetStandardSubEvent(StandardEvent & sev, const Event & ev) const {
-	std::cout << "\nV1730: GetStandardSubEvent" << std::endl;
+//	std::cout << "\nV1730: GetStandardSubEvent" << std::endl;
 	
 	const RawDataEvent & in_raw = dynamic_cast<const RawDataEvent &>(ev);
 	int nblocks = in_raw.NumBlocks();
-	std::cout << "Number of Blocks: " << nblocks << std::endl;
+//	std::cout << "Number of Blocks: " << nblocks << std::endl;
 
 	//get data:
 	int id = 0;
 	RawDataEvent::data_t data = in_raw.GetBlock(id);
 	bool valid_bit = static_cast<bool>(data[0]); //valid bit
-	std::cout << "Valid bit: " << valid_bit << std::endl;
+//	std::cout << "Valid bit: " << valid_bit << std::endl;
 	id++;
 
 	data = in_raw.GetBlock(id);
 	uint64_t timestamp = *((uint64_t*) &data[0]); //timestamp
-	std::cout << "Timestamp: " << timestamp << std::endl;
+//	std::cout << "Timestamp: " << timestamp << std::endl;
 	sev.SetTimestamp(timestamp);
 	id++;
 
 	data = in_raw.GetBlock(id);
 	uint32_t event_counter = static_cast<uint32_t>(data[0]); //event counter
-	std::cout << "Event counter: " << event_counter << std::endl;
+//	std::cout << "Event counter: " << event_counter << std::endl;
 	id++;
 
 
@@ -56,12 +56,12 @@ public:
 	int n_channels = nblocks - 3;
 
 	for(int ch = 0; ch < n_channels; ch++){
-	  std::cout << "hallo nr: " << ch << std::endl;
+//	  std::cout << "hallo nr: " << ch << std::endl;
 	  data = in_raw.GetBlock(id);
 	  data_size = data.size(); 
 	  n_samples =  data_size/sizeof(uint16_t);
-	  std::cout << "Waveform data size: " << data_size << std::endl;
-	  std::cout << "Number of samples per waveform: " << n_samples << std::endl;
+//	  std::cout << "Waveform data size: " << data_size << std::endl;
+//	  std::cout << "Number of samples per waveform: " << n_samples << std::endl;
 
 	  uint16_t wave_array[n_samples];
 	  uint16_t *raw_wave_array = (uint16_t*) &data[0];
