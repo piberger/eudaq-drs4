@@ -13,11 +13,9 @@ lib/*
 # ignore log files
 *.log
 
-# ignore conf files
-conf/*.conf
-
 # ignore ROOT files
 *.root
+*.pdf
 
 # ignore emacs autosaves
 \#*#
