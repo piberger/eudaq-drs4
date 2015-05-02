@@ -7,8 +7,8 @@
 #include <ostream>
 #include <vector>
 
-using namespace pxar; 
-using namespace std; 
+using namespace pxar;
+using namespace std;
 
 std::vector<int32_t> &CMSPixelProducer::split(const std::string &s, char delim, std::vector<int32_t> &elems) {
   std::stringstream ss(s);
@@ -90,7 +90,7 @@ std::vector<std::pair<std::string,uint8_t> > CMSPixelProducer::GetConfDACs(int16
       m_alldacs.append(name + " " + std::to_string(value) + "; ");
     }
 
-    EUDAQ_USER(string("Successfully read ") + std::to_string(dacs.size()) 
+    EUDAQ_USER(string("Successfully read ") + std::to_string(dacs.size())
 	       + string(" DACs from file, ") + std::to_string(overwritten_dacs) + string(" overwritten by config."));
   }
   else {
@@ -102,6 +102,8 @@ std::vector<std::pair<std::string,uint8_t> > CMSPixelProducer::GetConfDACs(int16
 
   return dacs;
 }
+
+/**Read trimfile*/
 
 std::vector<pxar::pixelConfig> CMSPixelProducer::GetConfTrimming(int16_t i2c) {
 
@@ -141,3 +143,35 @@ std::vector<pxar::pixelConfig> CMSPixelProducer::GetConfTrimming(int16_t i2c) {
   }
   return pixels;
 } // GetConfTrimming
+
+/**get Maskfile*/
+
+vector<masking> CMSPixelProducer::GetConfMask(){
+
+    string filename = m_config.Get("maskFile", "");
+    vector<masking>  mask;
+    ifstream file(filename);
+
+    if(!file.fail()){
+        std::string line;
+        while(std::getline(file, line)){
+            stringstream   linestream(line);
+            string         identifier;
+            uint16_t       roc, col, row;
+            linestream >> identifier >> roc >> col >> row;
+            mask.push_back(masking(identifier, roc, col, row));
+
+        }
+        m_maskingFromConf = true;
+    }
+    else {
+        cout << "Couldn't read mask parameters from \"" << string(filename) << "\". So I don't know how to mask ;-)\n";
+        EUDAQ_WARN(string("Couldn't read mask parameters from \"") + string(filename) + ("\". So I don't know how to mask ;-)\n"));
+        m_maskingFromConf = false;
+    }
+
+    cout << "\033[1;32;48mFILENAME: \033[0m" <<  filename << "\n";
+
+    return mask;
+}
+

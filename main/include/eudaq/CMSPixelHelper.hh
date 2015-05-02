@@ -39,7 +39,7 @@ namespace eudaq {
 
       m_detector = bore.GetTag("DETECTOR","");
       std::string pcbtype = bore.GetTag("PCBTYPE", "");
-      m_rotated_pcb = (pcbtype.find("-rot") != std::string::npos ? true : false);  
+      m_rotated_pcb = (pcbtype.find("-rot") != std::string::npos ? true : false);
 
       // Get the number of planes:
       m_nplanes = bore.GetTag("PLANES", 1);
@@ -54,7 +54,7 @@ namespace eudaq {
     }
 
     bool GetStandardSubEvent(StandardEvent & out, const Event & in) const {
-          
+
       // Check if we have BORE or EORE:
       if (in.IsBORE() || in.IsEORE()) { return true; }
 
@@ -204,7 +204,7 @@ namespace eudaq {
 	  sparsePixel->setYCoord((size_t)plane.GetY(iPixel));
 	  // Fill the pixel charge:
 	  sparsePixel->setSignal( (size_t)plane.GetPixel(iPixel) );
-	  
+
 	  // Add the pixel to the readout frame:
 	  sparseFrame->addSparsePixel(sparsePixel.get());
 	}
@@ -247,7 +247,7 @@ namespace eudaq {
 
       int size = block.size();
       if(size < 2) { return rawData; }
-      
+
       int i = 0;
       while(i < size-1) {
 	uint16_t temp = ((uint16_t)block.data()[i+1] << 8) | block.data()[i];

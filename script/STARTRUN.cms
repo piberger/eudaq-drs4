@@ -1,6 +1,6 @@
 #!/bin/sh
-export HOSTNAME=192.168.3.1
-export ROOTSYS=/usr/share/root/
+export HOSTNAME=pim1
+export ROOTSYS=/usr/local/bin/root
 export RCPORT=44000
 
 #export LD_LIBRARY_PATHT=$LD_LIBRARY_PATH:/home/eudet/eudaq/bin
@@ -13,7 +13,7 @@ echo '    Cleaning up first...'
 
 sleep 1
 echo '    Making sure all data files are properly writeprotected'
-chmod a=r data/run*.raw
+chmod a=r ../data/run*.raw
 echo '\033[1;32;48m    ...Done!\033[0m'
 cd ../bin
 
