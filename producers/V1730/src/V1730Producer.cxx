@@ -174,7 +174,8 @@ void V1730Producer::ReadoutLoop() {
         for(uint32_t ch = 0; ch < n_channels; ch++){
           uint16_t *payload = new uint16_t[n_samples];
           event.getChannelData(ch, payload, n_samples);
-          ev.AddBlock(block_no, reinterpret_cast<const char*>(payload), n_samples);
+          std::cout << "Size of readout - n_samples: " << n_samples << ", payload [byte]: " << n_samples*sizeof(uint16_t) << std::endl;
+          ev.AddBlock(block_no, reinterpret_cast<const char*>(payload), n_samples*sizeof(uint16_t));
           block_no++;
           delete payload;
         }
@@ -225,6 +226,32 @@ void V1730Producer::OnConfigure(const eudaq::Configuration& conf) {
     V1730_handle->setChannelEnableMask(c_enable_mask);
     V1730_handle->printChannelEnableMask(V1730_handle->getChannelEnableMask());
 
+    //send busy signal via the TRG OUT Limo connnector
+    caen_v1730::front_panel_io_control_reg io_control = V1730_handle->getFrontPanelIOControl();
+    uint32_t io_mask0 = io_control.raw;
+    std::cout << "IO mask before: " << io_mask0 << std::endl;
+    io_control.probe_select = 3;
+    io_control.trg_out_mode_sel = 1;
+    V1730_handle->setFrontPanelIOControl(io_control);
+    //short check
+    io_control = V1730_handle->getFrontPanelIOControl();
+    uint32_t io_mask1 = io_control.raw;
+    std::cout << "IO mask after: " << io_mask1 << std::endl << std::endl;
+
+
+    //set buffer organization (1024 memory blocks for 1024 events)
+    V1730_handle->setBufferOrganisation(0x0A);
+    std::cout << "Buffer Organisation: 0x" << std::hex << uint32_t(V1730_handle->getBufferOrganisation()) << std::dec << std::endl;
+
+    //set custom event lenght
+    int length = 790;
+	V1730_handle->setBufferCustomSize((length+10)/10);
+	V1730_handle->setPostTrigger(0);
+	std::cout << "Buffer setBufferCustomSize: " << V1730_handle->getBufferCustomSize() << std::endl;
+
+    //set almost full level to 800 events (out of 1024)
+    V1730_handle->setAlmostFullLevel(800);
+
     //set channel voltage range
     for(int ch = 0; ch < V1730_handle->GROUPS; ch++){
       V1730_handle->setChannel_Gain(ch, caen_v1730::GAIN_4); //set input range to +/-0.5V
@@ -239,7 +266,7 @@ void V1730Producer::OnConfigure(const eudaq::Configuration& conf) {
     }
 
     //all samples are pre-triggered
-    V1730_handle->setPostTriggerSamples(0);
+    //V1730_handle->setPostTriggerSamples(2000);
 
 
   std::cout << "V1730: Configured! Ready to take data." << std::endl;

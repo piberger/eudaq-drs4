@@ -56,22 +56,20 @@ public:
 	int n_channels = nblocks - 3;
 
 	for(int ch = 0; ch < n_channels; ch++){
-//	  std::cout << "hallo nr: " << ch << std::endl;
 	  data = in_raw.GetBlock(id);
 	  data_size = data.size(); 
-	  n_samples =  data_size/sizeof(uint16_t);
-//	  std::cout << "Waveform data size: " << data_size << std::endl;
-//	  std::cout << "Number of samples per waveform: " << n_samples << std::endl;
+	  n_samples =  data_size/sizeof(uint16_t); //change from /sizeof(uint16_t)
+
+	  std::cout << "Waveform data size: " << data_size << std::endl;
+	  std::cout << "Number of samples per waveform: " << n_samples << std::endl;
 
 	  uint16_t wave_array[n_samples];
-	  uint16_t *raw_wave_array = (uint16_t*) &data[0];
+	  //uint16_t *raw_wave_array = (uint16_t*) &data[0];
+	  uint16_t *raw_wave_array = (uint16_t*)(&data[0]);
 
 	  for (int i = 0; i < n_samples; i++){
-	  	wave_array[i] = raw_wave_array[i];
-	  	if(wave_array[i] == 0){
-	  		std::cout << "data is zero at channel " << ch << "at sample " << i << std::endl;
-	  	}
-	  }
+	  	wave_array[i] = raw_wave_array[i];}
+
 
 	  StandardWaveform wf(ch, EVENT_TYPE, "CH" + std::to_string(ch));
 	  wf.SetChannelName("CH" + std::to_string(ch));
