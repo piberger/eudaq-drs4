@@ -74,3 +74,5 @@ Thumbs.db
 #CMakeCache.txt
 build
 crashlog.txt
+
+data
