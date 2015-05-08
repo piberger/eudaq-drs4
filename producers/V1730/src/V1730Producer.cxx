@@ -205,6 +205,7 @@ void V1730Producer::OnConfigure(const eudaq::Configuration& conf) {
   m_trigger_source = m_config.Get("trigger_source", 1); //default 1 for external trigger
   m_active_channels = m_config.Get("active_channels", 1); //default 1 only for ch1
   m_trigger_threshold = m_config.Get("trigger_threshold", 1); //default 1
+  m_post_trigger_samples = m_config.Get("post_trigger_samples", 0); //default0
 
   try{
     if(V1730_handle->isRunning()){
@@ -244,7 +245,7 @@ void V1730Producer::OnConfigure(const eudaq::Configuration& conf) {
     std::cout << "Buffer Organisation: 0x" << std::hex << uint32_t(V1730_handle->getBufferOrganisation()) << std::dec << std::endl;
 
     //set custom event lenght
-    int length = 790;
+    int length = 990;
 	V1730_handle->setBufferCustomSize((length+10)/10);
 	V1730_handle->setPostTrigger(0);
 	std::cout << "Buffer setBufferCustomSize: " << V1730_handle->getBufferCustomSize() << std::endl;
@@ -266,7 +267,7 @@ void V1730Producer::OnConfigure(const eudaq::Configuration& conf) {
     }
 
     //all samples are pre-triggered
-    //V1730_handle->setPostTriggerSamples(2000);
+    V1730_handle->setPostTriggerSamples(m_post_trigger_samples);
 
 
   std::cout << "V1730: Configured! Ready to take data." << std::endl;
