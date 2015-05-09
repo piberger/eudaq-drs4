@@ -135,7 +135,6 @@ void V1730Producer::ReadoutLoop() {
         
         bool event_valid = true;
         v1730_event event; //CAEN event:
-        eudaq::RawDataEvent ev(m_event_type, m_run, m_ev); //generate a raw event
 
 
         V1730_handle->ReadEvent_D32(event);
@@ -144,14 +143,19 @@ void V1730Producer::ReadoutLoop() {
         }
 
         std::cout << "#######" << std::endl;
-        std::cout << "Event valid: "          << event.isValid()       << std::endl;
-        std::cout << "Event size(32b words): "<< event.EventSize()     << std::endl;
-        std::cout << "Channel mask: "         << event.ChannelMask()   << std::endl;
-        std::cout << "Event Counter: "        << event.EventCounter()       << std::endl;
-        std::cout << "Samples per channel: "  << event.SamplesPerChannel()  << std::endl;
-        std::cout << "Channels: "             << event.Channels()       << std::endl; 
+        std::cout << "Event valid:           " << event.isValid()           << std::endl;
+        std::cout << "Event size(32b words): " << event.EventSize()          << std::endl;
+        std::cout << "Channel mask:          " << event.ChannelMask()        << std::endl;
+        std::cout << "Event Counter:         " << event.EventCounter()       << std::endl;
+        std::cout << "Samples per channel:   " << event.SamplesPerChannel()  << std::endl;
+        std::cout << "Channels:              " << event.Channels()           << std::endl;
+        std::cout << "TimeStamp:             " << event.TriggerTimeTag()     << std:: endl;
         std::cout << std::endl << std::endl; 
+        m_ev = event.EventCounter();
 
+        eudaq::RawDataEvent ev(m_event_type, m_run, m_ev); //generate a raw event
+        ev.SetTimeStampToNow(); // Let's think weather this information can help us...
+        ev.SetTag("timestamp", event.TriggerTimeTag());
 
         unsigned int block_no = 0;
         ev.AddBlock(block_no, reinterpret_cast<const char*>(&event_valid), sizeof(bool)); //valid bit
@@ -160,7 +164,7 @@ void V1730Producer::ReadoutLoop() {
         ev.AddBlock(block_no, reinterpret_cast<const char*>(&m_timestamp), sizeof(m_timestamp)); //timestamp
         block_no++;
 
-        uint32_t m_ev = event.EventCounter();
+
         ev.AddBlock(block_no, reinterpret_cast<const char*>(&m_ev), sizeof(uint32_t)); //event counter
         block_no++;
 
