@@ -20,6 +20,10 @@ class SimpleStandardHit {
 
 
   public:
+    // X X Position / Column
+    // Y Y-Position / Row
+    // lvl1: ?????
+    // tot: total charge
     SimpleStandardHit(const int x, const int y) : _x(x), _y(y), _tot(-1), _lvl1(-1), _reduceX(-1), _reduceY(-1) {}
     SimpleStandardHit(const int x, const int y, const int tot, const int lvl1) : _x(x), _y(y), _tot(tot), _lvl1(lvl1), _reduceX(-1), _reduceY(-1) {}
     SimpleStandardHit(const int x, const int y, const int tot, const int lvl1, const int reduceX, const int reduceY) : _x(x), _y(y), _tot(tot), _lvl1(lvl1), _reduceX(reduceX), _reduceY(-reduceY){}
