@@ -155,7 +155,7 @@ void V1730Producer::ReadoutLoop() {
 
         eudaq::RawDataEvent ev(m_event_type, m_run, m_ev); //generate a raw event
         ev.SetTimeStampToNow(); // Let's think weather this information can help us...
-        ev.SetTag("timestamp", event.TriggerTimeTag());
+        ev.SetTag("TriggerTimeTag", event.TriggerTimeTag());
 
         unsigned int block_no = 0;
         ev.AddBlock(block_no, reinterpret_cast<const char*>(&event_valid), sizeof(bool)); //valid bit
