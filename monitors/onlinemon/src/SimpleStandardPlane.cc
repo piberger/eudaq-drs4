@@ -257,6 +257,10 @@ void SimpleStandardPlane::setPixelType(std::string name)
     is_UNKNOWN=false;
     AnalogPixelType=true;
   }
+  else if (name=="DUT"){//todo adjust for CMS pixel
+	  is_CMSPIXEL=true;
+	  is_UNKNOWN=false;
+  }
   else if(name=="USBPIXI4" || name=="USBPIXI4B")
   {
     is_USBPIXI4=true;
