@@ -134,6 +134,9 @@ class SimpleStandardCluster {
         back += (*hit_it).getY();
       return (int)back/_hits.size();
     }
+    /**
+     * Probably the TOTal Charge
+     */
     int getTOT()  const {
       if (_hits.size() == 1)
       {

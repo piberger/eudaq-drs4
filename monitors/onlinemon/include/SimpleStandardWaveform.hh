@@ -33,8 +33,8 @@ protected:
 	int _tlu_event;
 	int _channelnumber;
 public:
-	SimpleStandardWaveform(const std::string & name, const int id, OnlineMonConfiguration* mymon);
-	SimpleStandardWaveform(const std::string & name, const int id);
+	SimpleStandardWaveform(const std::string & name, const int id, const unsigned int nsamples, OnlineMonConfiguration* mymon);
+	SimpleStandardWaveform(const std::string & name, const int id, const unsigned int nsamples);
 	virtual ~SimpleStandardWaveform() {};
 	std::string getName() const {return _name;}
 	std::string getChannelName() const{return _channelname;}
