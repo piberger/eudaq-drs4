@@ -27,6 +27,8 @@ ELSE(PXARCORE_FOUND)
   list(REMOVE_ITEM plugins_sources plugins/CMSPixelTRPConverterPlugin.cc)
   list(REMOVE_ITEM plugins_sources plugins/CMSPixelREFConverterPlugin.cc)
   list(REMOVE_ITEM plugins_sources plugins/CMSPixelDUTConverterPlugin.cc)
+  list(REMOVE_ITEM plugins_sources plugins/CMSPixelANAConverterPlugin.cc)
+  list(REMOVE_ITEM plugins_sources plugins/CMSPixelDIGConverterPlugin.cc)
 ENDIF(PXARCORE_FOUND)
 
 if (PROTOBUF_FOUND AND GEN_proto)
