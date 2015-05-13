@@ -65,6 +65,7 @@ V1730Producer::V1730Producer(const std::string & name, const std::string & runco
 
 void V1730Producer::OnStartRun(unsigned runnumber){
   m_run = runnumber;
+  m_ev = 0;
   try{
     //set time stamp:
     this->SetTimeStamp();
@@ -75,6 +76,20 @@ void V1730Producer::OnStartRun(unsigned runnumber){
     bore.SetTag("V1730_timestamp", m_timestamp);
     bore.SetTag("V1730_serial_no", m_serialno);
     bore.SetTag("V1730_firmware_v", m_firmware);
+    
+    for (unsigned ch = 0; ch <  V1730_handle->GROUPS; ch++){
+        std::string key = "V1730_CHANNEL_DAC_"+std::to_string(ch);
+	std::cout << key << " - " << m_channel_dac.at(ch);
+	bore.SetTag(key, m_channel_dac.at(ch));
+	
+        key = "V1730_CHANNEL_RANGE_"+std::to_string(ch);
+	std::cout << key << " - " << m_dynamic_range.at(ch);
+	bore.SetTag(key, m_dynamic_range.at(ch));
+
+        key = "V1730_CHANNEL_GAIN_"+std::to_string(ch);
+	std::cout << key << " - " << m_channel_gain.at(ch);
+	bore.SetTag(key, m_channel_gain.at(ch));
+    }
     //set number of channels to be implemented
     //set tags for the channel numbers
 
@@ -142,18 +157,18 @@ void V1730Producer::ReadoutLoop() {
           event_valid = false;
         }
 
-        std::cout << "#######" << std::endl;
-        std::cout << "Event valid:           " << event.isValid()           << std::endl;
-        std::cout << "Event size(32b words): " << event.EventSize()          << std::endl;
-        std::cout << "Channel mask:          " << event.ChannelMask()        << std::endl;
-        std::cout << "Event Counter:         " << event.EventCounter()       << std::endl;
-        std::cout << "Samples per channel:   " << event.SamplesPerChannel()  << std::endl;
-        std::cout << "Channels:              " << event.Channels()           << std::endl;
-        std::cout << "TimeStamp:             " << event.TriggerTimeTag()     << std:: endl;
-        std::cout << std::endl << std::endl; 
-        m_ev = event.EventCounter();
+        uint32_t event_counter = event.EventCounter();
+        //std::cout << "#######" << std::endl;
+        //std::cout << "Event valid:           " << event.isValid()           << std::endl;
+        //std::cout << "Event size(32b words): " << event.EventSize()          << std::endl;
+        //std::cout << "Channel mask:          " << event.ChannelMask()        << std::endl;
+        std::cout << "\rEvent Counter:         " << event_counter << "/" << m_ev  << std::flush;
+        //std::cout << "Samples per channel:   " << event.SamplesPerChannel()  << std::endl;
+        //std::cout << "Channels:              " << event.Channels()           << std::endl;
+        //std::cout << "TimeStamp:             " << event.TriggerTimeTag()     << std:: endl;
+        //std::cout << std::endl << std::endl; 
 
-        eudaq::RawDataEvent ev(m_event_type, m_run, m_ev); //generate a raw event
+        eudaq::RawDataEvent ev(m_event_type, m_run, event_counter); //generate a raw event
         ev.SetTimeStampToNow(); // Let's think weather this information can help us...
         ev.SetTag("TriggerTimeTag", event.TriggerTimeTag());
 
@@ -171,22 +186,23 @@ void V1730Producer::ReadoutLoop() {
 
         //get information regarding the number and size of the events
         uint32_t n_channels = event.Channels();
-        std::cout << "Number of Channels: " << n_channels << std::endl;
+        //std::cout << "Number of Channels: " << n_channels << std::endl;
         size_t n_samples = event.SamplesPerChannel();
 
         //read out all channels
         for(uint32_t ch = 0; ch < n_channels; ch++){
           uint16_t *payload = new uint16_t[n_samples];
           event.getChannelData(ch, payload, n_samples);
-          std::cout << "Size of readout - n_samples: " << n_samples << ", payload [byte]: " << n_samples*sizeof(uint16_t) << std::endl;
+          //std::cout << "Size of readout - n_samples: " << n_samples << ", payload [byte]: " << n_samples*sizeof(uint16_t) << std::endl;
           ev.AddBlock(block_no, reinterpret_cast<const char*>(payload), n_samples*sizeof(uint16_t));
           block_no++;
           delete payload;
         }
         
         SendEvent(ev);
+	      m_ev++;
 
-        std::cout << "Event counter (loop): " << m_ev << std::endl;      
+        //std::cout << "Event counter (loop): " << m_ev << std::endl;      
       }//end if
       
     }  
@@ -238,6 +254,7 @@ void V1730Producer::OnConfigure(const eudaq::Configuration& conf) {
     io_control.probe_select = 3;
     io_control.trg_out_mode_sel = 1;
     V1730_handle->setFrontPanelIOControl(io_control);
+
     //short check
     io_control = V1730_handle->getFrontPanelIOControl();
     uint32_t io_mask1 = io_control.raw;
@@ -250,12 +267,27 @@ void V1730Producer::OnConfigure(const eudaq::Configuration& conf) {
 
     //set custom event lenght
     int length = 990;
-	V1730_handle->setBufferCustomSize((length+10)/10);
-	V1730_handle->setPostTrigger(0);
-	std::cout << "Buffer setBufferCustomSize: " << V1730_handle->getBufferCustomSize() << std::endl;
+	  V1730_handle->setBufferCustomSize((length+10)/10);
+    std::cout << "Buffer setBufferCustomSize: " << V1730_handle->getBufferCustomSize() << std::endl;
+
+    //set post trigger samples:
+    V1730_handle->setPostTriggerSamples(m_post_trigger_samples);
+	  std::cout << "Post trigger samples set to: " << m_post_trigger_samples << std::endl;
 
     //set almost full level to 800 events (out of 1024)
     V1730_handle->setAlmostFullLevel(800);
+
+    //count all triggers (not just accepted ones)
+    caen_v1730::acq_control acq_ctrl = V1730_handle->getACQControl();
+    acq_ctrl.count_mode = 1;  //count all triggers
+    acq_ctrl.board_full_mode = 1; //full when (N-1) events are reached
+    V1730_handle->setACQControl(acq_ctrl);
+
+    //allow event overlap
+    caen_v1730::channel_configuration ch_config = V1730_handle->getGroupConfig();
+    ch_config.trigger_overlapping = 1;
+    V1730_handle->setGroupConfig(ch_config);
+
 
     //set channel voltage range
     for(int ch = 0; ch < V1730_handle->GROUPS; ch++){
@@ -265,13 +297,23 @@ void V1730Producer::OnConfigure(const eudaq::Configuration& conf) {
       V1730_handle->doChannel_Calibration(ch);
       caen_v1730::channel_status status = V1730_handle->getChannel_Status(ch);
       if(status.calibration_status){
-        std::cout << " [OK]" << std::endl;
+        std::cout << " [OK] - "; 
         //std::cout << " [OK] - Temp: " << V1730_handle->getChannel_Temperature(ch) << std::endl;
+        float dac = V1730_handle->getChannel_DAC(ch);
+        float range =  V1730_handle->getChannel_DynamicRange(ch);
+        float gain =  V1730_handle->getChannel_Gain(ch);
+        m_dynamic_range[ch] = range;
+        m_channel_dac[ch] = dac;
+        m_channel_gain[ch] = gain;
+        std::cout << "Range: " << range << ", dac: " << dac << ", gain: " << gain << std::endl;
       }
+      else{
+        std::cout << "[FAILED]"<<std::endl;
+      }
+      
     }
 
-    //all samples are pre-triggered
-    V1730_handle->setPostTriggerSamples(m_post_trigger_samples);
+
 
 
   std::cout << "V1730: Configured! Ready to take data." << std::endl;

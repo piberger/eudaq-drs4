@@ -21,7 +21,7 @@ public:
 	//m_serialno = bore.GetTag("V1730_serial_no", (int)-1);
 	//m_firmware = bore.GetTag("V1730_firmware_v", (int)-1);
 	//m_timestamp = bore.GetTag("V1730_timestamp", (int)-1);
-
+	m_range = 0.5; //TODO
 
 }
 
@@ -68,8 +68,13 @@ public:
 	  uint16_t *raw_wave_array = (uint16_t*)(&data[0]);
 
 	  for (int i = 0; i < n_samples; i++){
-	  	wave_array[i] = raw_wave_array[i];}
+//	  	wave_array[i] = raw_wave_array[i];}
 
+	  	wave_array[i] = (uint16_t)(m_range*1000*raw_wave_array[i]/16384); //m_range=0.5V, 1000 fuer mV.
+	  	if(wave_array[i] == 0){
+	  		std::cout << "data is zero at channel " << ch << "at sample " << i << std::endl;
+	  	}
+	  }
 
 	  StandardWaveform wf(ch, EVENT_TYPE, "CH" + std::to_string(ch));
 	  wf.SetChannelName("CH" + std::to_string(ch));
@@ -90,12 +95,12 @@ public:
 
 
 private:
-  V1730ConverterPlugin() : DataConverterPlugin(EVENT_TYPE), m_serialno(-1), m_firmware(-1){
+  V1730ConverterPlugin() : DataConverterPlugin(EVENT_TYPE), m_serialno(-1), m_firmware(-1), m_range(0){
 	std::cout<<"V1730ConverterPlugin Constructor"<<std::endl;}
 
   uint64_t m_timestamp;
   uint32_t m_serialno;
-  float m_firmware;
+  float m_firmware, m_range;
   static V1730ConverterPlugin m_instance;
 
 }; // class V1730ConverterPlugin

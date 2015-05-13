@@ -34,6 +34,9 @@ private:
   int m_run;
   bool m_running, m_terminated;
   uint16_t m_trigger_threshold;
+  std::map<uint8_t,float> m_dynamic_range;
+  std::map<uint8_t,uint16_t> m_channel_gain;
+  std::map<uint8_t,uint16_t> m_channel_dac;
 
   //to be implemented: int n_channels;
 
