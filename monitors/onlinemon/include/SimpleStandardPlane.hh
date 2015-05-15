@@ -85,6 +85,7 @@ class SimpleStandardPlane {
     bool is_FORTIS;
     bool is_EXPLORER;
     bool is_UNKNOWN;
+    bool is_CMSPIXEL;
 
   private:
     OnlineMonConfiguration* mon;

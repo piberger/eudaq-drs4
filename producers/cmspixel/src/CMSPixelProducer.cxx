@@ -27,6 +27,10 @@ using namespace std;
 static const std::string EVENT_TYPE_DUT = "CMSPixelDUT";
 static const std::string EVENT_TYPE_REF = "CMSPixelREF";
 static const std::string EVENT_TYPE_TRP = "CMSPixelTRP";
+static const std::string EVENT_TYPE_ANA = "CMSPixelANA";
+static const std::string EVENT_TYPE_DIG = "CMSPixelDIG";
+
+
 
 CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string & runcontrol, const std::string & verbosity)
   : eudaq::Producer(name, runcontrol),
@@ -64,6 +68,15 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
   else if(m_producerName.find("TRP") != std::string::npos) {
     m_detector = "TRP";
     m_event_type = EVENT_TYPE_TRP;
+
+  }
+  else if(m_producerName.find("ANA") != std::string::npos) {
+    m_detector = "ANA";
+    m_event_type = EVENT_TYPE_ANA;
+  }
+  else if(m_producerName.find("DIG") != std::string::npos) {
+    m_detector = "DIG";
+    m_event_type = EVENT_TYPE_DIG;
   }
   else {
     m_detector = "DUT";
@@ -86,6 +99,24 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   std::vector<uint8_t> rocI2C;
 
   uint8_t hubid = config.Get("hubid", 31);
+  std::string value = config.Get("event_type","INVALID");
+  std::transform(value.begin(), value.end(), value.begin(), ::tolower);
+  if (value.find("dut") != std::string::npos)
+          m_event_type = EVENT_TYPE_DUT;
+  else if (value.find("ref") != std::string::npos)
+          m_event_type = EVENT_TYPE_REF;
+  else if (value.find("trp") != std::string::npos)
+          m_event_type = EVENT_TYPE_TRP;
+  else if (value.find("analog") != std::string::npos)
+          m_event_type = EVENT_TYPE_ANA;
+  else if (value.find("digital") != std::string::npos)
+          m_event_type = EVENT_TYPE_DIG;
+  EUDAQ_INFO(string("Set Event Type of " + m_producerName + " to " + m_event_type + "."));
+  value = config.Get("detector_name","INVALID");
+  if (value != "INVALID"){
+    m_detector = value;
+    EUDAQ_INFO(string("Set Detector Name to \"" + (string) m_detector + "\"."));
+  }
 
   // Store waiting time in ms before the DAQ is stopped in OnRunStop():
   m_tlu_waiting_time = config.Get("tlu_waiting_time", 4000);

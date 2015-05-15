@@ -12,7 +12,7 @@
 HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.getName()), _id(p.getID()), _maxX(p.getMaxX()), _maxY(p.getMaxY()), _wait(false),
 								     _hitmap(NULL),_hitXmap(NULL),_hitYmap(NULL),_clusterMap(NULL),_lvl1Distr(NULL), _lvl1Width(NULL),_lvl1Cluster(NULL),_totSingle(NULL),_totCluster(NULL),
   _hitOcc(NULL), _nClusters(NULL), _nHits(NULL), _clusterXWidth(NULL), _clusterYWidth(NULL),_nbadHits(NULL),_nHotPixels(NULL),_hitmapSections(NULL),
-  is_MIMOSA26(false), is_APIX(false), is_USBPIX(false),is_USBPIXI4(false)
+  is_MIMOSA26(false), is_APIX(false), is_USBPIX(false),is_USBPIXI4(false),is_CMSPIXEL(false)
 {
   char out[1024], out2[1024];
 
@@ -39,7 +39,8 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
   {
     is_USBPIXI4=true;
   }
-  is_DEPFET = p.is_DEPFET;
+  else if (_sensor == std::string("DUT"))
+	  is_CMSPIXEL = true;
 
   //std::cout << "HitmapHistos::Sensorname: " << _sensor << " "<< _id<< std::endl;
 
@@ -107,7 +108,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
     if (p.is_USBPIXI4)
       _totCluster= new TH1I(out2, out,80,0,79);
     else
-      _totCluster= new TH1I(out2, out,256,0,255);
+      _totCluster= new TH1I(out2, out,8192,-4096,4096);
 
     sprintf(out,"%s %i Hitoccupancy",_sensor.c_str(), _id);
     sprintf(out2,"h_hitocc%s_%i",_sensor.c_str(), _id);
@@ -299,6 +300,9 @@ void HitmapHistos::Fill(const SimpleStandardHit & hit)
   }
   //if (_sensor == std::string("APIX")) {
   //if (_sensor == std::string("APIX") || _sensor == std::string("USBPIX") || _sensor == std::string("USBPIXI4") ) {
+
+  if (is_CMSPIXEL)
+	  if (_totSingle != NULL ) _totSingle->Fill(hit.getTOT());
   if ( (is_APIX) || (is_USBPIX) || (is_USBPIXI4) || is_DEPFET)
   {
     if (_totSingle != NULL) _totSingle->Fill(hit.getTOT());
@@ -308,12 +312,12 @@ void HitmapHistos::Fill(const SimpleStandardHit & hit)
 
 void HitmapHistos::Fill(const SimpleStandardPlane & plane)
 {
-  //std::cout<< "FILL with a plane." << std::endl;
   if (_nHits != NULL) _nHits->Fill(plane.getNHits());
   if ((_nbadHits != NULL) &&(plane.getNBadHits()>0))
   {
     _nbadHits->Fill(plane.getNBadHits());
   }
+
   if (_nClusters != NULL) _nClusters->Fill(plane.getNClusters());
 
   // we fill the information for the individual mimosa sections, and do a zero-suppression,in case not all sections have hits/clusters
@@ -357,7 +361,8 @@ void HitmapHistos::Fill(const SimpleStandardCluster & cluster)
       }
     }
   }
-
+  if (is_CMSPIXEL)
+	  if (_totCluster != NULL ) _totCluster->Fill(cluster.getTOT());
 
   if ( (is_APIX) || (is_USBPIX) || (is_USBPIXI4) )
   {

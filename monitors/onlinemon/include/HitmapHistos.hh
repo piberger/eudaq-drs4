@@ -111,6 +111,7 @@ class HitmapHistos {
     bool is_USBPIX;
     bool is_USBPIXI4;
     bool is_DEPFET;
+    bool is_CMSPIXEL;
 };
 
 #ifdef __CINT__
