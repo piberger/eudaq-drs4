@@ -50,7 +50,6 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_trigger_is_pg(false),
     m_fout(0),
     m_foutName(""),
-    m_perFull(0),
     triggering(false),
     m_roctype(""),
     m_pcbtype(""),
@@ -60,7 +59,6 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_event_type(""),
     m_alldacs("")
 {
-  m_t = new eudaq::Timer;
   if(m_producerName.find("REF") != std::string::npos) {
     m_detector = "REF";
     m_event_type = EVENT_TYPE_REF;
@@ -130,6 +128,8 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   sig_delays.push_back(std::make_pair("deser160phase",config.Get("deser160phase",4)));
   sig_delays.push_back(std::make_pair("level",config.Get("level",15)));
   sig_delays.push_back(std::make_pair("triggerlatency",config.Get("triggerlatency",86)));
+  sig_delays.push_back(std::make_pair("tindelay",config.Get("tindelay",13)));
+  sig_delays.push_back(std::make_pair("toutdelay",config.Get("toutdelay",10)));
   //sig_delays.push_back(std::make_pair("triggertimeout",config.Get("triggertimeout",65000)));
 
   //Power settings:
@@ -163,10 +163,27 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     std::vector<int32_t> i2c_addresses = split(config.Get("i2c","i2caddresses","-1"),' ');
     std::cout << "Found " << i2c_addresses.size() << " I2C addresses: " << pxar::listVector(i2c_addresses) << std::endl;
 
+    // Set the type of the TBM and read registers if any:
+    m_tbmtype = config.Get("tbmtype","notbm");
+    try {
+      tbmDACs.push_back(GetConfDACs(0,true));
+      tbmDACs.push_back(GetConfDACs(1,true));
+    }
+    catch(pxar::InvalidConfig) {}
+
+    // Set the type of the ROC correctly:
+    m_roctype = config.Get("roctype","psi46digv21respin");
+
+    // Read the type of carrier PCB used ("desytb", "desytb-rot"):
+    m_pcbtype = config.Get("pcbtype","desytb");
+
+    // Read the mask file if existent:
+    std::vector<pxar::pixelConfig> maskbits = GetConfMaskBits();
+
     // Read DACs and Trim settings for all ROCs, one for each I2C address:
     for(int32_t i2c : i2c_addresses) {
-      // Read trimming from config:
-      rocPixels.push_back(GetConfTrimming(static_cast<int16_t>(i2c)));
+      // Read trim bits from config:
+      rocPixels.push_back(GetConfTrimming(maskbits,static_cast<int16_t>(i2c)));
       // Read the DAC file and update the vector with overwrite DAC settings from config:
       rocDACs.push_back(GetConfDACs(static_cast<int16_t>(i2c)));
       // Add the I2C address to the vector:
@@ -174,11 +191,6 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
       else { rocI2C.push_back(static_cast<uint8_t>(0)); }
     }
 
-    // Set the type of the ROC correctly:
-    m_roctype = config.Get("roctype","psi46digv2");
-
-    // Read the type of carrier PCB used ("desytb", "desytb-rot"):
-    m_pcbtype = config.Get("pcbtype","desytb");
 
     // create api
     if(m_api != NULL) { delete m_api; }
@@ -199,7 +211,7 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     }
 
     // Initialize the DUT as configured above:
-    m_api->initDUT(hubid,"tbm08",tbmDACs,m_roctype,rocDACs,rocPixels,rocI2C);
+    m_api->initDUT(hubid,m_tbmtype,tbmDACs,m_roctype,rocDACs,rocPixels,rocI2C);
     // Store the number of configured ROCs to be stored in a BORE tag:
     m_nplanes = rocDACs.size();
 
@@ -225,11 +237,18 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     }
 
     // Switching to the selected trigger source and check if DTB returns TRUE:
-    std::string triggersrc = config.Get("trigger_source","pg_dir");
+    std::string triggersrc = config.Get("trigger_source","extern");
     if(!m_api->daqTriggerSource(triggersrc)) {
       throw InvalidConfig("Couldn't select trigger source " + string(triggersrc));
     }
     else {
+      // Update the TBM setting according to the selected trigger source.
+      // Switches to TBM_EMU if we selected a trigger source using the TBM EMU.
+      TriggerDictionary* trgDict;
+      if(m_tbmtype == "notbm" && trgDict->getInstance()->getEmulationState(triggersrc)) {
+	m_tbmtype = "tbmemulator";
+      }
+
       if(triggersrc == "pg" || triggersrc == "pg_dir" || triggersrc == "patterngenerator") {
 	m_trigger_is_pg = true;
       }
@@ -256,10 +275,6 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     }
 
     EUDAQ_USER(m_api->getVersion() + string(" API set up successfully...\n"));
-
-    // All on!
-    m_api->_dut->maskAllPixels(false);
-    m_api->_dut->testAllPixels(false);
 
     // test pixels
     if(testpulses) {
@@ -314,8 +329,9 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     std::cout << "Start Run: " << m_run << std::endl;
 
     eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
-    // Set the ROC type for decoding:
+    // Set the TBM & ROC type for decoding:
     bore.SetTag("ROCTYPE", m_roctype);
+    bore.SetTag("TBMTYPE", m_tbmtype);
 
     // Set the number of planes (ROCs):
     bore.SetTag("PLANES", m_nplanes);
@@ -465,12 +481,6 @@ void CMSPixelProducer::ReadoutLoop() {
       // Acquire lock for pxarCore object access:
       std::lock_guard<std::mutex> lck(m_mutex);
 
-      if(m_t->Seconds() > 60){
-	m_api->daqStatus(m_perFull);
-	m_t->Restart();
-	std::cout << "DAQ buffer is " << int(m_perFull) << "\% full." << std::endl; 
-      }
-
       // Send periodic ROC Reset
       if(m_roc_resetperiod > 0 && m_reset_timer->mSeconds() > m_roc_resetperiod) {
 	if(!m_api->daqSingleSignal("resetroc")) { EUDAQ_ERROR(string("Unable to send ROC reset signal!\n")); }
@@ -486,13 +496,18 @@ void CMSPixelProducer::ReadoutLoop() {
 
 	SendEvent(ev);
 	m_ev++;
-	if(daqEvent.data.size() > 1) { m_ev_filled++; m_ev_runningavg_filled++; }
+	// Events with pixel data have more than 4 words for TBM header/trailer and 1 for each ROC header:
+	if(daqEvent.data.size() > (4 + m_nplanes)) { m_ev_filled++; m_ev_runningavg_filled++; }
 
+	// Print every 1k evt:
 	if(m_ev%1000 == 0) {
+	  uint8_t filllevel = 0;
+	  m_api->daqStatus(filllevel);
 	  std::cout << "CMSPixel " << m_detector 
 		    << " EVT " << m_ev << " / " << m_ev_filled << " w/ px" << std::endl;
 	  std::cout << "\t Total average:  \t" << (m_ev > 0 ? std::to_string(100*m_ev_filled/m_ev) : "(inf)") << "%" << std::endl;
 	  std::cout << "\t 1k Trg average: \t" << (100*m_ev_runningavg_filled/1000) << "%" << std::endl;
+	  std::cout << "\t RAM fill level: \t" << static_cast<int>(filllevel) << "%" << std::endl;
 	  m_ev_runningavg_filled = 0;
 	}
       }
