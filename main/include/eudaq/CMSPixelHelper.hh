@@ -50,10 +50,20 @@ namespace eudaq {
       if (m_roctype == 0x0)
 	EUDAQ_ERROR("Roctype" + to_string((int) m_roctype) + " not propagated correctly to CMSPixelConverterPlugin");
 
-      std::cout<<"CMSPixel Converter initialized with detector " << m_detector << ", Event Type " << m_event_type << ", ROC type " << roctype << " (" << static_cast<int>(m_roctype) << ")" << std::endl;
+      std::cout<<"CMSPixel Converter initialized with detector " << m_detector << ", Event Type " << m_event_type 
+	       << ", TBM type " << tbmtype << " (" << static_cast<int>(m_tbmtype) << ")"
+	       << ", ROC type " << roctype << " (" << static_cast<int>(m_roctype) << ")" << std::endl;
     }
 
     bool GetStandardSubEvent(StandardEvent & out, const Event & in) const {
+
+      // If we receive the EORE print the collected statistics:
+      if (in.IsEORE()) {
+	// Set decoder to INFO level for statistics printout:
+	std::cout << "Decoding statistics for detector " << m_detector << std::endl;
+	pxar::Log::ReportingLevel() = pxar::Log::FromString("INFO");
+	decoding_stats.dump();
+      }
           
       // Check if we have BORE or EORE:
       if (in.IsBORE() || in.IsEORE()) { return true; }
@@ -78,6 +88,7 @@ namespace eudaq {
 
       // Set decoder to reasonable verbosity (still informing about problems:
       pxar::Log::ReportingLevel() = pxar::Log::FromString("WARNING");
+      //pxar::Log::ReportingLevel() = pxar::Log::FromString("DEBUGPIPES");
 
       // The pipeworks:
       evtSource src;
@@ -93,6 +104,7 @@ namespace eudaq {
       src.AddData(TransformRawData(in_raw.GetBlock(0)));
       // ...and pull it out at the other end:
       pxar::Event* evt = Eventpump.Get();
+      decoding_stats += decoder.getStatistics();
 
       // Iterate over all planes and check for pixel hits:
       for(size_t roc = 0; roc < m_nplanes; roc++) {
@@ -203,21 +215,17 @@ namespace eudaq {
 	  sparsePixel->setXCoord((size_t)plane.GetX(iPixel));
 	  sparsePixel->setYCoord((size_t)plane.GetY(iPixel));
 	  // Fill the pixel charge:
-	  sparsePixel->setSignal( (size_t)plane.GetPixel(iPixel) );
+	  sparsePixel->setSignal((int32_t)plane.GetPixel(iPixel));
 	  
 	  // Add the pixel to the readout frame:
 	  sparseFrame->addSparsePixel(sparsePixel.get());
 	}
-
-	// FIXME find out about difference between ZS and ZS2!
 
 	// Now add the TrackerData to the collection
 	zsDataCollection->push_back(zsFrame.release());
 	delete currentDetector;
 
       } // loop over all planes
-
-
 
       // Add the collection to the event only if not empty and not yet there
       if(!zsDataCollectionExists){
@@ -239,6 +247,7 @@ namespace eudaq {
     std::string m_detector;
     bool m_rotated_pcb;
     std::string m_event_type;
+    mutable pxar::statistics decoding_stats;
 
     static std::vector<uint16_t> TransformRawData(const std::vector<unsigned char> & block) {
 

@@ -86,6 +86,15 @@ class RunControlGUI : public QMainWindow, public Ui::wndRun, public eudaq::RunCo
         Configure(settings, txtGeoID->text().toInt());
         SetState(ST_READY);
         dostatus = true;
+        //Reset Scalers
+        EmitStatus("SCALERS", "-,-,-,-");
+        EmitStatus("PARTICLES", "0");
+        EmitStatus("TRIG", "0");
+        EmitStatus("EVENT","0");
+        EmitStatus("FILEBYTES","0 MB");
+        EmitStatus("MEANRATE","NAN Hz");
+        EmitStatus("RATE","NAN Hz");
+        EmitStatus("FULLRATE","NAN Hz");
       }
     //void on_btnReset_clicked() {
     //  Reset();

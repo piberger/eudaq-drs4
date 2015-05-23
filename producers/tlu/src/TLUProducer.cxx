@@ -246,7 +246,10 @@ public:
 		}
 	}
 	virtual void OnStatus() {
-		m_status.SetTag("TRIG", to_string(m_ev));
+		if (TLUStarted)
+			m_status.SetTag("TRIG", to_string(m_ev+1));
+		else
+			m_status.SetTag("TRIG", to_string(0));
 		if (m_tlu) {
 			m_status.SetTag("TIMESTAMP", to_string(Timestamp2Seconds(m_tlu->GetTimestamp())));
 			m_status.SetTag("LASTTIME", to_string(Timestamp2Seconds(lasttime)));
