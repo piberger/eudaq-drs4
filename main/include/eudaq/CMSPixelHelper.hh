@@ -88,6 +88,7 @@ namespace eudaq {
 
       // Set decoder to reasonable verbosity (still informing about problems:
       pxar::Log::ReportingLevel() = pxar::Log::FromString("WARNING");
+      //pxar::Log::ReportingLevel() = pxar::Log::FromString("DEBUGPIPES");
 
       // The pipeworks:
       evtSource src;
