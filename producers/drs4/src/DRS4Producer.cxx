@@ -31,7 +31,8 @@ DRS4Producer::DRS4Producer(const std::string & name, const std::string & runcont
 		m_inputRange(0.),
 		m_running(false){
 	n_channels = 4;
-	cout<<"Started DRS4Producer with Name: "<<name<<endl;
+	cout<<"Started DRS4Producer with Name: \""<<name<<"\""<<endl;
+
 	m_b = 0;
 	m_drs = 0;
 	cout<<"Event Type:"<<m_event_type<<endl;
@@ -95,12 +96,13 @@ void DRS4Producer::OnStartRun(unsigned runnumber) {
 						j++;
 					}
 				cout<<endl;
-				cout<<"Add block"<<endl;
-				char buffer [4];
-				sprintf((char *)buffer, "C%03d", i+1);
+                //cout << "Set Buffer" << i+1 << endl;
+				char buffer [6];
+				sprintf((char *)buffer, "C%03d\n", i+1);
 				//				bore.AddBlock(block_id,reinterpret_cast<const char*>(&i),sizeof(i));
-				bore.AddBlock(block_id,reinterpret_cast<const char*>(buffer),sizeof(*buffer)*4);
-				block_id++;
+				//cout<<"Add block"<<endl;
+				bore.AddBlock(block_id++,reinterpret_cast<const char*>(buffer),sizeof(*buffer)*4);
+				//cout<<"Add block"<<endl;
 				bore.AddBlock(block_id,reinterpret_cast<const char*>(&tcal), sizeof( tcal[0])*1024);
 			}
 		}
@@ -144,13 +146,35 @@ void DRS4Producer::OnStopRun() {
 };
 
 void DRS4Producer::OnTerminate() {
+	m_terminated = true;
 	if (m_b){
 		if (m_b->IsBusy()) {
 			m_b->SoftTrigger();
 			for (int i=0 ; i<10 && m_b->IsBusy() ; i++)
 				usleep(10);//todo not mt save
 		}
+		try {
+			SendRawEvent();
+
+			if(m_ev%1000 == 0) {
+				std::cout << "DRS4 Board "
+						<< " EVT " << m_ev << std::endl;
+			}
+		}
+		catch(int e) {
+			// No event available in derandomize buffers (DTB RAM), return to scheduler:
+			cout << "An exception occurred. Exception Nr. " << e << '\n';
+			sched_yield();
+		}
 	}
+
+	  // If we already have a pxarCore instance, shut it down cleanly:
+	  if(m_drs != NULL) {
+	    delete m_drs;
+	    m_drs = NULL;
+	  }
+
+	  std::cout << "DRS4Producer " << m_producerName << " terminated." << std::endl;
 };
 
 void DRS4Producer::ReadoutLoop() {
@@ -268,10 +292,10 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf) {
 		/* use following lines to enable hardware trigger on CH1 at 50 mV positive edge */
 		if (m_b->GetBoardType() >= 8) {        // Evaluation Board V4&5
 			m_b->EnableTrigger(1, 0);           // enable hardware trigger
-			m_b->SetTriggerSource(1<<0);        // set CH1 as source
+			//m_b->SetTriggerSource(1<<0);        // set CH1 as source
 		} else if (m_b->GetBoardType() == 7) { // Evaluation Board V3
 			m_b->EnableTrigger(0, 1);           // lemo off, analog trigger on
-			m_b->SetTriggerSource(0);           // use CH1 as source
+			//m_b->SetTriggerSource(0);           // use CH1 as source
 		}
 
 		float trigger_level = m_config.Get("trigger_level",-0.05);
@@ -290,9 +314,11 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf) {
 		else
 			EUDAQ_INFO(string("Set Trigger Polarity to positive edge"));
 
-		unsigned short trigger_source = m_config.Get("trigger_source",1);
+		int trigger_source = m_config.Get("trigger_source",1);
+		std::cout<<string("Set Trigger Source to: "+std::to_string(trigger_source))<<endl;
 		m_b->SetTriggerSource(trigger_source);
-		EUDAQ_INFO(string("Set Trigger Source to: "+std::to_string(trigger_delay)));
+		std::cout<<string("Read Trigger Source to: "+std::to_string(trigger_source))<<endl;
+		EUDAQ_INFO(string("Set Trigger Source to: "+std::to_string(trigger_source)));
 
 		activated_channels = m_config.Get("activated_channels",255);
 		for (int i = 0; i< 8; i++){
@@ -381,8 +407,8 @@ void DRS4Producer::SendRawEvent() {
 	for (int ch = 0; ch < n_channels; ch++){
 		if (!m_chnOn[ch])
 			continue;
-		char buffer [4];
-		sprintf(buffer, "C%03d", ch+1);
+		char buffer [6];
+		sprintf(buffer, "C%03d\n", ch+1);
 		ev.AddBlock(block_no++, reinterpret_cast<const char*>(buffer),sizeof(buffer));
 		/* Set data block of ch */
 		unsigned short raw_wave_array[1024];
