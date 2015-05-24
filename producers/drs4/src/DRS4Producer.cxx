@@ -29,7 +29,7 @@ DRS4Producer::DRS4Producer(const std::string & name, const std::string & runcont
 		m_event_type(EVENT_TYPE),
 		m_self_triggering(false),
 		m_inputRange(0.),
-        m_running(false){
+		m_running(false){
 	n_channels = 4;
 	cout<<"Started DRS4Producer with Name: "<<name<<endl;
 	m_b = 0;
