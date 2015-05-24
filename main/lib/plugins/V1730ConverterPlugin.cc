@@ -70,7 +70,7 @@ public:
 	  for (int i = 0; i < n_samples; i++){
 //	  	wave_array[i] = raw_wave_array[i];}
 
-	  	wave_array[i] = (uint16_t)(m_range*1000*raw_wave_array[i]/16384); //m_range=0.5V, 1000 fuer mV.
+	  	wave_array[i] = (uint16_t)(raw_wave_array[i]); //m_range=0.5V, 1000 fuer mV.
 	  	if(wave_array[i] == 0){
 	  		std::cout << "data is zero at channel " << ch << "at sample " << i << std::endl;
 	  	}
