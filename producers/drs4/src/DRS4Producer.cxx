@@ -147,26 +147,6 @@ void DRS4Producer::OnStopRun() {
 
 void DRS4Producer::OnTerminate() {
 	m_terminated = true;
-	if (m_b){
-		if (m_b->IsBusy()) {
-			m_b->SoftTrigger();
-			for (int i=0 ; i<10 && m_b->IsBusy() ; i++)
-				usleep(10);//todo not mt save
-		}
-		try {
-			SendRawEvent();
-
-			if(m_ev%1000 == 0) {
-				std::cout << "DRS4 Board "
-						<< " EVT " << m_ev << std::endl;
-			}
-		}
-		catch(int e) {
-			// No event available in derandomize buffers (DTB RAM), return to scheduler:
-			cout << "An exception occurred. Exception Nr. " << e << '\n';
-			sched_yield();
-		}
-	}
 
 	  // If we already have a pxarCore instance, shut it down cleanly:
 	  if(m_drs != NULL) {
