@@ -29,7 +29,7 @@ DRS4Producer::DRS4Producer(const std::string & name, const std::string & runcont
 		m_event_type(EVENT_TYPE),
 		m_self_triggering(false),
 		m_inputRange(0.),
-        m_running(false){
+		m_running(false){
 	n_channels = 4;
 	cout<<"Started DRS4Producer with Name: \""<<name<<"\""<<endl;
 
@@ -146,13 +146,35 @@ void DRS4Producer::OnStopRun() {
 };
 
 void DRS4Producer::OnTerminate() {
+	m_terminated = true;
 	if (m_b){
 		if (m_b->IsBusy()) {
 			m_b->SoftTrigger();
 			for (int i=0 ; i<10 && m_b->IsBusy() ; i++)
 				usleep(10);//todo not mt save
 		}
+		try {
+			SendRawEvent();
+
+			if(m_ev%1000 == 0) {
+				std::cout << "DRS4 Board "
+						<< " EVT " << m_ev << std::endl;
+			}
+		}
+		catch(int e) {
+			// No event available in derandomize buffers (DTB RAM), return to scheduler:
+			cout << "An exception occurred. Exception Nr. " << e << '\n';
+			sched_yield();
+		}
 	}
+
+	  // If we already have a pxarCore instance, shut it down cleanly:
+	  if(m_drs != NULL) {
+	    delete m_drs;
+	    m_drs = NULL;
+	  }
+
+	  std::cout << "DRS4Producer " << m_producerName << " terminated." << std::endl;
 };
 
 void DRS4Producer::ReadoutLoop() {

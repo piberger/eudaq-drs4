@@ -135,7 +135,7 @@ namespace eudaq {
   void DataCollector::OnStatus() {
     std::string evt;
     if (m_eventnumber > 0)
-      evt = to_string(m_eventnumber - 1);
+      evt = to_string(m_eventnumber );
     m_status.SetTag("EVENT", evt);
     m_status.SetTag("RUN", to_string(m_runnumber));
     if (m_writer.get())
