@@ -371,12 +371,12 @@ void DRS4Producer::SendRawEvent() {
 	}
 	int trigger_cell = m_b->GetTriggerCell(0);
 
-	cout<<"Trigger cell: "<<trigger_cell<<endl;
+	cout<<"Trigger cell: "<<trigger_cell<<", ";
 
 	/* Restart Readout */
 	m_b->StartDomino();
 	/* print some progress indication */
-	printf("\rEvent #%6d read successfully\n",m_ev);
+//	printf("\rEvent #%6d read successfully\n",m_ev);
 
 	eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
 	unsigned int block_no = 0;
@@ -390,11 +390,13 @@ void DRS4Producer::SendRawEvent() {
 		char buffer [6];
 		sprintf(buffer, "C%03d\n", ch+1);
 		ev.AddBlock(block_no++, reinterpret_cast<const char*>(buffer),sizeof(buffer));
-		/* Set data block of ch */
-		unsigned short raw_wave_array[1024];
-		for (int i =0; i<1024; i++)
-			raw_wave_array[i] = (unsigned short)((wave_array[ch][i]/1000.0 - m_inputRange + 0.5) * 65535);
-		ev.AddBlock(block_no++, reinterpret_cast<const char*>(&raw_wave_array), sizeof( raw_wave_array[0])*1024);
+		/* Set data block of ch, each channel ist connected to to DRS channels*/
+		int n_samples = 2048;
+		unsigned short raw_wave_array[n_samples];
+		for (int j =0; j < 2; j++)
+		for (int i =0; i<n_samples/2; i++)
+			raw_wave_array[i+1024*j] = (unsigned short)((wave_array[ch][i]/1000.0 - m_inputRange + 0.5) * 65535);
+		ev.AddBlock(block_no++, reinterpret_cast<const char*>(&raw_wave_array), sizeof( raw_wave_array[0])*n_samples);
 	}
 	cout<<"Send Event"<<m_ev<<" "<<m_self_triggering<<endl;
 	SendEvent(ev);
