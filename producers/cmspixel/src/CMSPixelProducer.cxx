@@ -20,8 +20,8 @@
 #include <vector>
 #include <sched.h>
 
-using namespace pxar; 
-using namespace std; 
+using namespace pxar;
+using namespace std;
 
 // event type name, needed for readout with eudaq. Links to /main/lib/src/CMSPixelConverterPlugin.cc:
 static const std::string EVENT_TYPE_DUT = "CMSPixelDUT";
@@ -90,10 +90,11 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   // declare config vectors
   std::vector<std::pair<std::string,uint8_t> > sig_delays;
   std::vector<std::pair<std::string,double> > power_settings;
-  std::vector<std::pair<std::string,uint8_t> > pg_setup; 
+  std::vector<std::pair<std::string,uint8_t> > pg_setup;
   std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs;
   std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs;
   std::vector<std::vector<pxar::pixelConfig> > rocPixels;
+  std::vector<masking> maskPixels;
   std::vector<uint8_t> rocI2C;
 
   uint8_t hubid = config.Get("hubid", 31);
@@ -191,10 +192,19 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
       else { rocI2C.push_back(static_cast<uint8_t>(0)); }
     }
 
+//<<<<<<< HEAD
+//=======
+
+    // Set the type of the ROC correctly:
+    m_roctype = config.Get("roctype","psi46digv2");
+
+    // Read the type of carrier PCB used ("desytb", "desytb-rot"):
+    m_pcbtype = config.Get("pcbtype","desytb");
+//>>>>>>> e3909fa378d09c097e867dbeacb5a1f75eb82687
 
     // create api
     if(m_api != NULL) { delete m_api; }
-      
+
     m_usbId = config.Get("usbId","*");
     EUDAQ_USER("Trying to connect to USB id: " + m_usbId + "\n");
 
@@ -205,7 +215,7 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     m_api = new pxar::pxarCore(m_usbId, m_verbosity);
 
     // Initialize the testboard:
-    if(!m_api->initTestboard(sig_delays, power_settings, pg_setup)) { 
+    if(!m_api->initTestboard(sig_delays, power_settings, pg_setup)) {
       EUDAQ_ERROR(string("Firmware mismatch."));
       throw pxar::pxarException("Firmware mismatch");
     }
@@ -260,7 +270,7 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     std::string signal_d2 = config.Get("signalprobe_d2","off");
     std::string signal_a1 = config.Get("signalprobe_a1","off");
     std::string signal_a2 = config.Get("signalprobe_a2","off");
-    
+
     if(m_api->SignalProbe("d1", signal_d1) && signal_d1 != "off") {
       EUDAQ_USER("Setting scope output D1 to \"" + signal_d1 + "\"\n");
     }
@@ -282,8 +292,75 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
       for(int i = 40; i < 45; i++){
 	m_api->_dut->testPixel(25,i,true);
       }
-    
+
     }
+
+    /**MASKING*/
+
+    maskPixels = GetConfMask();
+    vector<vector<bool> > maskArray; maskArray.resize(52); for (uint16_t row(0); row<52; row++) maskArray[row].resize(80);
+    string hexMask;
+    for (uint16_t i(0); i<maskPixels.size(); i++){
+        if (maskPixels[i].id()[0] != '#' && maskPixels[i].id()[0] != ' ' && maskPixels[i].id().size()>0){
+            uint16_t col = maskPixels[i].col(); string cCol = to_string(col/16)+char(col%16 < 10 ? col%16+'0' : col%16+'W');
+            uint16_t row = maskPixels[i].row(); string cRow = to_string(row/16)+char(row%16 < 10 ? row%16+'0' : row%16+'W');
+            uint16_t roc = maskPixels[i].roc(); char cRoc = (roc < 10 ? roc+'0' : roc+'W');
+            string sCol = cRoc+cCol, sRow = "00"+cRow;
+
+            if (maskPixels[i].id() == "pix"){
+                m_api->_dut->maskPixel(col, row, true, roc);
+                maskArray[col][row] = true;
+                hexMask.insert(0," ").insert(0,sRow).insert(0," ").insert(0,sCol).insert(0,"a");}
+            else if (maskPixels[i].id() == "col"){
+                hexMask.insert(0," ").insert(0,sRow).insert(0," ").insert(0,sCol).insert(0,"b");
+                for (uint16_t nCols(col); nCols < row+1; nCols++){
+                    for (uint16_t nRows(0); nRows < 80; nRows++) {
+                        m_api->_dut->maskPixel(nCols, nRows, true, roc);
+                        maskArray[nCols][nRows] = true; }}} //end elseif
+            else if (maskPixels[i].id() == "row"){
+                hexMask.insert(0," ").insert(0,sRow).insert(0," ").insert(0,sCol).insert(0,"c");
+                for (uint16_t nRows(col); nRows < row+1; nRows++){
+                    for (uint16_t nCols(0); nCols < 52; nCols++) {
+                        m_api->_dut->maskPixel(nCols, nRows, true, roc);
+                        maskArray[nCols][nRows] = true; }}} //end elseif
+            else if (maskPixels[i].id() == "roc"){
+                hexMask.insert(0," ").insert(0,sRow).insert(0," ").insert(0,sCol).insert(0,"d");
+                cout << "masked roc "<< roc <<"\n";
+                EUDAQ_INFO(string("ROC ") + string(to_string(roc)) + string(" fully masked"));
+                m_api->_dut->maskAllPixels(true,roc);} //end elseif
+            else {
+                cout << "Wrong identifier in maskFile!\n";
+                EUDAQ_WARN("Wrong identifier in maskFile!");}//end else
+        }//end first if
+    }//end of loop
+
+    /**complete hexMask*/
+    string hashBin;
+    string hashHex;
+    for (int i(0); i<80;i++){
+        for (int j(0); j<52;j++) {hashBin.push_back(maskArray[j][i]+'0');}
+    }
+    uint16_t it(3), hex(0);
+    uint32_t index(0);
+    while (index<hashBin.size()){
+        hex += pow(2,it)*(hashBin[index]-'0');
+        if (!it){
+            if (hex < 10 )  hashHex.push_back(hex+'0');
+            else            hashHex.push_back(hex+'W');
+            hex = 0; it = 4;
+        }
+        it--; index++;
+    }
+    cout << hashHex << "\n";
+    cout << hexMask << "\n";
+
+    /**print number of masked pixels on each ROC*/
+    for (uint16_t roc(0); roc<m_api->_dut->getNEnabledRocs();roc++){
+        cout << "--> masked " << m_api->_dut->getNMaskedPixels(roc) << " Pixels in ROC " << roc << "!\n";
+        stringstream ss; ss << "--> masked " << m_api->_dut->getNMaskedPixels(roc) << " Pixels in ROC "<< roc;
+        EUDAQ_INFO(ss.str()); //string("--> masked ")+m_api->_dut->getNMaskedPixels(roc)+string(" Pixels in ROC ")+roc
+    }
+
     // Read DUT info, should print above filled information:
     m_api->_dut->info();
 
@@ -315,6 +392,8 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     m_api = NULL;
   }
 }
+
+/**STARTRUN*/
 
 void CMSPixelProducer::OnStartRun(unsigned runnumber) {
   m_run = runnumber;
@@ -358,6 +437,9 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     // Start the Data Acquisition:
     m_api -> daqStart();
 
+
+
+
     // Send additional ROC Reset signal at run start:
     if(!m_api->daqSingleSignal("resetroc")) {
       throw InvalidConfig("Unable to send ROC reset signal!");
@@ -365,6 +447,8 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     else {
       EUDAQ_INFO(string("ROC Reset signal issued."));
     }
+
+
 
     // If we run on Pattern Generator, activate the PG loop:
     if(m_trigger_is_pg) {
@@ -408,7 +492,7 @@ void CMSPixelProducer::OnStopRun() {
 
     // Stop the Data Acquisition:
     m_api->daqStop();
-    
+
     EUDAQ_INFO("Switching Sensor Bias HV OFF.");
     m_api->HVoff();
 
@@ -425,7 +509,7 @@ void CMSPixelProducer::OnStopRun() {
       }
     }
     catch(pxar::DataNoEvent &) {
-      // No event available in derandomize buffers (DTB RAM), 
+      // No event available in derandomize buffers (DTB RAM),
     }
 
     // Sending the final end-of-run event:
@@ -437,12 +521,12 @@ void CMSPixelProducer::OnStopRun() {
     std::cout << "RUN " << m_run << " CMSPixel " << m_detector << std::endl
 	      << "\t Total triggers:   \t" << m_ev << std::endl
 	      << "\t Total filled evt: \t" << m_ev_filled << std::endl;
-    std::cout << "\t " << m_detector << " yield: \t" 
+    std::cout << "\t " << m_detector << " yield: \t"
 	      << (m_ev > 0 ? std::to_string(100*m_ev_filled/m_ev) : "(inf)") << "%" << std::endl;
-    EUDAQ_USER(string("Run " + std::to_string(m_run) + ", detector " + m_detector 
-		      + " yield: " + (m_ev > 0 ? std::to_string(100*m_ev_filled/m_ev) : "(inf)") 
+    EUDAQ_USER(string("Run " + std::to_string(m_run) + ", detector " + m_detector
+		      + " yield: " + (m_ev > 0 ? std::to_string(100*m_ev_filled/m_ev) : "(inf)")
 		      + "% (" + std::to_string(m_ev_filled) + "/" + std::to_string(m_ev) + ")"));
-    
+
     SetStatus(eudaq::Status::LVL_OK, "Stopped");
   } catch (const std::exception & e) {
     printf("While Stopping: Caught exception: %s\n", e.what());
@@ -480,6 +564,7 @@ void CMSPixelProducer::ReadoutLoop() {
     else {
       // Acquire lock for pxarCore object access:
       std::lock_guard<std::mutex> lck(m_mutex);
+
 
       // Send periodic ROC Reset
       if(m_roc_resetperiod > 0 && m_reset_timer->mSeconds() > m_roc_resetperiod) {

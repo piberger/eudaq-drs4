@@ -16,6 +16,7 @@
 #include <mutex>
 
 // CMSPixelProducer
+class masking;
 class CMSPixelProducer : public eudaq::Producer {
 
 public:
@@ -41,6 +42,8 @@ private:
   std::vector<pxar::pixelConfig> GetConfTrimming(std::vector<pxar::pixelConfig> maskbits, int16_t i2c = -1);
 
   std::string prepareFilename(std::string filename, std::string n);
+  std::vector<masking> GetConfMask();
+
 
   unsigned m_run, m_ev, m_ev_filled, m_ev_runningavg_filled;
   unsigned m_tlu_waiting_time;
@@ -49,6 +52,7 @@ private:
   std::string m_verbosity, m_foutName, m_roctype, m_tbmtype, m_pcbtype, m_usbId, m_producerName, m_detector, m_event_type, m_alldacs;
   bool m_terminated, m_running, triggering;
   bool m_trimmingFromConf, m_trigger_is_pg;
+  bool m_maskingFromConf;
   eudaq::Configuration m_config;
 
   // Add one mutex to protect calls to pxarCore:
@@ -58,5 +62,19 @@ private:
   int m_pattern_delay;
   std::ofstream m_fout;
   eudaq::Timer *m_reset_timer;
+};
+
+class masking {
+
+private:
+    std::string _identifier;
+    uint8_t _rocID, _col, _row;
+public:
+    masking(std::string identifier, uint8_t rocID, uint8_t col, uint8_t row) :
+    _identifier(identifier), _rocID(rocID), _col(col), _row(row) {}
+    std::string id() {return _identifier;}
+    uint8_t col() {return _col;}
+    uint8_t row() {return _row;}
+    uint8_t roc() {return _rocID;}
 };
 #endif /*CMSPIXELPRODUCER_HH*/
