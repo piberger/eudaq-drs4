@@ -14,6 +14,7 @@
 # include "TTree.h"
 # include "TRandom.h"
 # include "TString.h"
+// gROOT->ProcessLine("#include <vector>");
 
 using namespace std;
 
@@ -112,14 +113,15 @@ namespace eudaq {
     }
     return integral/(float)(i-(int)min);
   }
-  float FileWriterTreeDRS4::CalculateSig(std::vector<float> * data, int min, int max) {
-    int mid = (int)( (max + min)/2 );
-    int iext = mid;
-    int n = 1;
-    while( (data->at(mid-1)/data->at(mid) -1)*(data->at(mid+1)/data->at(mid) -1) < 0) {
-      mid += (-2)**n;
-      n++;
-    }
+  float FileWriterTreeDRS4::CalculatePeak(std::vector<float> * data, int min, int max) {
+    //int mid = (int)( (max + min)/2 );
+    //int iext = mid;
+    //int n = 1;
+    //while( (data->at(mid-1)/data->at(mid) -1)*(data->at(mid+1)/data->at(mid) -1) < 0) {
+    //  mid += (-2)**n;
+    //  n++;
+    //}
+    return 4.;
   }
 
   void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
@@ -133,6 +135,8 @@ namespace eudaq {
     m_ttree->Branch("event_number",&f_event_number, "event_number/I");
 
     m_ttree->Branch("time",&f_time, "time/F");
+
+cout << __LINE__ << endl;
 
     m_ttree->Branch("nwfs", &f_nwfs,"n_waveforms/I");
     m_ttree->Branch("ped", &f_ped, "pedestal/F");
@@ -153,6 +157,7 @@ namespace eudaq {
       return;
     }
 
+cout << __LINE__ << endl;
     StandardEvent sev = eudaq::PluginManager::ConvertToStandard(ev);
 
     f_event_number = sev.GetEventNumber();
@@ -162,8 +167,10 @@ namespace eudaq {
     // assuming the DRS4 waveform is the first
     // int len_drs4_wf = sev.GetWaveform(0);
 
+cout << __LINE__ << endl;
     f_wf0->clear();
 
+cout << __LINE__ << endl;
     // std::cout << "number of wf in my event" << nwf << std::endl;
 
     // SimpleStandardEvent simpEv;
@@ -176,8 +183,10 @@ namespace eudaq {
 //    mon_configdata.PrintConfiguration();
 
 
+cout << __LINE__ << endl;
     std::vector<float> * data;
     
+cout << __LINE__ << endl;
 
 
     // assuming exactly one waveform for (unsigned int i = 0; i < nwf;i++){
@@ -224,6 +233,7 @@ namespace eudaq {
     //   }
     // }
 
+cout << __LINE__ << endl;
     m_ttree->Fill();
     
   }
