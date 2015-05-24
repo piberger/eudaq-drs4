@@ -15,7 +15,8 @@
 # include "TRandom.h"
 # include "TString.h"
 # include "TH1F.h"
-// # include "TROOT.h"
+#include "TSystem.h"
+#include "TInterpreter.h"
 
 // template class std::vector<std::vector< float> >;
 // template class std::vector<float>;
@@ -83,8 +84,8 @@ namespace eudaq {
         
         // DUT
         std::vector< std::string >  * v_name;
-        std::vector<float>  * v_ped;
         std::vector<float>  * v_sig;
+        std::vector<float>  * v_ped;
         
         std::vector<float> * f_wf0;
         std::vector< std::vector<float>> * f_waveforms;
@@ -154,10 +155,24 @@ namespace eudaq {
     
     void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
         EUDAQ_INFO("Converting the inputfile into a DRS4 TTree " );
-        std::string foutput(FileNamer(m_filepattern).Set('X', "_drs4.root").Set('R', runnumber));
+        std::string foutput(FileNamer(m_filepattern).Set('X', ".root").Set('R', runnumber));
         EUDAQ_INFO("Preparing the outputfile: " + foutput);
 
-gROOT->ProcessLine("#include <vector>");
+        // ---------------------------------------------------------------------
+        // the following lines are needed to have std::vector<float> in the tree
+        // ---------------------------------------------------------------------
+        //gROOT->ProcessLine("#include <vector>");
+        #if !defined(__CINT__)
+            cout << "i'm in the CINT statement" << endl;
+            if (!(gInterpreter->IsLoaded("vector")))
+                gInterpreter->ProcessLine("#include <vector>");
+              gSystem->Exec("rm -f AutoDict*vector*vector*float*");
+              gInterpreter->GenerateDictionary("vector<vector<float> >", "vector");
+            // gInterpreter->GenerateDictionary("std::vector<std::vector<float> >", "vector");
+        #endif /* !defined(__CINT__) */
+        // ---------------------------------------------------------------------
+        // ---------------------------------------------------------------------
+
         m_tfile = new TFile(foutput.c_str(), "RECREATE");
         m_ttree = new TTree("tree", "a simple Tree with simple variables");
         
@@ -167,6 +182,7 @@ gROOT->ProcessLine("#include <vector>");
         
         m_ttree->Branch("nwfs", &f_nwfs,"n_waveforms/I");
         m_ttree->Branch("wf0" , &f_wf0);
+        m_ttree->Branch("waveforms" , &f_waveforms);
         
         // DUT
         m_ttree->Branch("name", &v_name);
@@ -199,12 +215,18 @@ gROOT->ProcessLine("#include <vector>");
         
         f_event_number = sev.GetEventNumber();
         f_time = sev.GetTimestamp()/384066.;
+
         
         // --------------------------------------------------------------------
         // ---------- get the number of waveforms -----------------------------
         // --------------------------------------------------------------------
         unsigned int nwfs = (unsigned int) sev.NumWaveforms();
         
+        if(f_event_number <= 10 && nwfs == 0){
+            cout << "----------------------------------------" << endl;
+            cout << "WARNING!!! NO WAVEFORMS IN THIS EVENT!!!" << endl;
+            cout << "----------------------------------------" << endl;
+        }
         
         // --------------------------------------------------------------------
         // ---------- reset/clear all the vectors -----------------------------
@@ -223,8 +245,11 @@ gROOT->ProcessLine("#include <vector>");
         
         
         
-        
+        // --------------------------------------------------------------------
+        // ---------- verbosity level and some printouts ----------------------
+        // --------------------------------------------------------------------
         int verbose = 0;
+        
         if(verbose > 3) cout << "event number " << f_event_number << endl;
         if(verbose > 3) cout << "number of waveforms " << nwfs << endl;
         
@@ -234,28 +259,37 @@ gROOT->ProcessLine("#include <vector>");
         // --------------------------------------------------------------------
         std::vector<float> * data;
 
-        if (nwfs == 0) cout << "NO WAVEFORMS IN THIS EVENT!!!" << endl;
         
         for (unsigned int i = 0; i < nwfs;i++){
             const eudaq::StandardWaveform & waveform = sev.GetWaveform(i);
+                // get the sensor name. see eventually what this actually does!
                 std::string sensorname;
                 sensorname = waveform.GetType();
                 v_name->push_back(sensorname);
+
                 // SimpleStandardWaveform simpWaveform(sensorname,waveform.ID());
                 // simpWaveform.setNSamples(waveform.GetNSamples());
+
                 if (verbose > 3) std::cout << "number of samples in my wf" << waveform.GetNSamples() << std::endl;
+
+                // load the wafeforms into the vector
                 data = waveform.GetData();
                 
-                // calculate the signal and the baseline
+                // calculate the signal and the baseline. this is very hardcoded!!!
                 float sig = CalculatePeak(data, 1075, 1150);
                 float ped = Calculate    (data,    1,  900);
         
-                // save them in the event
+                // save the values in the event
                 v_sig->push_back(sig);
                 v_ped->push_back(ped);
         
                 // save the first waveform (not necessary, should be removed eventually)
                 if (i==0) f_wf0 = data;
+
+                // save _all_ waveforms for every 100th event
+                if ( !(f_event_number%100) ){
+                    f_waveforms->push_back( *data);
+                }
         
                 data->clear();
         
