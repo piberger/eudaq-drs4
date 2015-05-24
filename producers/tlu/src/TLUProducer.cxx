@@ -62,7 +62,7 @@ public:
 					//float freq= 1./(d*20./1000000000);
 					float freq = 1. / Timestamp2Seconds(d);
 					if (m_ev < 10 || m_ev % 1000 == 0) {
-						std::cout << "  " << m_tlu->GetEntry(i) << ", diff=" << d << (d <= 0 ? "  ***" : "") << ", freq=" << freq << std::endl;
+						std::cout << "  "<< m_ev <<" " << m_tlu->GetEntry(i) << ", diff=" << d << (d <= 0 ? "  ***" : "") << ", freq=" << freq << std::endl;
 					}
 					lasttime = t;
 					TLUEvent ev(m_run, m_ev, t);
@@ -246,14 +246,15 @@ public:
 		}
 	}
 	virtual void OnStatus() {
-		if (TLUStarted)
-			m_status.SetTag("TRIG", to_string(m_ev+1));
+		unsigned particles = m_tlu->GetParticles();
+		if (TLUStarted and particles != 0)
+				m_status.SetTag("TRIG", to_string(m_ev+1));
 		else
 			m_status.SetTag("TRIG", to_string(0));
 		if (m_tlu) {
 			m_status.SetTag("TIMESTAMP", to_string(Timestamp2Seconds(m_tlu->GetTimestamp())));
 			m_status.SetTag("LASTTIME", to_string(Timestamp2Seconds(lasttime)));
-			m_status.SetTag("PARTICLES", to_string(m_tlu->GetParticles()));
+			m_status.SetTag("PARTICLES", to_string(particles));
 			m_status.SetTag("STATUS", m_tlu->GetStatusString());
 			for (int i = 0; i < 4; ++i) {
 				m_status.SetTag("SCALER" + to_string(i), to_string(m_tlu->GetScaler(i)));
