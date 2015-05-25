@@ -66,6 +66,7 @@ namespace eudaq {
         virtual uint64_t FileBytes() const;
         float Calculate(std::vector<float> * data, int min, int max);
         float CalculatePeak(std::vector<float> * data, int min, int max);
+        float CalculateMax(std::vector<float> * data, int min, int max);
         virtual ~FileWriterTreeDRS4();
     private:
         TFile * m_tfile; // book the pointer to a file (to store the otuput)
@@ -88,6 +89,9 @@ namespace eudaq {
         std::vector<float>  * v_ped;
         
         std::vector<float> * f_wf0;
+        std::vector<float> * f_wf1;
+        std::vector<float> * f_wf2;
+        std::vector<float> * f_wf3;
         // std::vector< std::vector<float>> * f_waveforms;
         
         // TELESCOPE
@@ -100,27 +104,38 @@ namespace eudaq {
     };
 
     float FileWriterTreeDRS4::Calculate(std::vector<float> * data, int min, int max) {
-      float integral = 0;
-      int i;
-      for (i = min; i <= int(max+1) && i < data->size() ;i++){
-          integral += data->at(i);
-      }
-      return integral/(float)(i-(int)min);
+        float integral = 0;
+        int i;
+        for (i = min; i <= int(max+1) && i < data->size() ;i++){
+            integral += data->at(i);
+        }
+        return integral/(float)(i-(int)min);
     }
     float FileWriterTreeDRS4::CalculatePeak(std::vector<float> * data, int min, int max) {
-      int mid = (int)( (max + min)/2 );
-      int n = 1;
-      while( (data->at(mid-1)/data->at(mid) -1)*(data->at(mid+1)/data->at(mid) -1) < 0 ){
-          // jump up and down from the center position to find the max or min
-          mid += pow(-1, n)*n;
-          n+=1;
-      }
-    
-      // extremal value is now at mid
-    
-      float integral = Calculate(data, mid-3, mid+6);
-      return integral;
-      
+        int mid = (int)( (max + min)/2 );
+        int n = 1;
+        while( (data->at(mid-1)/data->at(mid) -1)*(data->at(mid+1)/data->at(mid) -1) < 0 ){
+            // jump up and down from the center position to find the max or min
+            mid += pow(-1, n)*n;
+            n+=1;
+        }
+
+        // extremal value is now at mid
+        
+        float integral = Calculate(data, mid-3, mid+6);
+        return integral;
+        
+    }
+
+    float FileWriterTreeDRS4::CalculateMax(std::vector<float> * data, int min, int max) {
+        float integral = 0;
+        int i;
+        float maxVal = -999;
+        int imax = min;
+        for (i = min; i <= int(max+1) && i < data->size() ;i++){
+            if (data->at(i) > maxVal){ maxVal = data->at(i); imax = i; }
+        }
+        return maxVal;
     }
 
 
@@ -143,6 +158,9 @@ namespace eudaq {
         v_sig  = new std::vector<float>;
         
         f_wf0 = new std::vector<float>;
+        f_wf1 = new std::vector<float>;
+        f_wf2 = new std::vector<float>;
+        f_wf3 = new std::vector<float>;
         // f_waveforms = new std::vector< std::vector<float> >;
         
         // telescope
@@ -182,6 +200,9 @@ namespace eudaq {
         
         m_ttree->Branch("nwfs", &f_nwfs,"n_waveforms/I");
         m_ttree->Branch("wf0" , &f_wf0);
+        m_ttree->Branch("wf1" , &f_wf1);
+        m_ttree->Branch("wf2" , &f_wf2);
+        m_ttree->Branch("wf3" , &f_wf3);
         // m_ttree->Branch("waveforms" , &f_waveforms);
         
         // DUT
@@ -221,11 +242,16 @@ namespace eudaq {
         // ---------- get the number of waveforms -----------------------------
         // --------------------------------------------------------------------
         unsigned int nwfs = (unsigned int) sev.NumWaveforms();
+        f_nwfs = nwfs;
         
-        if(f_event_number <= 10 && nwfs == 0){
-            cout << "----------------------------------------" << endl;
-            cout << "WARNING!!! NO WAVEFORMS IN THIS EVENT!!!" << endl;
-            cout << "----------------------------------------" << endl;
+        if(f_event_number <= 10){
+            cout << "event number " << f_event_number << endl;
+            cout << "number of waveforms " << nwfs << endl;
+            if(nwfs ==0){
+                cout << "----------------------------------------" << endl;
+                cout << "WARNING!!! NO WAVEFORMS IN THIS EVENT!!!" << endl;
+                cout << "----------------------------------------" << endl;
+            }
         }
         
         // --------------------------------------------------------------------
@@ -236,6 +262,9 @@ namespace eudaq {
         v_sig->clear();
         
         f_wf0->clear();
+        f_wf1->clear();
+        f_wf2->clear();
+        f_wf3->clear();
         
         f_plane->clear();
         f_col->clear();
@@ -258,6 +287,7 @@ namespace eudaq {
         // --------------------------------------------------------------------
         // ---------- get and save all info for all waveforms -----------------
         // --------------------------------------------------------------------
+        int nEvtSave =  1;
 
         
         std::vector<float> * data;
@@ -278,17 +308,21 @@ namespace eudaq {
                 
                 // calculate the signal and the baseline. this is very hardcoded!!!
                 // float sig = CalculatePeak(data, 1075, 1150);
-                float sig = CalculatePeak(data, 1075, 1150);
-                float ped = Calculate    (data,    1,  900);
+                float sig = CalculateMax (data,    0, 1000);
+                float ped = Calculate    (data,  500, 1000);
         
+// cout << "WF " << iwf << " this is my signal: " << sig << " this is the pedestal: " << ped << endl;
                 // save the values in the event
                 v_sig->push_back(sig);
                 v_ped->push_back(ped);
         
-                // save the first waveform (not necessary, should be removed eventually)
-                if (iwf==0) {
+                // save the first waveform of every 100th event
+                if (!(f_event_number)%nEvtSave) {
                     for (int j=0; j<data->size(); j++){
-                        f_wf0->push_back(data->at(j));
+                        if     (iwf == 0) f_wf0->push_back(data->at(j));
+                        else if(iwf == 1) f_wf1->push_back(data->at(j));
+                        else if(iwf == 2) f_wf2->push_back(data->at(j));
+                        else if(iwf == 3) f_wf3->push_back(data->at(j));
                     }
                 }
 
