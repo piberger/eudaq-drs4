@@ -52,6 +52,7 @@ public:
 	float getMin()const{return !calculated?-1e9:_min;};
 	float getIntegral() const{return !calculated?getIntegral(0,_nsamples):_integral;}
 	float getIntegral(float min, float max) const;
+	float getMaximum(float min, float max) const;
 	void setNSamples(unsigned int n_samples){_nsamples = n_samples;}
 	unsigned int getNSamples() const{return _nsamples;}
 	float* getData() const{return _data;}

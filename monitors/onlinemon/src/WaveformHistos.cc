@@ -17,8 +17,8 @@ WaveformHistos::WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon): _n_
 	max_wf = -1e9;
 
 	// signal_integral_range = make_pair(500.,800.);
-	signal_integral_range = make_pair(1075.,1150.);
-    pedestal_integral_range = make_pair(100,800);
+	signal_integral_range   = make_pair(   60, 100.);
+    pedestal_integral_range = make_pair(  300, 700);
 	//	std::cout << "WaveformHistos::Sensorname: " << _sensor << " "<< _id<< std::endl;
 	this->InitHistos();
 }
@@ -57,7 +57,7 @@ void WaveformHistos::InitHistos() {
 	hName = TString::Format("h_PedestalIntegral_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: PedestalIntegral; pedestal integral/mV; number of entries",_sensor.c_str(),_id);
 	histos["PedestalIntegral"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
-	SetMaxRangeX((string)hName,-30,100);
+	SetMaxRangeX((string)hName,-30, 30);
 
 	hName = TString::Format("h_DeltaIntegral_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: DeltaIntegral; signal integral/mV; number of entries",_sensor.c_str(),_id);
@@ -157,14 +157,15 @@ void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 	float max = wf.getMax();
 	float delta = fabs(max-min);
 	float integral = wf.getIntegral();
-	float signal_integral = wf.getIntegral(signal_integral_range.first,signal_integral_range.second);
+	//float signal_integral = wf.getIntegral(signal_integral_range.first,signal_integral_range.second);
+	float signal_integral = wf.getMaximum(signal_integral_range.first,signal_integral_range.second);
 	float pedestal_integral = wf.getIntegral(pedestal_integral_range.first,pedestal_integral_range.second);
 
     // cout << "first and second: " << signal_integral_range.first << " " << signal_integral_range.second << endl;
     // cout << "this is the signal   integral: " << signal_integral << endl;
     // cout << "this is the pedestal integral: " << pedestal_integral << endl;
     // cout << "this is the delta integral: " << signal_integral - pedestal_integral << endl;
-	int sign = wf.getSign();
+	int sign = signal_integral > 0 ? 1 : -1; //wf.getSign(); //why is this here? it's never properly assigned
 	int event_no = wf.getEvent();
 	histos["FullIntegral"]->Fill(sign*integral);
 	histos["SignalIntegral"]->Fill(sign*signal_integral);

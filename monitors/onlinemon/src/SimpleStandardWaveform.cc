@@ -52,3 +52,13 @@ float SimpleStandardWaveform::getIntegral(float min, float max) const {
 	}
 	return integral/(float)(i-(int)min);
 }
+float SimpleStandardWaveform::getMaximum(float min, float max) const {
+    float maxVal = -999;
+    int imax = min;
+    for (int i = min; i <= int(max+1) && i < _nsamples ;i++){
+        if (abs(_data[i]) > maxVal){ maxVal = abs(_data[i]); imax = i; }
+    }
+    maxVal = _data[imax];
+    return maxVal;
+
+}
