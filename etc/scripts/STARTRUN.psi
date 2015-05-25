@@ -37,13 +37,15 @@ sleep 5
 
 echo '        LogCollector'
 ~/sdvlp/eudaq-drs4/bin/euLog.exe -l DEBUG -x 900 -y 0 -w 1000 -g 550 -r  tcp://$HOSTNAME:$RCPORT &
-sleep 2
-killall euLog.exe
-~/sdvlp/eudaq-drs4/bin/euLog.exe -l DEBUG -x 900 -y 0 -w 1000 -g 550 -r  tcp://$HOSTNAME:$RCPORT &
+#sleep 2
+#killall euLog.exe
+#~/sdvlp/eudaq-drs4/bin/euLog.exe -l DEBUG -x 900 -y 0 -w 1000 -g 550 -r  tcp://$HOSTNAME:$RCPORT &
+echo '\033[1;36;48m PLEASE WAIT...'
 sleep 5
 
 echo '        DataCollector @ rapidshare'
 xterm -geom 78x20+10-30 -hold -e 'ssh -tY rapidshare scripts/StartDataCollector.sh' &
+echo '\033[1;36;48m PLEASE WAIT...'
 sleep 5
 
 # Old Version
@@ -52,18 +54,21 @@ sleep 5
 if [ "$TLU" = true ]; then
     echo '        TLU @ PiM1'
     xterm -geom 78x20+490-30 -hold -e 'ssh -tY pim1 scripts/StartTLU.sh' &
+    echo '\033[1;36;48m PLEASE WAIT...'
     sleep 5
 fi
 
 if [ "$CMS" = true ]; then
     echo '        CMSPixel @ PiM1'
     xterm -geom 78x20+970-30 -hold -e 'ssh -tY pim1 scripts/StartCMSPixel.sh' &
+    echo '\033[1;36;48m PLEASE WAIT...'
     sleep 5
 fi
 
 if [ "$DRS" = true ]; then
     echo '        DRS4 @ PiM1'
     xterm -geom 78x20+1450-30 -hold -e 'ssh -tY pim1 scripts/StartDRS4.sh' &
+    echo '\033[1;36;48m PLEASE WAIT...'
     sleep 5
 fi
 
