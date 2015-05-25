@@ -26,7 +26,7 @@ public:
 	TLUProducer(const std::string & runcontrol) :
 	  eudaq::Producer("TLU", runcontrol), m_run(0), m_ev(0), trigger_interval(0), dut_mask(0), veto_mask(0), and_mask(255),
 	  or_mask(0), pmtvcntlmod(0), strobe_period(0), strobe_width(0), enable_dut_veto(0), trig_rollover(0), readout_delay(100),
-	  timestamps(true), done(false), timestamp_per_run(false), TLUStarted(false), TLUJustStopped(false), lasttime(0), m_tlu(0) {
+	  timestamps(true), done(false), timestamp_per_run(false), TLUStarted(false), TLUJustStopped(false), lasttime(0), m_tlu(0),start_sleep_time(5000) {
 	  for(int i = 0; i < TLU_PMTS; i++)
 	  {
 	      pmtvcntl[i] = PMT_VCNTL_DEFAULT;
@@ -108,6 +108,7 @@ public:
 			veto_mask = param.Get("VetoMask", 0);
 			trig_rollover = param.Get("TrigRollover", 0);
 			timestamps = param.Get("Timestamps", 1);
+			start_sleep_time = param.Get("StartSleepTime",5000);
 			for(int i = 0; i < TLU_PMTS; i++)  // Override with any individually set values
 			{
 			  pmtvcntl[i] = (unsigned)param.Get("PMTVcntl" + to_string(i + 1), "PMTVcntl", PMT_VCNTL_DEFAULT);
@@ -189,9 +190,11 @@ public:
 			ev.SetTag("TimestampZero", to_string(m_tlu->TimestampZero()));
 			eudaq::mSleep(5000); // temporarily, to fix startup with EUDRB
 			SendEvent(ev);
+			m_tlu->ResetTriggerCounter();
+			m_tlu->ResetScalers();
 			if (timestamp_per_run)
 				m_tlu->ResetTimestamp();
-			eudaq::mSleep(5000);
+			eudaq::mSleep(start_sleep_time);
 			m_tlu->ResetTriggerCounter();
 			if (timestamp_per_run)
 				m_tlu->ResetTimestamp();
@@ -276,6 +279,7 @@ private:
     unsigned enable_dut_veto , handshake_mode;
 	unsigned trig_rollover, readout_delay;
 	bool timestamps, done, timestamp_per_run;
+	unsigned start_sleep_time;
 	bool TLUStarted;
 	bool TLUJustStopped;
 	uint64_t lasttime;
