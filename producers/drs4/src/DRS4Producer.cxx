@@ -223,7 +223,7 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf) {
 		for (size_t i=0 ; i<m_drs->GetNumberOfBoards() ; i++) {
 			m_b = m_drs->GetBoard(i);
 			printf("    #%2d: serial #%d, firmware revision %d\n",
-					i, m_b->GetBoardSerialNumber(), m_b->GetFirmwareVersion());
+					(int)i, m_b->GetBoardSerialNumber(), m_b->GetFirmwareVersion());
 			if (m_b->GetBoardSerialNumber() == m_serialno)
 				board_no = i;
 		}
@@ -371,7 +371,6 @@ void DRS4Producer::SendRawEvent() {
 	}
 	int trigger_cell = m_b->GetTriggerCell(0);
 
-	cout<<"Trigger cell: "<<trigger_cell<<", ";
 
 	/* Restart Readout */
 	m_b->StartDomino();
@@ -398,7 +397,9 @@ void DRS4Producer::SendRawEvent() {
 			raw_wave_array[i+1024*j] = (unsigned short)((wave_array[ch][i]/1000.0 - m_inputRange + 0.5) * 65535);
 		ev.AddBlock(block_no++, reinterpret_cast<const char*>(&raw_wave_array), sizeof( raw_wave_array[0])*n_samples);
 	}
-	cout<<"Send Event"<<m_ev<<" "<<m_self_triggering<<endl;
+    if ( m_ev < 50 || m_ev % 100 == 0) {
+	    cout<< "\rSend Event" << std::setw(7) << m_ev << " " << std::setw(1) <<  m_self_triggering << "Trigger cell: " << std::setw(4) << trigger_cell << ", " << std::flush;
+    }
 	SendEvent(ev);
 	m_ev++;
 	//				if(daqEvent.data.size() > 1) { m_ev_filled++; m_ev_runningavg_filled++; }
@@ -410,5 +411,5 @@ void DRS4Producer::SetTimeStamp() {
 	auto elapsed = now - epoch;
 	// you need to be explicit about your timestamp type
 	m_timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(elapsed).count()/ 100u;
-	std::cout<<"Set Timestamp: "<<m_timestamp<<endl;
+	//std::cout<<"Set Timestamp: "<<m_timestamp<<endl;
 }
