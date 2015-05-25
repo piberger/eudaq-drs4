@@ -391,10 +391,13 @@ void DRS4Producer::SendRawEvent() {
 		ev.AddBlock(block_no++, reinterpret_cast<const char*>(buffer),sizeof(buffer));
 		/* Set data block of ch, each channel ist connected to to DRS channels*/
 		int n_samples = 2048;
+		int n_drs_channels = 2;
 		unsigned short raw_wave_array[n_samples];
-		for (int j =0; j < 2; j++)
-		for (int i =0; i<n_samples/2; i++)
-			raw_wave_array[i+1024*j] = (unsigned short)((wave_array[ch][i]/1000.0 - m_inputRange + 0.5) * 65535);
+		//Merge both drs channels to the output of the channel
+		for (int drs_ch = 0; drs_ch < n_drs_channels; drs_ch++){
+			for (int i =0; i<n_samples/n_drs_channels; i++)
+				raw_wave_array[i+1024*drs_ch] = (unsigned short)((wave_array[ch+drs_ch][i]/1000.0 - m_inputRange + 0.5) * 65535);
+		}
 		ev.AddBlock(block_no++, reinterpret_cast<const char*>(&raw_wave_array), sizeof( raw_wave_array[0])*n_samples);
 	}
     if ( m_ev < 50 || m_ev % 100 == 0) {
