@@ -88,7 +88,7 @@ namespace eudaq {
         std::vector<float>  * v_ped;
         
         std::vector<float> * f_wf0;
-        std::vector< std::vector<float>> * f_waveforms;
+        // std::vector< std::vector<float>> * f_waveforms;
         
         // TELESCOPE
         std::vector<int> * f_plane;
@@ -143,7 +143,7 @@ namespace eudaq {
         v_sig  = new std::vector<float>;
         
         f_wf0 = new std::vector<float>;
-        f_waveforms = new std::vector< std::vector<float> >;
+        // f_waveforms = new std::vector< std::vector<float> >;
         
         // telescope
         f_plane  = new std::vector<int>;
@@ -161,15 +161,15 @@ namespace eudaq {
         // ---------------------------------------------------------------------
         // the following lines are needed to have std::vector<float> in the tree
         // ---------------------------------------------------------------------
-        //gROOT->ProcessLine("#include <vector>");
-        #if !defined(__CINT__)
-            cout << "i'm in the CINT statement" << endl;
-            if (!(gInterpreter->IsLoaded("vector")))
-                gInterpreter->ProcessLine("#include <vector>");
-              gSystem->Exec("rm -f AutoDict*vector*vector*float*");
-              gInterpreter->GenerateDictionary("vector<vector<float> >", "vector");
-            // gInterpreter->GenerateDictionary("std::vector<std::vector<float> >", "vector");
-        #endif /* !defined(__CINT__) */
+        gROOT->ProcessLine("#include <vector>");
+        // #if !defined(__CINT__)
+        //     cout << "i'm in the CINT statement" << endl;
+        //     if (!(gInterpreter->IsLoaded("vector")))
+        //         gInterpreter->ProcessLine("#include <vector>");
+        //       gSystem->Exec("rm -f AutoDict*vector*vector*float*");
+        //       gInterpreter->GenerateDictionary("vector<vector<float> >", "vector");
+        //     // gInterpreter->GenerateDictionary("std::vector<std::vector<float> >", "vector");
+        // #endif /* !defined(__CINT__) */
         // ---------------------------------------------------------------------
         // ---------------------------------------------------------------------
 
@@ -182,7 +182,7 @@ namespace eudaq {
         
         m_ttree->Branch("nwfs", &f_nwfs,"n_waveforms/I");
         m_ttree->Branch("wf0" , &f_wf0);
-        m_ttree->Branch("waveforms" , &f_waveforms);
+        // m_ttree->Branch("waveforms" , &f_waveforms);
         
         // DUT
         m_ttree->Branch("name", &v_name);
@@ -244,6 +244,7 @@ namespace eudaq {
         f_charge->clear();
         
         
+
         
         // --------------------------------------------------------------------
         // ---------- verbosity level and some printouts ----------------------
@@ -257,11 +258,11 @@ namespace eudaq {
         // --------------------------------------------------------------------
         // ---------- get and save all info for all waveforms -----------------
         // --------------------------------------------------------------------
-        std::vector<float> * data;
 
         
-        for (unsigned int i = 0; i < nwfs;i++){
-            const eudaq::StandardWaveform & waveform = sev.GetWaveform(i);
+        std::vector<float> * data;
+        for (unsigned int iwf = 0; iwf < nwfs;iwf++){
+            const eudaq::StandardWaveform & waveform = sev.GetWaveform(iwf);
                 // get the sensor name. see eventually what this actually does!
                 std::string sensorname;
                 sensorname = waveform.GetType();
@@ -270,12 +271,13 @@ namespace eudaq {
                 // SimpleStandardWaveform simpWaveform(sensorname,waveform.ID());
                 // simpWaveform.setNSamples(waveform.GetNSamples());
 
-                if (verbose > 3) std::cout << "number of samples in my wf" << waveform.GetNSamples() << std::endl;
+                if (verbose > 3) std::cout << "number of samples in my wf " << waveform.GetNSamples() << std::endl;
 
                 // load the wafeforms into the vector
                 data = waveform.GetData();
                 
                 // calculate the signal and the baseline. this is very hardcoded!!!
+                // float sig = CalculatePeak(data, 1075, 1150);
                 float sig = CalculatePeak(data, 1075, 1150);
                 float ped = Calculate    (data,    1,  900);
         
@@ -284,12 +286,16 @@ namespace eudaq {
                 v_ped->push_back(ped);
         
                 // save the first waveform (not necessary, should be removed eventually)
-                if (i==0) f_wf0 = data;
+                if (iwf==0) {
+                    for (int j=0; j<data->size(); j++){
+                        f_wf0->push_back(data->at(j));
+                    }
+                }
 
                 // save _all_ waveforms for every 100th event
-                if ( !(f_event_number%100) ){
-                    f_waveforms->push_back( *data);
-                }
+                // if ( !(f_event_number%100) ){
+                //     f_waveforms->push_back( *data);
+                // }
         
                 data->clear();
         
