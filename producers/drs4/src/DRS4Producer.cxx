@@ -29,7 +29,8 @@ DRS4Producer::DRS4Producer(const std::string & name, const std::string & runcont
 		m_event_type(EVENT_TYPE),
 		m_self_triggering(false),
 		m_inputRange(0.),
-		m_running(false){
+		m_running(false), 
+        m_terminated(false){
 	n_channels = 4;
 	cout<<"Started DRS4Producer with Name: \""<<name<<"\""<<endl;
 
@@ -158,6 +159,7 @@ void DRS4Producer::OnTerminate() {
 };
 
 void DRS4Producer::ReadoutLoop() {
+    std::cout<<"Start ReadoutLoop"<<m_terminated<<std::endl;
 	int k = 0;
 	while (!m_terminated) {
 		// No run is m_running, cycle and wait:
@@ -198,6 +200,7 @@ void DRS4Producer::ReadoutLoop() {
 			}
 		}
 	}
+    std::cout<<"ReadoutLoop Done. " << std::endl;
 };
 
 void DRS4Producer::OnConfigure(const eudaq::Configuration& conf) {
