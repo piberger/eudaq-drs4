@@ -53,17 +53,23 @@ public:
 	float getIntegral() const{return !calculated?getIntegral(0,_nsamples):_integral;}
 	float getIntegral(float min, float max) const;
 	float getMaximum(float min, float max) const;
+	float getMinimum(float min, float max) const;
 	void setNSamples(unsigned int n_samples){_nsamples = n_samples;}
 	unsigned int getNSamples() const{return _nsamples;}
 	float* getData() const{return _data;}
 	int getSign() const {return _sign;}
 	void setSign(int sign){ _sign = sign>0?1:-1;}
 	void setTimestamp(ULong64_t timestamp){_timestamp = timestamp;};
+	ULong64_t getTimestamp const {return _timestamp;}
 	void setEvent(int event){_tlu_event = event;}
 	int getEvent() const{return _tlu_event;}
+	bool isPulserEvent() const{ _PulserEvent;}
+	void setPulserEvent() {_PulserEvent = true;}
+	void setPulserEvent(bool pulserEvent) {_PulserEvent = pulserEvent;}
 private:
 	int _sign;
 	bool calculated;
+	bool _PulserEvent;
 	float *_data;
 	float _max;
 	float _min;

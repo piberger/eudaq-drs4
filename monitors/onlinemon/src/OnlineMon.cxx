@@ -270,6 +270,21 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
     // add some info into the simple event header
     simpEv.setEvent_number(ev.GetEventNumber());
     simpEv.setEvent_timestamp(ev.GetTimestamp());
+    // Get Information wheater this event is an Pulser event
+    bool isPulserEvent = false;
+    for (unsigned int i = 0; i < nwf;i++){
+    	const eudaq::StandardWaveform & waveform = ev.GetWaveform(i);
+    	if (waveform.GetChannelName() == "Pulser"){
+    		SimpleStandardWaveform simpWaveform(sensorname,waveform.ID(),waveform.GetNSamples(),&mon_configdata);
+			simpWaveform.addData(&(*waveform.GetData())[0]);
+			simpWaveform.Calculate();
+			float integral = simpWaveform.getIntegral();
+			if (TMath::Abs(integral) > mon_configdata.getPulserThreshold())
+				isPulserEvent = true;
+			cout << "Pulser: " << isPulserEvent << std::endl;
+    	}
+    }
+
 	for (unsigned int i = 0; i < nwf;i++){
 			const eudaq::StandardWaveform & waveform = ev.GetWaveform(i);
 #ifdef DEBUG
@@ -290,11 +305,13 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 			SimpleStandardWaveform simpWaveform(sensorname,waveform.ID(),waveform.GetNSamples(),&mon_configdata);//,plane.XSize(),plane.YSize(), plane.TLUEvent(),plane.PivotPixel(),&mon_configdata);
 			simpWaveform.setNSamples(waveform.GetNSamples());
 			simpWaveform.addData(&(*waveform.GetData())[0]);
+			simpWaveform.SetTimestamp(waveform.GetTimeStamp());
 			simpWaveform.Calculate();
 			simpWaveform.setTimestamp(ev.GetTimestamp());
 			simpWaveform.setEvent(ev.GetEventNumber());
 			simpWaveform.setChannelName(waveform.GetChannelName());
 			simpWaveform.setChannelNumber(waveform.GetChannelNumber());
+			simpWaveform.setPulserEvent(isPulserEvent);
 //			waveform.GetNSamples();
 //			cout<<"simpWaveform no"<<i<<" name \""<<simpWaveform.getName()
 //					<<"\" ID: "<<simpWaveform.getID()

@@ -18,7 +18,7 @@ WaveformHistos::WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon): _n_
 
 	// signal_integral_range = make_pair(500.,800.);
 	signal_integral_range   = make_pair(   60, 100.);
-    pedestal_integral_range = make_pair(  300, 700);
+    pedestal_integral_range = make_pair(  300, 340);// should be the same length as signal
 	//	std::cout << "WaveformHistos::Sensorname: " << _sensor << " "<< _id<< std::endl;
 	this->InitHistos();
 }
@@ -157,9 +157,10 @@ void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 	float max      = wf.getMax();
 	float delta    = fabs(max-min);
 	float integral = wf.getIntegral();
-	//float signal_integral = wf.getIntegral(signal_integral_range.first,signal_integral_range.second);
+	//float signal_inteal = wf.getIntegral(signal_integral_range.first,signal_integral_range.second);
 	float signal_integral = wf.getMaximum(signal_integral_range.first,signal_integral_range.second);
 	float pedestal_integral = wf.getIntegral(pedestal_integral_range.first,pedestal_integral_range.second);
+	ULong64_t timestamp = wf.getTimestamp();
 
     // cout << "first and second: " << signal_integral_range.first << " " << signal_integral_range.second << endl;
     // cout << "this is the signal   integral: " << signal_integral << endl;
@@ -191,6 +192,8 @@ void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 			it->second->Fill(event_no,sign*signal_integral);
 		else if (it->first == "DeltaIntegral")
 			it->second->Fill(event_no,sign*(signal_integral-pedestal_integral));
+		if (event_no % 5000 == 0 )
+			it->second->Fit("pol(0)+exp(1)");
 	}
 	UpdateRanges();
 	//	cout<<"Name: "<<wf.getName()<<" ID: "<<wf.getID()<<endl;

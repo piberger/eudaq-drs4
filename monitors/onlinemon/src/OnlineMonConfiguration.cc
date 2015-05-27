@@ -264,6 +264,8 @@ void OnlineMonConfiguration::SetDefaults()
 	//correl cluster settings
 	correl_minclustersize=2;
 
+	_pulserthreshold = 20;
+
 }
 
 void OnlineMonConfiguration::setSnapShotDir(string SnapShotDir)
