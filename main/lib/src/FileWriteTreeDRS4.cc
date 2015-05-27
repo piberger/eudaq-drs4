@@ -292,7 +292,7 @@ namespace eudaq {
                 
                 // calculate the signal and the baseline. this is very hardcoded!!!
                 // float sig = CalculatePeak(data, 1075, 1150);
-                std::pair<int, float> sig = FindMaxAndValue(data,    0, 1000);
+                std::pair<int, float> sig = FindMaxAndValue(data,   10,  300);
                 float ped = Calculate    (data,  300,  700);
 
                 // save the values in the event
