@@ -76,7 +76,7 @@ public:
 		// Get Timestamp
 		data = in_raw.GetBlock(id++);
 		uint64_t timestamp = *((uint64_t*) &data[0]);
-		sev.SetTimestamp(timestamp);
+//		sev.SetTimestamp(timestamp);
 
 		float min_waves[m_n_channels];
 		float max_waves[m_n_channels];
@@ -118,6 +118,7 @@ public:
 			wf.SetChannelNumber(ch);
 			wf.SetNSamples(n_samples);
 			wf.SetWaveform((float*) wave_array);
+			wf.SetTimeStamp(timestamp);
 			sev.AddWaveform(wf);
 //			std::cout<<"CH"<<ch<<": "<<wf<<std::endl;
 			// Indicate that data was successfully converted
