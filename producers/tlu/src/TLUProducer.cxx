@@ -202,6 +202,7 @@ public:
 			m_tlu->Update(timestamps);
 			m_tlu->Start();
 			TLUStarted = true;
+            EUDAQ_INFO(string("Trigger are now accepted"));
 			SetStatus(eudaq::Status::LVL_OK, "Started");
 		} catch (const std::exception & e) {
 			printf("Caught exception: %s\n", e.what());
