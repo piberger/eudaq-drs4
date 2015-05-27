@@ -37,7 +37,7 @@ public:
 	int GetChannelNumber() const {return m_channelnumber;};
 	void SetChannelNumber(int channelnumber){m_channelnumber = channelnumber;}
 	void SetTimeStamp(uint64_t timestamp){m_timestamp=timestamp;}
-	void GetTimeStamp() const {return m_timestamp;}
+	uint64_t GetTimeStamp() const {return m_timestamp;}
 //	std::string GetName() const {return m_sensor+(std::string)"_"+m_type+(std::string)to_string(m_id);}
 private:
 	uint64_t m_timestamp;

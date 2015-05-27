@@ -60,7 +60,7 @@ public:
 	int getSign() const {return _sign;}
 	void setSign(int sign){ _sign = sign>0?1:-1;}
 	void setTimestamp(ULong64_t timestamp){_timestamp = timestamp;};
-	ULong64_t getTimestamp const {return _timestamp;}
+	ULong64_t getTimestamp() const {return _timestamp;}
 	void setEvent(int event){_tlu_event = event;}
 	int getEvent() const{return _tlu_event;}
 	bool isPulserEvent() const{ _PulserEvent;}

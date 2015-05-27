@@ -275,7 +275,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
     for (unsigned int i = 0; i < nwf;i++){
     	const eudaq::StandardWaveform & waveform = ev.GetWaveform(i);
     	if (waveform.GetChannelName() == "Pulser"){
-    		SimpleStandardWaveform simpWaveform(sensorname,waveform.ID(),waveform.GetNSamples(),&mon_configdata);
+    		SimpleStandardWaveform simpWaveform(waveform.GetType(),waveform.ID(),waveform.GetNSamples(),&mon_configdata);
 			simpWaveform.addData(&(*waveform.GetData())[0]);
 			simpWaveform.Calculate();
 			float integral = simpWaveform.getIntegral();
@@ -305,9 +305,9 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 			SimpleStandardWaveform simpWaveform(sensorname,waveform.ID(),waveform.GetNSamples(),&mon_configdata);//,plane.XSize(),plane.YSize(), plane.TLUEvent(),plane.PivotPixel(),&mon_configdata);
 			simpWaveform.setNSamples(waveform.GetNSamples());
 			simpWaveform.addData(&(*waveform.GetData())[0]);
-			simpWaveform.SetTimestamp(waveform.GetTimeStamp());
 			simpWaveform.Calculate();
-			simpWaveform.setTimestamp(ev.GetTimestamp());
+			//simpWaveform.setTimestamp(ev.GetTimestamp());
+			simpWaveform.setTimestamp(waveform.GetTimeStamp());
 			simpWaveform.setEvent(ev.GetEventNumber());
 			simpWaveform.setChannelName(waveform.GetChannelName());
 			simpWaveform.setChannelNumber(waveform.GetChannelNumber());
