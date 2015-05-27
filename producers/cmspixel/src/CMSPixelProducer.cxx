@@ -57,7 +57,8 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_producerName(name),
     m_detector(""),
     m_event_type(""),
-    m_alldacs("")
+    m_alldacs(""),
+    m_last_mask_filename("")
 {
   if(m_producerName.find("REF") != std::string::npos) {
     m_detector = "REF";
@@ -298,7 +299,7 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     /**MASKING*/
 
     maskPixels = GetConfMask();
-    vector<vector<bool> > maskArray; maskArray.resize(52); for (uint16_t row(0); row<52; row++) maskArray[row].resize(80);
+    //vector<vector<bool> > maskArray; maskArray.resize(52); for (uint16_t row(0); row<52; row++) maskArray[row].resize(80);
     string hexMask;
     for (uint16_t i(0); i<maskPixels.size(); i++){
         if (maskPixels[i].id()[0] != '#' && maskPixels[i].id()[0] != ' ' && maskPixels[i].id().size()>0){
@@ -309,20 +310,22 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
 
             if (maskPixels[i].id() == "pix"){
                 m_api->_dut->maskPixel(col, row, true, roc);
-                maskArray[col][row] = true;
+                //maskArray[col][row] = true;
                 hexMask.insert(0," ").insert(0,sRow).insert(0," ").insert(0,sCol).insert(0,"a");}
             else if (maskPixels[i].id() == "col"){
                 hexMask.insert(0," ").insert(0,sRow).insert(0," ").insert(0,sCol).insert(0,"b");
                 for (uint16_t nCols(col); nCols < row+1; nCols++){
                     for (uint16_t nRows(0); nRows < 80; nRows++) {
                         m_api->_dut->maskPixel(nCols, nRows, true, roc);
-                        maskArray[nCols][nRows] = true; }}} //end elseif
+                        //maskArray[nCols][nRows] = true;
+                        }}} //end elseif
             else if (maskPixels[i].id() == "row"){
                 hexMask.insert(0," ").insert(0,sRow).insert(0," ").insert(0,sCol).insert(0,"c");
                 for (uint16_t nRows(col); nRows < row+1; nRows++){
                     for (uint16_t nCols(0); nCols < 52; nCols++) {
                         m_api->_dut->maskPixel(nCols, nRows, true, roc);
-                        maskArray[nCols][nRows] = true; }}} //end elseif
+                        //maskArray[nCols][nRows] = true;
+                        }}} //end elseif
             else if (maskPixels[i].id() == "roc"){
                 hexMask.insert(0," ").insert(0,sRow).insert(0," ").insert(0,sCol).insert(0,"d");
                 cout << "masked roc "<< roc <<"\n";
@@ -335,29 +338,35 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     }//end of loop
 
     /**complete hexMask*/
-    string hashBin;
-    string hashHex;
-    for (int i(0); i<80;i++){
-        for (int j(0); j<52;j++) {hashBin.push_back(maskArray[j][i]+'0');}
-    }
-    uint16_t it(3), hex(0);
-    uint32_t index(0);
-    while (index<hashBin.size()){
-        hex += pow(2,it)*(hashBin[index]-'0');
-        if (!it){
-            if (hex < 10 )  hashHex.push_back(hex+'0');
-            else            hashHex.push_back(hex+'W');
-            hex = 0; it = 4;
-        }
-        it--; index++;
-    }
-    cout << hashHex << "\n";
+//    string hashBin;
+//    string hashHex;
+//    for (int i(0); i<80;i++){
+//        for (int j(0); j<52;j++) {hashBin.push_back(maskArray[j][i]+'0');}
+//    }
+//    uint16_t it(3), hex(0);
+//    uint32_t index(0);
+//    while (index<hashBin.size()){
+//        hex += pow(2,it)*(hashBin[index]-'0');
+//        if (!it){
+//            if (hex < 10 )  hashHex.push_back(hex+'0');
+//            else            hashHex.push_back(hex+'W');
+//            hex = 0; it = 4;
+//        }
+//        it--; index++;
+//    }
+    //cout << hashHex << "\n";
     cout << hexMask << "\n";
+
+    /**print the name of the maskfile*/
+    string filename = m_config.Get("maskFile", "");
+    m_last_mask_filename = filename;
+    stringstream maskname; maskname << "Using maskfile " << filename;
+    EUDAQ_INFO(maskname.str());
 
     /**print number of masked pixels on each ROC*/
     for (uint16_t roc(0); roc<m_api->_dut->getNEnabledRocs();roc++){
         cout << "--> masked " << m_api->_dut->getNMaskedPixels(roc) << " Pixels in ROC " << roc << "!\n";
-        stringstream ss; ss << "--> masked " << m_api->_dut->getNMaskedPixels(roc) << " Pixels in ROC "<< roc;
+        stringstream ss; ss << "--> masked " << m_api->_dut->getNMaskedPixels(roc) << " Pixels in ROC "<< roc << " " << readHash(hexMask,char(roc+48));
         EUDAQ_INFO(ss.str()); //string("--> masked ")+m_api->_dut->getNMaskedPixels(roc)+string(" Pixels in ROC ")+roc
     }
 
@@ -403,6 +412,7 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
 
   try {
     EUDAQ_INFO("Switching Sensor Bias HV ON.");
+    EUDAQ_INFO(m_last_mask_filename);
     m_api->HVon();
 
     std::cout << "Start Run: " << m_run << std::endl;
@@ -411,6 +421,7 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     // Set the TBM & ROC type for decoding:
     bore.SetTag("ROCTYPE", m_roctype);
     bore.SetTag("TBMTYPE", m_tbmtype);
+    bore.SetTag("MASKFILE",m_last_mask_filename);
 
     // Set the number of planes (ROCs):
     bore.SetTag("PLANES", m_nplanes);
@@ -588,7 +599,7 @@ void CMSPixelProducer::ReadoutLoop() {
 	if(m_ev%1000 == 0) {
 	  uint8_t filllevel = 0;
 	  m_api->daqStatus(filllevel);
-	  std::cout << "CMSPixel " << m_detector 
+	  std::cout << "CMSPixel " << m_detector
 		    << " EVT " << m_ev << " / " << m_ev_filled << " w/ px" << std::endl;
 	  std::cout << "\t Total average:  \t" << (m_ev > 0 ? std::to_string(100*m_ev_filled/m_ev) : "(inf)") << "%" << std::endl;
 	  std::cout << "\t 1k Trg average: \t" << (100*m_ev_runningavg_filled/1000) << "%" << std::endl;
