@@ -88,7 +88,8 @@ namespace eudaq {
         // Vector Branches     
         
         // DUT
-        std::vector< std::string >  * v_name;
+        std::vector< std::string >  * v_sensor_name;
+        std::vector< std::string >  * v_type_name;
         std::vector<float>  * v_sig;
         std::vector<float>  * v_sig_time;
         std::vector<float>  * v_ped;
@@ -129,7 +130,8 @@ namespace eudaq {
         f_trig_time     =  0.;
         
         // dut
-        v_name      = new std::vector< std::string >;
+        v_sensor_name = new std::vector< std::string >;
+        v_type_name   = new std::vector< std::string >;
         v_ped       = new std::vector<float>;
         v_sig       = new std::vector<float>;
         v_sig_time  = new std::vector<float>;
@@ -180,10 +182,11 @@ namespace eudaq {
         // m_ttree->Branch("wf3" , &f_wf3);
         
         // DUT
-        m_ttree->Branch("name"     , &v_name);
-        m_ttree->Branch("ped"      , &v_ped);
-        m_ttree->Branch("sig"      , &v_sig);
-        m_ttree->Branch("sig_time" , &v_sig_time);
+        m_ttree->Branch("sensor_name" , &v_sensor_name);
+        m_ttree->Branch("type_name"   , &v_type_name);
+        m_ttree->Branch("ped"         , &v_ped);
+        m_ttree->Branch("sig"         , &v_sig);
+        m_ttree->Branch("sig_time"    , &v_sig_time);
         
         
         // telescope
@@ -233,7 +236,8 @@ namespace eudaq {
         // --------------------------------------------------------------------
         // ---------- reset/clear all the vectors -----------------------------
         // --------------------------------------------------------------------
-        v_name->clear();
+        v_sensor_name->clear();
+        v_type_name->clear();
         v_ped->clear();
         v_sig->clear();
         v_sig_time->clear();
@@ -262,15 +266,20 @@ namespace eudaq {
         // --------------------------------------------------------------------
         // ---------- get and save all info for all waveforms -----------------
         // --------------------------------------------------------------------
-        int nEvtSave =  100;
 
         std::vector<float> * data;
         for (unsigned int iwf = 0; iwf < nwfs;iwf++){
             const eudaq::StandardWaveform & waveform = sev.GetWaveform(iwf);
                 // get the sensor name. see eventually what this actually does!
-                std::string sensorname;
-                sensorname = waveform.GetType();
-                v_name->push_back(sensorname);
+
+                std::string type_name;
+                type_name = waveform.GetType();
+
+                std::string sensor_name;
+                sensor_name = waveform.GetSensor();
+
+                v_type_name->push_back(type_name);
+                v_sensor_name->push_back(sensor_name);
 
                 // SimpleStandardWaveform simpWaveform(sensorname,waveform.ID());
                 // simpWaveform.setNSamples(waveform.GetNSamples());

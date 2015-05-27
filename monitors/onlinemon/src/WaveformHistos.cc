@@ -65,17 +65,17 @@ void WaveformHistos::InitHistos() {
 	//SetMaxRangeX((string)hName,-5,200);
 
 	hName = TString::Format("h_ProfileDelta_%s_%d",_sensor.c_str(),_id);
-	hTitle = TString::Format("%s %d: Profile Delta; event number / 1000events; signal/mV",_sensor.c_str(),_id);
+	hTitle = TString::Format("%s %d: Profile Delta; event number / 5000events; signal/mV",_sensor.c_str(),_id);
 	profiles["DeltaVoltage"] = new TProfile(hName,hTitle,1,0,1000);
 	profiles["DeltaVoltage"]->SetStats(false);
 
 	hName = TString::Format("h_ProfileFullIntegral_%s_%d",_sensor.c_str(),_id);
-	hTitle = TString::Format("%s %d: Profile FullIntegral; event number / 1000events; signal/mV",_sensor.c_str(),_id);
+	hTitle = TString::Format("%s %d: Profile FullIntegral; event number / 5000events; signal/mV",_sensor.c_str(),_id);
 	profiles["FullIntegral"] = new TProfile(hName,hTitle,1,0,1000);
 	profiles["FullIntegral"]->SetStats(false);
 
 	hName = TString::Format("h_ProfileSignalIntegral_%s_%d",_sensor.c_str(),_id);
-	hTitle = TString::Format("%s %d: Profile SignalIntegral (%5.1f - %5.1f); event number / 1000events; signal/mV",
+	hTitle = TString::Format("%s %d: Profile SignalIntegral (%5.1f - %5.1f); event number / 5000events; signal/mV",
 			_sensor.c_str(),_id,
 			pedestal_integral_range.first,
 			pedestal_integral_range.second);
@@ -83,7 +83,7 @@ void WaveformHistos::InitHistos() {
 	profiles["SignalIntegral"]->SetStats(false);
 
 	hName = TString::Format("h_ProfilePedestalIntegral_%s_%d",_sensor.c_str(),_id);
-	hTitle = TString::Format("%s %d: Profile PedestalIntegral (%5.1f - %5.1f); event number / 1000events; signal/mV",
+	hTitle = TString::Format("%s %d: Profile PedestalIntegral (%5.1f - %5.1f); event number / 5000events; signal/mV",
 			_sensor.c_str(),_id,
 			pedestal_integral_range.first,
 			pedestal_integral_range.second);
@@ -91,7 +91,7 @@ void WaveformHistos::InitHistos() {
 	profiles["PedestalIntegral"]->SetStats(false);
 
 	hName = TString::Format("h_ProfileDeltaIntegral_%s_%d",_sensor.c_str(),_id);
-	hTitle = TString::Format("%s %d: Profile DeltaIntegral; event number / 1000events; signal/mV",_sensor.c_str(),_id);
+	hTitle = TString::Format("%s %d: Profile DeltaIntegral; event number / 5000events; signal/mV",_sensor.c_str(),_id);
 	profiles["DeltaIntegral"] = new TProfile(hName,hTitle,1,0,1000);
 	profiles["DeltaIntegral"]->SetStats(false);
 
@@ -153,9 +153,9 @@ void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 		_n_samples = wf.getNSamples();
 		Reinitialize_Waveforms();
 	}
-	float min = wf.getMin();
-	float max = wf.getMax();
-	float delta = fabs(max-min);
+	float min      = wf.getMin();
+	float max      = wf.getMax();
+	float delta    = fabs(max-min);
 	float integral = wf.getIntegral();
 	//float signal_integral = wf.getIntegral(signal_integral_range.first,signal_integral_range.second);
 	float signal_integral = wf.getMaximum(signal_integral_range.first,signal_integral_range.second);
@@ -167,17 +167,17 @@ void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
     // cout << "this is the delta integral: " << signal_integral - pedestal_integral << endl;
 	int sign = signal_integral > 0 ? 1 : -1; //wf.getSign(); //why is this here? it's never properly assigned
 	int event_no = wf.getEvent();
-	histos["FullIntegral"]->Fill(sign*integral);
-	histos["SignalIntegral"]->Fill(sign*signal_integral);
-	histos["PedestalIntegral"]->Fill(sign*pedestal_integral);
-	histos["DeltaIntegral"]->Fill((signal_integral-pedestal_integral)*sign);
-	histos["MinVoltage"]->Fill(sign<0?sign*max:sign*min);
-	histos["MaxVoltage"]->Fill(sign<0?sign*min:sign*max);
-	histos["DeltaVoltage"]->Fill(delta);
+	histos["FullIntegral"]     -> Fill(sign*integral);
+	histos["SignalIntegral"]   -> Fill(sign*signal_integral);
+	histos["PedestalIntegral"] -> Fill(sign*pedestal_integral);
+	histos["DeltaIntegral"]    -> Fill((signal_integral - pedestal_integral)*sign);
+	histos["MinVoltage"]       -> Fill(sign<0?sign*max:sign*min);
+	histos["MaxVoltage"]       -> Fill(sign<0?sign*min:sign*max);
+	histos["DeltaVoltage"]     -> Fill(delta);
 	for (std::map<std::string, TH1*>::iterator it = profiles.begin();it!=profiles.end();it++){
 		if (it->second->GetXaxis()->GetXmax() < event_no){
-			int bins = (event_no+1000)/1000;
-			int max = (bins)*1000;
+			int bins = (event_no+5000)/5000;
+			int max = (bins)*5000;
 			it->second->SetBins(bins,0,max);
 			//			cout<<it->first<<": Extend Profile "<<bins<<" "<<max<<endl;
 		}
