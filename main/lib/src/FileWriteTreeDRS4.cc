@@ -79,7 +79,7 @@ namespace eudaq {
         // Scalar Branches     
         int   f_nwfs;
         int   f_event_number;
-        float f_time;
+        Double_t f_time;
 
         int   f_pulser;
         float f_pulser_int;
@@ -170,7 +170,7 @@ namespace eudaq {
         
         // Set Branch Addresses
         m_ttree->Branch("event_number"  ,&f_event_number , "event_number/I");
-        m_ttree->Branch("time"          ,&f_time         , "time/F");
+        m_ttree->Branch("time"          ,&f_time         , "time/D");
         m_ttree->Branch("pulser"        ,&f_pulser       , "pulser/I");
         m_ttree->Branch("pulser_int"    ,&f_pulser_int   , "pulser_int/F");
         m_ttree->Branch("trig_time"     ,&f_trig_time    , "trig_time/I");
