@@ -168,6 +168,10 @@ void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
     // cout << "this is the delta integral: " << signal_integral - pedestal_integral << endl;
 	int sign = signal_integral > 0 ? 1 : -1; //wf.getSign(); //why is this here? it's never properly assigned
 	int event_no = wf.getEvent();
+	bool isPulserEvent = wf.isPulserEvent();
+	if (isPulserEvent){
+		continue;
+	}
 	histos["FullIntegral"]     -> Fill(sign*integral);
 	histos["SignalIntegral"]   -> Fill(sign*signal_integral);
 	histos["PedestalIntegral"] -> Fill(sign*pedestal_integral);
