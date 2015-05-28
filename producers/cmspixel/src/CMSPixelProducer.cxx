@@ -207,7 +207,7 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     if(m_api != NULL) { delete m_api; }
 
     m_usbId = config.Get("usbId","*");
-    EUDAQ_USER("Trying to connect to USB id: " + m_usbId + "\n");
+    EUDAQ_EXTRA("Trying to connect to USB id: " + m_usbId + "\n");
 
     // Allow overwriting of verbosity level via command line:
     m_verbosity = config.Get("verbosity", m_verbosity);
@@ -273,19 +273,19 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     std::string signal_a2 = config.Get("signalprobe_a2","off");
 
     if(m_api->SignalProbe("d1", signal_d1) && signal_d1 != "off") {
-      EUDAQ_USER("Setting scope output D1 to \"" + signal_d1 + "\"\n");
+      EUDAQ_EXTRA("Setting scope output D1 to \"" + signal_d1 + "\"\n");
     }
     if(m_api->SignalProbe("d2", signal_d2) && signal_d2 != "off") {
-      EUDAQ_USER("Setting scope output D2 to \"" + signal_d2 + "\"\n");
+      EUDAQ_EXTRA("Setting scope output D2 to \"" + signal_d2 + "\"\n");
     }
     if(m_api->SignalProbe("a1", signal_a1) && signal_a1 != "off") {
-      EUDAQ_USER("Setting scope output A1 to \"" + signal_a1 + "\"\n");
+      EUDAQ_EXTRA("Setting scope output A1 to \"" + signal_a1 + "\"\n");
     }
     if(m_api->SignalProbe("a2", signal_a2) && signal_a2 != "off") {
-      EUDAQ_USER("Setting scope output A2 to \"" + signal_a2 + "\"\n");
+      EUDAQ_EXTRA("Setting scope output A2 to \"" + signal_a2 + "\"\n");
     }
 
-    EUDAQ_USER(m_api->getVersion() + string(" API set up successfully...\n"));
+    EUDAQ_EXTRA(m_api->getVersion() + string(" API set up successfully...\n"));
 
     // test pixels
     if(testpulses) {

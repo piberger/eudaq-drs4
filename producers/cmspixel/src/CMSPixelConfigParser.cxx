@@ -97,7 +97,7 @@ std::vector<std::pair<std::string,uint8_t> > CMSPixelProducer::GetConfDACs(int16
       m_alldacs.append(name + " " + std::to_string(value) + "; ");
     }
 
-    EUDAQ_USER(string("Successfully read ") + std::to_string(dacs.size())
+    EUDAQ_EXTRA(string("Successfully read ") + std::to_string(dacs.size())
 	       + string(" DACs from file, ") + std::to_string(overwritten_dacs) + string(" overwritten by config."));
   }
   else {
@@ -164,7 +164,7 @@ std::vector<pxar::pixelConfig> CMSPixelProducer::GetConfTrimming(std::vector<pxa
   }
 
   if(m_trimmingFromConf) {
-    EUDAQ_USER(string("Trimming successfully read from ") + m_config.Name() + string(": \"") + string(filename) + string("\"\n"));
+    EUDAQ_EXTRA(string("Trimming successfully read from ") + m_config.Name() + string(": \"") + string(filename) + string("\"\n"));
   }
   return pixels;
 } // GetConfTrimming
