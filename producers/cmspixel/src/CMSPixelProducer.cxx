@@ -301,6 +301,17 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     maskPixels = GetConfMask();
     //vector<vector<bool> > maskArray; maskArray.resize(52); for (uint16_t row(0); row<52; row++) maskArray[row].resize(80);
     string hexMask;
+
+    /**mask whole ROC for the antimask identifier*/
+    for (uint16_t i(0); i<maskPixels.size(); i++){
+        if (maskPixels[i].id()[0] != '#' && maskPixels[i].id()[0] != ' ' && maskPixels[i].id().size()>0){
+            uint16_t roc = maskPixels[i].roc();
+            if (maskPixels[i].id() == "cornBot") {
+                m_api->_dut->maskAllPixels(true,roc);
+                cout << "masking whole ROC " << roc << "\n";
+            }
+        }}
+
     for (uint16_t i(0); i<maskPixels.size(); i++){
         if (maskPixels[i].id()[0] != '#' && maskPixels[i].id()[0] != ' ' && maskPixels[i].id().size()>0){
             uint16_t col = maskPixels[i].col(); string cCol = to_string(col/16)+char(col%16 < 10 ? col%16+'0' : col%16+'W');
@@ -331,6 +342,23 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
                 cout << "masked roc "<< roc <<"\n";
                 EUDAQ_INFO(string("ROC ") + string(to_string(roc)) + string(" fully masked"));
                 m_api->_dut->maskAllPixels(true,roc);} //end elseif
+
+            /**antimask*/
+            else if (maskPixels[i].id() == "cornBot" && maskPixels[i+1].id() == "cornTop"){
+                uint16_t row_start = maskPixels[i].row();   string cRow1 = to_string(row_start/16)+char(row_start%16 < 10 ? row_start%16+'0' : row_start%16+'W');
+                uint16_t row_stop = maskPixels[i+1].row();  string cRow2 = to_string(row_stop/16)+char(row_stop%16 < 10 ? row_stop%16+'0' : row_stop%16+'W');
+                uint16_t col_start = maskPixels[i].col();   string cCol1 = to_string(col_start/16)+char(col_start%16 < 10 ? col_start%16+'0' : col_start%16+'W');
+                uint16_t col_stop = maskPixels[i+1].col();  string cCol2 = to_string(col_stop/16)+char(col_stop%16 < 10 ? col_stop%16+'0' : col_stop%16+'W');
+                string sCol1 = cRoc+cCol1, sCol2 = "00"+cCol2, sRow1 = "00"+cRow1, sRow2 = "00"+cRow2;
+                hexMask.insert(0," ").insert(0,sRow2).insert(0," ").insert(0,sCol2).insert(0," ").insert(0,sRow1).insert(0," ").insert(0,sCol1).insert(0,"d");
+                for (uint16_t nRows(row_start); nRows <= row_stop; nRows++){
+                    for (uint16_t nCols(col_start); nCols <= col_stop; nCols++) {
+                        m_api->_dut->maskPixel(nCols, nRows, false, roc);
+                        }}
+                cout << "unmasked box from col "<< col_start <<" to " << col_stop;
+                cout << " and row " << row_start << " to " << row_stop << " of ROC" << roc <<"\n";} //end elseif
+            else if (maskPixels[i].id() == "cornTop") ; //catch identifier to avoid the error message
+
             else {
                 cout << "Wrong identifier in maskFile!\n";
                 EUDAQ_WARN("Wrong identifier in maskFile!");}//end else
@@ -367,6 +395,7 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     for (uint16_t roc(0); roc<m_api->_dut->getNEnabledRocs();roc++){
         cout << "--> masked " << m_api->_dut->getNMaskedPixels(roc) << " Pixels in ROC " << roc << "!\n";
         stringstream ss; ss << "--> masked " << m_api->_dut->getNMaskedPixels(roc) << " Pixels in ROC "<< roc << " " << readHash(hexMask,char(roc+48));
+        EUDAQ_INFO(hexMask);
         EUDAQ_INFO(ss.str()); //string("--> masked ")+m_api->_dut->getNMaskedPixels(roc)+string(" Pixels in ROC ")+roc
     }
 
@@ -613,6 +642,36 @@ void CMSPixelProducer::ReadoutLoop() {
       }
     }
   }
+}
+
+
+/** Read hash */
+string CMSPixelProducer::readHash(string hexMask, char i2c){
+
+    stringstream ss;
+
+    for (uint16_t i(0); i<hexMask.size(); i++){
+        if (hexMask[i]==i2c && i % 5 == 1){
+            if (hexMask[i-1] == 'a'){
+                ss << "pix" << int(hexMask[i+1])*16+int(hexMask[i+2]) << "/" << int(hexMask[i+6])*16+int(hexMask[i+7]);
+            }
+            else if (hexMask[i-1] == 'b'){
+                uint16_t start = (hexMask[i+1]-'0')*16 + (hexMask[i+2] < '9'? hexMask[i+2]-'0' : hexMask[i+2]-'W');
+                uint16_t stop  = (hexMask[i+6]-'0')*16 + (hexMask[i+7] < '9'? hexMask[i+7]-'0' : hexMask[i+7]-'W');
+                start == stop ? ss << "col " << start << ", " : ss << "col " << start << "-" << stop << ", ";
+            }
+            else if (hexMask[i-1] == 'c'){
+                uint16_t start = (hexMask[i+1]-'0')*16 + (hexMask[i+2] < '9'? hexMask[i+2]-'0' : hexMask[i+2]-'W');
+                uint16_t stop  = (hexMask[i+6]-'0')*16 + (hexMask[i+7] < '9'? hexMask[i+7]-'0' : hexMask[i+7]-'W');
+                start == stop ? ss << "row " << start << ", " : ss << "row " << start << "-" << stop << ", ";}
+            else if (hexMask[i-1] == 'd'){
+                uint16_t start1 = (hexMask[i+1]-'0')*16 + (hexMask[i+2] < '9'? hexMask[i+2]-'0' : hexMask[i+2]-'W');
+                uint16_t start2  = (hexMask[i+6]-'0')*16 + (hexMask[i+7] < '9'? hexMask[i+7]-'0' : hexMask[i+7]-'W');
+                uint16_t stop1 = (hexMask[i+11]-'0')*16 + (hexMask[i+12] < '9'? hexMask[i+12]-'0' : hexMask[i+12]-'W');
+                uint16_t stop2  = (hexMask[i+16]-'0')*16 + (hexMask[i+17] < '9'? hexMask[i+17]-'0' : hexMask[i+17]-'W');
+                ss << "unmasked box: from " << start1 << "/" << start2 << " to " << stop1 << "/" << stop2;
+            }}}
+    return ss.str();
 }
 
 // The main function that will create a Producer instance and run it
