@@ -11,6 +11,7 @@
 //#include <TGraph.h>
 #include <TH1F.h>
 #include <TH2F.h>
+#include <TF1.h>
 #include <TFile.h>
 #include <TString.h>
 #include <THStack.h>
