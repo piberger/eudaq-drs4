@@ -64,8 +64,8 @@ public:
 	void setEvent(int event){_tlu_event = event;}
 	int getEvent() const{return _tlu_event;}
 	bool isPulserEvent() const{ _PulserEvent;}
-	void setPulserEvent() {_PulserEvent = true;}
-	void setPulserEvent(bool pulserEvent) {_PulserEvent = pulserEvent;}
+	void setPulserEvent() {setPulserEvent(true);}
+	void setPulserEvent(bool pulserEvent) {_PulserEvent = pulserEvent;std::cout<<"setPulser:"<<_PulserEvent<<std::endl;}
 private:
 	int _sign;
 	bool calculated;

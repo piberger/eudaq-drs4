@@ -170,6 +170,7 @@ void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 	int sign = signal_integral > 0 ? 1 : -1; //wf.getSign(); //why is this here? it's never properly assigned
 	int event_no = wf.getEvent();
 	bool isPulserEvent = wf.isPulserEvent();
+    std::cout<<"Pulser:"<<wf.isPulserEvent()<<std::endl;
 	if (isPulserEvent){
         std::cout<<" Ignoring Pulser Event "<<std::endl;
 		return;  

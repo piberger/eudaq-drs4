@@ -312,6 +312,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 			simpWaveform.setChannelName(waveform.GetChannelName());
 			simpWaveform.setChannelNumber(waveform.GetChannelNumber());
 			simpWaveform.setPulserEvent(isPulserEvent);
+            std::cout<<"isPulser Event: "<<isPulserEvent<<"/"<<simpWaveform.isPulserEvent()<<std::endl;
 //			waveform.GetNSamples();
 //			cout<<"simpWaveform no"<<i<<" name \""<<simpWaveform.getName()
 //					<<"\" ID: "<<simpWaveform.getID()
