@@ -270,6 +270,26 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
     // add some info into the simple event header
     simpEv.setEvent_number(ev.GetEventNumber());
     simpEv.setEvent_timestamp(ev.GetTimestamp());
+    // Get Information wheater this event is an Pulser event
+    // this is a hardcoded fix for setup at psi, think about a different option
+    bool isPulserEvent = false;
+    for (unsigned int i = 0; i < nwf;i++){
+    	const eudaq::StandardWaveform & waveform = ev.GetWaveform(i);
+    	if (waveform.GetChannelName() == "Pulser"){
+    		SimpleStandardWaveform simpWaveform(waveform.GetType(),waveform.ID(),waveform.GetNSamples(),&mon_configdata);
+			simpWaveform.addData(&(*waveform.GetData())[0]);
+			simpWaveform.Calculate();
+			float integral = simpWaveform.getIntegral(700,900);
+			//if (TMath::Abs(integral) > 40) //mon_configdata.getPulserThreshold())
+			//	isPulserEvent = true;
+            float pulserMin = simpWaveform.getMinimum(700, 900);
+            if( pulserMin < -100.) 
+                isPulserEvent = true;
+            // if (isPulserEvent)
+            //     cout << "PulserEvent, minimum is " << pulserMin << std::endl;
+    	}
+    }
+
 	for (unsigned int i = 0; i < nwf;i++){
 			const eudaq::StandardWaveform & waveform = ev.GetWaveform(i);
 #ifdef DEBUG
@@ -288,13 +308,17 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 //             cout << "sensorname " << sensorname << endl; // this gives V1730 or drs4
 //			SimpleStandardWaveform simpWaveform(sensorname,waveform.ID(),&mon_configdata);//,plane.XSize(),plane.YSize(), plane.TLUEvent(),plane.PivotPixel(),&mon_configdata);
 			SimpleStandardWaveform simpWaveform(sensorname,waveform.ID(),waveform.GetNSamples(),&mon_configdata);//,plane.XSize(),plane.YSize(), plane.TLUEvent(),plane.PivotPixel(),&mon_configdata);
+			simpWaveform.setSign(mon_configdata.getSignalSign(waveform.GetChannelNumber()));
 			simpWaveform.setNSamples(waveform.GetNSamples());
 			simpWaveform.addData(&(*waveform.GetData())[0]);
 			simpWaveform.Calculate();
-			simpWaveform.setTimestamp(ev.GetTimestamp());
+			//simpWaveform.setTimestamp(ev.GetTimestamp());
+			simpWaveform.setTimestamp(waveform.GetTimeStamp());
 			simpWaveform.setEvent(ev.GetEventNumber());
 			simpWaveform.setChannelName(waveform.GetChannelName());
 			simpWaveform.setChannelNumber(waveform.GetChannelNumber());
+			simpWaveform.setPulserEvent(isPulserEvent);
+            //std::cout<<"isPulser Event: "<<isPulserEvent<<"/"<<simpWaveform.isPulserEvent()<<std::endl;
 //			waveform.GetNSamples();
 //			cout<<"simpWaveform no"<<i<<" name \""<<simpWaveform.getName()
 //					<<"\" ID: "<<simpWaveform.getID()
@@ -466,6 +490,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
     std::cout << "This is a BORE" << std::endl;
   }
 
+
 }
 
 void RootMonitor::autoReset(const bool reset) {
@@ -582,8 +607,8 @@ int main(int argc, const char ** argv) {
     {
       gStyle->SetPalette(1);
       gStyle->SetNumberContours(99);
-      gStyle->SetOptStat(0111);
-      gStyle->SetStatH(0.03);
+      gStyle->SetOptStat(111111);
+      gStyle->SetStatH(0.15);
     }
     else
     {

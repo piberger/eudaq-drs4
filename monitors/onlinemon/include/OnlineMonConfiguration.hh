@@ -53,8 +53,12 @@ public:
 	std::vector<int> getPlanes_to_be_skipped() const;
 	void setPlanes_to_be_skipped(std::vector<int> planes_to_be_skipped);
 
+	float getPulserThreshold() const {return _pulserthreshold;}
+	int getSignalSign(int ch)const{return ch==0||ch==4?-1:1;}
+
 private:
 	WaveformOptions* _waveformoptions;
+	float _pulserthreshold;
 	//general settings
 	std::string ConfigurationFileName;
 	std::string SnapShotDir;

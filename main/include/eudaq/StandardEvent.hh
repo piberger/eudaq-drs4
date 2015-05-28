@@ -36,14 +36,18 @@ public:
 	void SetChannelName(std::string channelname){m_channelname = channelname;}
 	int GetChannelNumber() const {return m_channelnumber;};
 	void SetChannelNumber(int channelnumber){m_channelnumber = channelnumber;}
+	void SetTimeStamp(uint64_t timestamp){m_timestamp=timestamp;}
+	uint64_t GetTimeStamp() const {return m_timestamp;}
 //	std::string GetName() const {return m_sensor+(std::string)"_"+m_type+(std::string)to_string(m_id);}
 private:
+	uint64_t m_timestamp;
 	int m_n_samples;
 	int m_channelnumber;
 	mutable std::vector<float> m_samples;
 	unsigned m_id;
 	std::string m_type, m_sensor,m_channelname;
 	unsigned int m_trigger_cell;
+
 };
 
 class DLLEXPORT StandardPlane : public Serializable {
