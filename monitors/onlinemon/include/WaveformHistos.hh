@@ -46,6 +46,8 @@ class WaveformHistos {
     std::string getName() const {return (std::string)TString::Format("%s_%d",_sensor.c_str(),_id);};
     virtual ~WaveformHistos(){}
     void Fill(const SimpleStandardWaveform & wf);
+    void FillPulserEvent(const SimpleStandardWaveform & wf);
+    void FillSignalEvent(const SimpleStandardWaveform & wf);
     unsigned int getNSamples() const {return _n_samples;}
     void Reset();
     void SetOptions(WaveformOptions* options){std::cout<<"Setting Options for "<<getName()<<std::endl;};
@@ -67,6 +69,8 @@ class WaveformHistos {
     TProfile* getProfileDeltaIntegral() const { return (TProfile*)profiles.at("DeltaIntegral");};
     TProfile* getProfileSignalIntegral() const { return (TProfile*)profiles.at("SignalIntegral");};
     TProfile* getProfilePedestalIntegral() const { return (TProfile*)profiles.at("PedestalIntegral");};
+    TProfile* getProfile(std::string key) const;
+    TH1F* getHisto(std::string key) const;
     void SetMaxRangeX(std::string,float minx, float maxx);
     void SetMaxRangeY(std::string,float min, float max);
     void SetPedestalIntegralRange(float min, float max);
@@ -75,8 +79,11 @@ class WaveformHistos {
   private:
     std::pair<float,float> pedestal_integral_range;
     std::pair<float,float> signal_integral_range;
+    std::pair<float,float> pulser_integral_range;
     unsigned int n_fills;
     void InitHistos();
+    void InitIntegralHistos();
+    void InitProfiles();
     void Reinitialize_Waveforms();
     void UpdateRanges();
     void UpdateRange(TH1* histo);
