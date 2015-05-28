@@ -54,6 +54,7 @@ public:
 	void setPlanes_to_be_skipped(std::vector<int> planes_to_be_skipped);
 
 	float getPulserThreshold() const {return _pulserthreshold;}
+	int getSignalSign(int ch)const{return ch==0||ch==4?-1:1;}
 
 private:
 	WaveformOptions* _waveformoptions;

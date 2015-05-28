@@ -43,6 +43,7 @@ private:
 
   std::string prepareFilename(std::string filename, std::string n);
   std::vector<masking> GetConfMask();
+  std::string readHash(std::string hexMask, char i2c);
 
 
   unsigned m_run, m_ev, m_ev_filled, m_ev_runningavg_filled;
@@ -53,6 +54,7 @@ private:
   bool m_terminated, m_running, triggering;
   bool m_trimmingFromConf, m_trigger_is_pg;
   bool m_maskingFromConf;
+  std::string m_last_mask_filename;
   eudaq::Configuration m_config;
 
   // Add one mutex to protect calls to pxarCore:

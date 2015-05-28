@@ -48,10 +48,12 @@ public:
 		mon=mymon;
 	}
 	void Calculate();
-	float getMax() const{return !calculated?-1e9:_max;};
-	float getMin()const{return !calculated?-1e9:_min;};
+	float getMax() const{return !calculated?getMaximum(0,1e9):_max;};
+	float getMin()const{return !calculated?getMinimum(0,1e9):_min;};
 	float getIntegral() const{return !calculated?getIntegral(0,_nsamples):_integral;}
 	float getIntegral(float min, float max) const;
+    float maxSpreadInRegion(float min, float max) const;
+	float getAbsMaximum(float min, float max) const;
 	float getMaximum(float min, float max) const;
 	float getMinimum(float min, float max) const;
 	void setNSamples(unsigned int n_samples){_nsamples = n_samples;}
@@ -63,7 +65,7 @@ public:
 	ULong64_t getTimestamp() const {return _timestamp;}
 	void setEvent(int event){_tlu_event = event;}
 	int getEvent() const{return _tlu_event;}
-	bool isPulserEvent() const{ _PulserEvent;}
+	bool isPulserEvent() const{ return _PulserEvent;}
 	void setPulserEvent() {setPulserEvent(true);}
 	void setPulserEvent(bool pulserEvent) {_PulserEvent = pulserEvent;}//std::cout<<"setPulser:"<<_PulserEvent<<std::endl;}
 private:

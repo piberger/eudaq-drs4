@@ -271,6 +271,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
     simpEv.setEvent_number(ev.GetEventNumber());
     simpEv.setEvent_timestamp(ev.GetTimestamp());
     // Get Information wheater this event is an Pulser event
+    // this is a hardcoded fix for setup at psi, think about a different option
     bool isPulserEvent = false;
     for (unsigned int i = 0; i < nwf;i++){
     	const eudaq::StandardWaveform & waveform = ev.GetWaveform(i);
@@ -278,11 +279,14 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
     		SimpleStandardWaveform simpWaveform(waveform.GetType(),waveform.ID(),waveform.GetNSamples(),&mon_configdata);
 			simpWaveform.addData(&(*waveform.GetData())[0]);
 			simpWaveform.Calculate();
-			float integral = simpWaveform.getIntegral();
-			if (TMath::Abs(integral) > mon_configdata.getPulserThreshold())
-				isPulserEvent = true;
-            if (isPulserEvent)
-			cout << "Pulser: " << isPulserEvent << std::endl;
+			float integral = simpWaveform.getIntegral(700,900);
+			//if (TMath::Abs(integral) > 40) //mon_configdata.getPulserThreshold())
+			//	isPulserEvent = true;
+            float pulserMin = simpWaveform.getMinimum(700, 900);
+            if( pulserMin < -100.) 
+                isPulserEvent = true;
+            // if (isPulserEvent)
+            //     cout << "PulserEvent, minimum is " << pulserMin << std::endl;
     	}
     }
 
@@ -304,6 +308,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 //             cout << "sensorname " << sensorname << endl; // this gives V1730 or drs4
 //			SimpleStandardWaveform simpWaveform(sensorname,waveform.ID(),&mon_configdata);//,plane.XSize(),plane.YSize(), plane.TLUEvent(),plane.PivotPixel(),&mon_configdata);
 			SimpleStandardWaveform simpWaveform(sensorname,waveform.ID(),waveform.GetNSamples(),&mon_configdata);//,plane.XSize(),plane.YSize(), plane.TLUEvent(),plane.PivotPixel(),&mon_configdata);
+			simpWaveform.setSign(mon_configdata.getSignalSign(waveform.GetChannelNumber()));
 			simpWaveform.setNSamples(waveform.GetNSamples());
 			simpWaveform.addData(&(*waveform.GetData())[0]);
 			simpWaveform.Calculate();
@@ -484,6 +489,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
   {
     std::cout << "This is a BORE" << std::endl;
   }
+
 
 }
 

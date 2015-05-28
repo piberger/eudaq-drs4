@@ -97,7 +97,7 @@ std::vector<std::pair<std::string,uint8_t> > CMSPixelProducer::GetConfDACs(int16
       m_alldacs.append(name + " " + std::to_string(value) + "; ");
     }
 
-    EUDAQ_USER(string("Successfully read ") + std::to_string(dacs.size())
+    EUDAQ_EXTRA(string("Successfully read ") + std::to_string(dacs.size())
 	       + string(" DACs from file, ") + std::to_string(overwritten_dacs) + string(" overwritten by config."));
   }
   else {
@@ -113,7 +113,7 @@ std::vector<std::pair<std::string,uint8_t> > CMSPixelProducer::GetConfDACs(int16
 }
 
 std::vector<pxar::pixelConfig> CMSPixelProducer::GetConfMaskBits() {
-  
+
   // Read in the mask bits:
   std::vector<pxar::pixelConfig> maskbits;
 
@@ -189,7 +189,7 @@ std::vector<pxar::pixelConfig> CMSPixelProducer::GetConfTrimming(std::vector<pxa
   }
 
   if(m_trimmingFromConf) {
-    EUDAQ_USER(string("Trimming successfully read from ") + m_config.Name() + string(": \"") + string(filename) + string("\"\n"));
+    EUDAQ_EXTRA(string("Trimming successfully read from ") + m_config.Name() + string(": \"") + string(filename) + string("\"\n"));
   }
   return pixels;
 } // GetConfTrimming
@@ -225,3 +225,26 @@ vector<masking> CMSPixelProducer::GetConfMask(){
     return mask;
 }
 
+/** Read hash */
+
+string CMSPixelProducer::readHash(string hexMask, char i2c){
+
+    stringstream ss;
+
+    for (uint16_t i(0); i<hexMask.size(); i++){
+        if (hexMask[i]==i2c && i % 5 == 1){
+            if (hexMask[i-1] == 'a'){
+                cout << "pix" << int(hexMask[i+1])*16+int(hexMask[i+2]) << "/" << int(hexMask[i+6])*16+int(hexMask[i+7]);
+            }
+            else if (hexMask[i-1] == 'b'){
+                uint16_t start = (hexMask[i+1]-'0')*16 + (hexMask[i+2] < '9'? hexMask[i+2]-'0' : hexMask[i+2]-'W');
+                uint16_t stop  = (hexMask[i+6]-'0')*16 + (hexMask[i+7] < '9'? hexMask[i+7]-'0' : hexMask[i+7]-'W');
+                start == stop ? ss << "col " << start << ", " : ss << "col " << start << "-" << stop << ", ";
+            }
+            else if (hexMask[i-1] == 'c'){
+                uint16_t start = (hexMask[i+1]-'0')*16 + (hexMask[i+2] < '9'? hexMask[i+2]-'0' : hexMask[i+2]-'W');
+                uint16_t stop  = (hexMask[i+6]-'0')*16 + (hexMask[i+7] < '9'? hexMask[i+7]-'0' : hexMask[i+7]-'W');
+                start == stop ? ss << "row " << start << ", " : ss << "row " << start << "-" << stop << ", ";
+            }}}
+    return ss.str();
+    }
