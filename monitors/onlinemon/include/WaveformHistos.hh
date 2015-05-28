@@ -60,32 +60,26 @@ class WaveformHistos {
     THStack* getWaveformStack(){return h_wf_stack;}
     void setRootMonitor(RootMonitor *mon)  {_mon = mon; };
     // signal histos   
-    TH1F* getDeltaVoltageHisto() const { return (TH1F*)histos.at("DeltaVoltage");};
-    TH1F* getMinVoltageHisto() const { return (TH1F*)histos.at("MinVoltage");};
-    TH1F* getMaxVoltageHisto() const { return (TH1F*)histos.at("MaxVoltage");};
-    TH1F* getFullIntegralVoltageHisto() const { return (TH1F*)histos.at("FullIntegral");};
-    TH1F* getSignalIntegralVoltageHisto() const{ return (TH1F*)histos.at("SignalIntegral");};
+    TH1F* getFullAverageVoltageHisto() const { return (TH1F*)histos.at("FullAverage");};
+    TH1F* getSignalHisto() const{ return (TH1F*)histos.at("Signal");};
     TH1F* getSignalMinusPedestalHisto() const{ return (TH1F*)histos.at("SignalMinusPedestal");};
-    TH1F* getPedestalIntegralVoltageHisto() const { return (TH1F*)histos.at("PedestalIntegral");};
-    TH1F* getDeltaIntegralVoltageHisto() const { return (TH1F*)histos.at("DeltaIntegral");};
-    TProfile* getProfileDeltaVoltage() const { return (TProfile*)profiles.at("DeltaVoltage");};
-    TProfile* getProfileDeltaIntegral() const { return (TProfile*)profiles.at("DeltaIntegral");};
-    TProfile* getProfileSignalIntegral() const { return (TProfile*)profiles.at("SignalIntegral");};
-    TProfile* getProfilePedestalIntegral() const { return (TProfile*)profiles.at("PedestalIntegral");};
+    TH1F* getPedestalHisto() const { return (TH1F*)histos.at("Pedestal");};
+    // TH1F* getDeltaIntegralVoltageHisto() const { return (TH1F*)histos.at("DeltaIntegral");};
+    TProfile* getProfileFullAverageVoltage() const { return (TProfile*)profiles.at("FullAverage");};
+    //TProfile* getProfileDeltaIntegral() const { return (TProfile*)profiles.at("DeltaIntegral");};
+    TProfile* getProfileSignal() const { return (TProfile*)profiles.at("Signal");};
+    TProfile* getProfilePedestal() const { return (TProfile*)profiles.at("Pedestal");};
     TProfile* getProfile(std::string key) const;
     // pulser histos   
-    TH1F* getPulserDeltaVoltageHisto() const { return (TH1F*)histos.at("Pulser_DeltaVoltage");};
-    TH1F* getPulserMinVoltageHisto() const { return (TH1F*)histos.at("Pulser_MinVoltage");};
-    TH1F* getPulserMaxVoltageHisto() const { return (TH1F*)histos.at("Pulser_MaxVoltage");};
-    TH1F* getPulserFullIntegralVoltageHisto() const { return (TH1F*)histos.at("Pulser_FullIntegral");};
-    TH1F* getPulserSignalIntegralVoltageHisto() const{ return (TH1F*)histos.at("Pulser_SignalIntegral");};
+    TH1F* getPulserFullAverageVoltageHisto() const { return (TH1F*)histos.at("Pulser_FullAverage");};
+    TH1F* getPulserSignalHisto() const{ return (TH1F*)histos.at("Pulser_Signal");};
     TH1F* getPulserSignalMinusPedestalHisto() const{ return (TH1F*)histos.at("Pulser_SignalMinusPedestal");};
-    TH1F* getPulserPedestalIntegralVoltageHisto() const { return (TH1F*)histos.at("Pulser_PedestalIntegral");};
-    TH1F* getPulserDeltaIntegralVoltageHisto() const { return (TH1F*)histos.at("Pulser_DeltaIntegral");};
-    TProfile* getPulserProfileDeltaVoltage() const { return (TProfile*)profiles.at("Pulser_DeltaVoltage");};
-    TProfile* getPulserProfileDeltaIntegral() const { return (TProfile*)profiles.at("Pulser_DeltaIntegral");};
-    TProfile* getPulserProfileSignalIntegral() const { return (TProfile*)profiles.at("Pulser_SignalIntegral");};
-    TProfile* getPulserProfilePedestalIntegral() const { return (TProfile*)profiles.at("Pulser_PedestalIntegral");};
+    TH1F* getPulserPedestalHisto() const { return (TH1F*)histos.at("Pulser_Pedestal");};
+    // TH1F* getPulserDeltaIntegralVoltageHisto() const { return (TH1F*)histos.at("Pulser_DeltaIntegral");};
+    TProfile* getPulserProfileFullAverageVoltage() const { return (TProfile*)profiles.at("Pulser_FullAverage");};
+    //TProfile* getPulserProfileDeltaIntegral() const { return (TProfile*)profiles.at("Pulser_DeltaIntegral");};
+    TProfile* getPulserProfileSignal() const { return (TProfile*)profiles.at("Pulser_Signal");};
+    TProfile* getPulserProfilePedestal() const { return (TProfile*)profiles.at("Pulser_Pedestal");};
     TProfile* getPulserProfile(std::string key) const;
 
     TH1F* getHisto(std::string key) const;

@@ -607,8 +607,8 @@ int main(int argc, const char ** argv) {
     {
       gStyle->SetPalette(1);
       gStyle->SetNumberContours(99);
-      gStyle->SetOptStat(0111);
-      gStyle->SetStatH(0.03);
+      gStyle->SetOptStat(111111);
+      gStyle->SetStatH(0.15);
     }
     else
     {
