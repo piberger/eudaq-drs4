@@ -281,6 +281,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 			float integral = simpWaveform.getIntegral();
 			if (TMath::Abs(integral) > mon_configdata.getPulserThreshold())
 				isPulserEvent = true;
+            if (isPulserEvent)
 			cout << "Pulser: " << isPulserEvent << std::endl;
     	}
     }
@@ -312,7 +313,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 			simpWaveform.setChannelName(waveform.GetChannelName());
 			simpWaveform.setChannelNumber(waveform.GetChannelNumber());
 			simpWaveform.setPulserEvent(isPulserEvent);
-            std::cout<<"isPulser Event: "<<isPulserEvent<<"/"<<simpWaveform.isPulserEvent()<<std::endl;
+            //std::cout<<"isPulser Event: "<<isPulserEvent<<"/"<<simpWaveform.isPulserEvent()<<std::endl;
 //			waveform.GetNSamples();
 //			cout<<"simpWaveform no"<<i<<" name \""<<simpWaveform.getName()
 //					<<"\" ID: "<<simpWaveform.getID()
