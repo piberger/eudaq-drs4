@@ -98,6 +98,7 @@ void WaveformHistos::InitHistos() {
 	hName = TString::Format("h_wf_stack_%s_%d",_sensor.c_str(),_id);
 	hTitle = TString::Format("%s %d: Waveform Stack;time; signal/mV",_sensor.c_str(),_id);
 	h_wf_stack = new THStack(hName,hTitle);
+
 	for (int i = 0; i < _n_wfs; i++){
 		hName = TString::Format("Waveform_%d_%d",_id,i);
 		hTitle = TString::Format("Waveform ID %d - %d",_id,i);
@@ -170,7 +171,8 @@ void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 	int event_no = wf.getEvent();
 	bool isPulserEvent = wf.isPulserEvent();
 	if (isPulserEvent){
-		continue;
+        std::cout<<" Ignoring Pulser Event "<<std::endl;
+		return;  
 	}
 	histos["FullIntegral"]     -> Fill(sign*integral);
 	histos["SignalIntegral"]   -> Fill(sign*signal_integral);
@@ -193,11 +195,14 @@ void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 		else if (it->first == "SignalIntegral")
 			it->second->Fill(event_no,sign*signal_integral);
 		else if (it->first == "PedestalIntegral")
-			it->second->Fill(event_no,sign*signal_integral);
+			it->second->Fill(event_no,sign*pedestal_integral);
 		else if (it->first == "DeltaIntegral")
 			it->second->Fill(event_no,sign*(signal_integral-pedestal_integral));
-		if (event_no % 5000 == 0 )
-			it->second->Fit("pol(0)+exp(1)");
+		if (event_no % 5000 == 0 && event_no >20000){
+            TF1* fit = new TF1("expoFit", "pol0(0)+expo(1)",0,event_no+5000);
+			it->second->Fit(fit,"Q");
+            delete fit;
+            }
 	}
 	UpdateRanges();
 	//	cout<<"Name: "<<wf.getName()<<" ID: "<<wf.getID()<<endl;
