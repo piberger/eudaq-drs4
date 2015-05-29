@@ -383,104 +383,6 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     }
 }
 
-
-void WaveformHistos::FillPulserEvent(const SimpleStandardWaveform & wf){
-//    std::cout<<"WaveformHistos::FillPulserEvent "<<std::endl;
-    int event_no = wf.getEvent();
-    ULong64_t timestamp = wf.getTimestamp();
-    int sign = wf.getSign(); //why is this here? it's never properly assigned
-//    std::cout<<" Ignoring Pulser Event "<<std::endl;
-    float pulser_integral = wf.getIntegral(pulser_integral_range.first,pulser_integral_range.second);
-    float pulser_maximum = wf.getMaximum(pulser_integral_range.first,pulser_integral_range.second);
-    float pulser_minimum = wf.getMinimum(pulser_integral_range.first,pulser_integral_range.second);
-//    std::cout<<"Fill1"<<std::endl;
-    histos["PulserIntegral"] -> Fill(sign* pulser_integral);
-//    std::cout<<"Fill2"<<std::endl;
-    histos["PulserMaximum"] -> Fill(sign* pulser_maximum);
-    histos["PulserMinimum"] -> Fill(sign* pulser_minimum);
-    return;
-}
-void WaveformHistos::FillSignalEvent(const SimpleStandardWaveform & wf){
-//    std::cout<<"WaveformHistos::FillSignalEvent "<<std::endl;
-    int event_no = wf.getEvent();
-    ULong64_t timestamp = wf.getTimestamp();
-    int sign = wf.getSign(); //why is this here? it's never properly assigned
-
-    float min      = wf.getMin();
-    float max      = wf.getMax();
-    float delta    = fabs(max-min);
-    float integral = wf.getIntegral();
-    float signalSpread   = wf.maxSpreadInRegion(signal_integral_range.first  ,signal_integral_range.second);
-    float pedestalSpread = wf.maxSpreadInRegion(pedestal_integral_range.first,pedestal_integral_range.second);
-
-    float signal_integral   = wf.getIntegral(signal_integral_range.first  ,signal_integral_range.second);
-    float signal_maximum    = wf.getMaximum (signal_integral_range.first  ,signal_integral_range.second);
-    float signal_minimum    = wf.getMinimum (signal_integral_range.first  ,signal_integral_range.second);
-    float pedestal_integral = wf.getIntegral(pedestal_integral_range.first,pedestal_integral_range.second);
-
-//     cout << "first and second: " << signal_integral_range.first << " " << signal_integral_range.second << endl;
-//     cout << "this is the signal   integral: " << signal_integral << endl;
-//     cout << "this is the pedestal integral: " << pedestal_integral << endl;
-//     cout << "this is the delta integral: " << signal_integral - pedestal_integral << endl;
-
-    histos["FullIntegral"]     -> Fill(sign*integral);
-    // histos["SignalIntegral"]   -> Fill(sign*signal_integral);
-    histos["Signal"]   -> Fill(signalSpread);
-    // histos["PedestalIntegral"] -> Fill(sign*pedestal_integral);
-    histos["PedestalIntegral"] -> Fill(pedestalSpread);
-//    std::cout<<"Fill1"<<std::endl;
-    histos["DeltaIntegral"]    -> Fill((signal_integral - pedestal_integral)*sign);
-    histos["SignalMinusPedestal"]    -> Fill(signalSpread-pedestalSpread);
-//    std::cout<<"Fill2"<<std::endl;
-//    std::cout<<"Fill3"<<std::endl;
-//    std::cout<<"FillProfiles"<<std::endl;
-    for (std::map<std::string, TH1*>::iterator it = profiles.begin();it!=profiles.end();it++){
-        if (it->second->GetXaxis()->GetXmax() < event_no){
-            int bins = (event_no+5000)/5000;
-            int max = (bins)*5000;
-            it->second->SetBins(bins,0,max);
-            //			cout<<it->first<<": Extend Profile "<<bins<<" "<<max<<endl;
-        }
-        if (it->first == "FullIntegral")
-            it->second->Fill(event_no,sign*integral);
-        else if (it->first == "Signal")
-            it->second->Fill(event_no,sign*signal_integral);
-        else if (it->first == "PedestalIntegral")
-            it->second->Fill(event_no,sign*pedestal_integral);
-        else if (it->first == "DeltaIntegral")
-            it->second->Fill(event_no,sign*(signal_integral-pedestal_integral));
-        if (event_no % 5000 == 0 && event_no >20000){
-            TF1* fit = new TF1("expoFit", "pol0(0)+expo(1)",0,event_no+5000);
-            it->second->Fit(fit,"Q");
-            delete fit;
-        }
-    }
-    UpdateRanges();
-    //	cout<<"Name: "<<wf.getName()<<" ID: "<<wf.getID()<<endl;
-    //	TString name = TString::Format("wf_%s_%d_%d",wf.getName().c_str(),wf.getID());
-    TH1F* gr = _Waveforms[n_fills%_n_wfs];
-    for (int n = 0; n < wf.getNSamples();n++)
-        gr->SetBinContent(n+1,wf.getData()[n]);
-    for (int i = 0; i < _n_wfs; i++)
-        _Waveforms[(n_fills-i)%_n_wfs]->SetLineColor(kAzure+i);
-    gr->SetEntries(event_no);
-    n_fills++;
-    //	if (!gr->GetN())
-    //		return;
-    //	if (gr->GetXaxis())
-    //		gr->GetXaxis()->SetTitle("n");
-    //	if (gr->GetYaxis())
-    //		gr->GetYaxis()->SetTitle("Signal / mV");
-
-    if (n_fills<=1){
-        //		gr->Draw("APL");
-        if (gr->GetXaxis())
-            gr->GetXaxis()->SetTitle("n");
-        if (gr->GetYaxis())
-            gr->GetYaxis()->SetTitle("Signal / mV");
-    }
-}
-
 void WaveformHistos::Reset() {
     for (int i = 0; i < _Waveforms.size(); i++)
         _Waveforms[i]->Reset();
@@ -537,11 +439,11 @@ TProfile* WaveformHistos::getProfile(std::string key) const {
     return (TProfile*)profiles.at(key);
 }
 
-TH1F* WaveformHistos::getHisto(std::string key) const {
+TH1* WaveformHistos::getHisto(std::string key) const {
 //    std::cout<<"WaveformHistos::getHisto"<<key<<std::endl;
     std::map<std::string, TH1*>::const_iterator it = histos.find(key);
     if ( it == histos.end()) return 0;
-    return (TH1F*)histos.at(key);
+    return histos.at(key);
 }
 
 int WaveformHistos::SetHistoAxisLabels(TH1* histo,string xlabel, string ylabel)

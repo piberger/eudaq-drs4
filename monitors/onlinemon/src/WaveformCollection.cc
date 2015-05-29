@@ -139,11 +139,12 @@ void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
         }
         //		cout << "WaveformCollection:: Monitor running in online-mode" << endl;
         char tree[1024], folder[1024];
+WaveformHistos* wf_histo =getWaveformHistos(p.getName(),p.getID());
         sprintf(tree,"%s/Ch %i - %s/PulserEvents",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
         std::cout<<tree<<endl;
         _mon->getOnlineMon()->registerTreeItem(tree);
         _mon->getOnlineMon()->registerHisto(tree,
-                getWaveformHistos(p.getName(),p.getID())->getHisto("PulserEvents"), "",0);
+                wf_histo->getHisto("PulserEvents"), "",0);
 
         sprintf(tree,"%s/Ch %i - %s/PulserEventsProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
         std::cout<<tree<<endl;

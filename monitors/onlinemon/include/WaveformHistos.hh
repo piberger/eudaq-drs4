@@ -84,7 +84,7 @@ class WaveformHistos {
     TProfile* getPulserProfileSignalMinusPedestal() const { return (TProfile*)profiles.at("Pulser_SignalMinusPedestal");};
     TProfile* getPulserProfile(std::string key) const;
 
-    TH1F* getHisto(std::string key) const;
+    TH1* getHisto(std::string key) const;
     void SetMaxRangeX(std::string,float minx, float maxx);
     void SetMaxRangeY(std::string,float min, float max);
     void SetPedestalIntegralRange(float min, float max);
