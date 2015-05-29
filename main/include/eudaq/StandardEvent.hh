@@ -5,6 +5,7 @@
 //#include "eudaq/StandardWaveform.hh"
 #include <vector>
 #include <string>
+#include <algorithm>
 //#include <TString.h>
 
 namespace eudaq {
@@ -39,6 +40,11 @@ public:
 	void SetTimeStamp(uint64_t timestamp){m_timestamp=timestamp;}
 	uint64_t GetTimeStamp() const {return m_timestamp;}
 //	std::string GetName() const {return m_sensor+(std::string)"_"+m_type+(std::string)to_string(m_id);}
+    float getMinInRange(int min, int max) const{return (*std::min_element(&m_samples.at(min), &m_samples.at(max)));};
+    float getMaxInRange(int min, int max) const{return (*std::max_element(&m_samples.at(min), &m_samples.at(max)));};
+    int getIndexMin(int min, int max) const{return find(m_samples.begin()+min, m_samples.begin()+min+max+1,getMinInRange(min, max)) - (m_samples.begin()+min);};
+    int getIndexMax(int min, int max) const{return find(m_samples.begin()+min, m_samples.begin()+min+max+1,getMaxInRange(min, max)) - (m_samples.begin()+min);};
+
 private:
 	uint64_t m_timestamp;
 	int m_n_samples;

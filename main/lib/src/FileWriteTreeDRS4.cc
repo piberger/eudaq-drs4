@@ -287,14 +287,20 @@ namespace eudaq {
                 int n_samples = waveform.GetNSamples();
                 if (verbose > 3) std::cout << "number of samples in my wf " << n_samples << std::endl;
 
-                // load the wafeforms into the vector
+                // load the waveforms into the vector
                 data = waveform.GetData();
                 
                 // calculate the signal and the baseline. this is very hardcoded!!!
                 // float sig = CalculatePeak(data, 1075, 1150);
                 std::pair<int, float> sig = FindMaxAndValue(data,    0, 1000);
-                float ped = Calculate    (data,  300,  700);
+                float sig = CalculateMax (data,    0, 1000);
+                float ped = Calculate    (data,  500, 1000);
+                float pul = Calculate    (data,  500, 1000);
 
+                // float mini = waveform.getMinInRange(10,1000);
+                // float minind = waveform.getIndexMin(10,1000);
+                // cout << "minimum of the waveform in range 10, 1000: " << mini << " at index " << minind<< endl;
+        
                 // save the values in the event
                 v_sig     ->push_back(sig.second);
                 v_sig_time->push_back(sig.first);
