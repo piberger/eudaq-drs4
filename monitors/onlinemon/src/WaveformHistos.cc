@@ -333,7 +333,7 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
             //			cout<<it->first<<": Extend Profile "<<bins<<" "<<max<<endl;
         }
         if(it->first == "PulserEvents")
-            histos["PulserEvents"]->Fill(event_no,isPulserEvent);
+            it->second->Fill(event_no,isPulserEvent);
         else if (it->first == prefix+"FullIntegral")
             it->second->Fill(event_no,sign*integral);
         else if (it->first == prefix+"Signal")
