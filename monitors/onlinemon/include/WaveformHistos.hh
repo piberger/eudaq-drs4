@@ -68,6 +68,7 @@ class WaveformHistos {
     TProfile* getProfileFullAverageVoltage() const { return (TProfile*)profiles.at("FullAverage");};
     //TProfile* getProfileDeltaIntegral() const { return (TProfile*)profiles.at("DeltaIntegral");};
     TProfile* getProfileSignal() const { return (TProfile*)profiles.at("Signal");};
+    TProfile* getProfileSignalMinusPedestal() const { return (TProfile*)profiles.at("SignalMinusPedestal");};
     TProfile* getProfilePedestal() const { return (TProfile*)profiles.at("Pedestal");};
     TProfile* getProfile(std::string key) const;
     // pulser histos   
@@ -80,6 +81,7 @@ class WaveformHistos {
     //TProfile* getPulserProfileDeltaIntegral() const { return (TProfile*)profiles.at("Pulser_DeltaIntegral");};
     TProfile* getPulserProfileSignal() const { return (TProfile*)profiles.at("Pulser_Signal");};
     TProfile* getPulserProfilePedestal() const { return (TProfile*)profiles.at("Pulser_Pedestal");};
+    TProfile* getPulserProfileSignalMinusPedestal() const { return (TProfile*)profiles.at("Pulser_SignalMinusPedestal");};
     TProfile* getPulserProfile(std::string key) const;
 
     TH1F* getHisto(std::string key) const;

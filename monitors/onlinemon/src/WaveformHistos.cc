@@ -141,6 +141,14 @@ void WaveformHistos::InitProfiles(){
     profiles["Signal"] = new TProfile(hName,hTitle,1,0,1000);
     profiles["Signal"]->SetStats(false);
 
+    hName = TString::Format("h_ProfileSignalMinusPedestal_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Profile Signal-Pedestal (%5.1f - %5.1f); event number / 5000events; signal/mV",
+            _sensor.c_str(),_id,
+            signal_integral_range.first,
+            signal_integral_range.second);
+    profiles["SignalMinusPedestal"] = new TProfile(hName,hTitle,1,0,1000);
+    profiles["SignalMinusPedestal"]->SetStats(false);
+
     hName = TString::Format("h_ProfilePulser_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: Profile Pulser (%5.1f - %5.1f); event number / 5000events; signal/mV",
             _sensor.c_str(),_id,
@@ -180,6 +188,14 @@ void WaveformHistos::InitProfiles(){
             signal_integral_range.second);
     profiles["Pulser_Signal"] = new TProfile(hName,hTitle,1,0,1000);
     profiles["Pulser_Signal"]->SetStats(false);
+
+    hName = TString::Format("h_Pulser_ProfileSignalMinusPedestal_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Profile Signal-Pedestal (%5.1f - %5.1f); event number / 5000events; signal/mV",
+            _sensor.c_str(),_id,
+            signal_integral_range.first,
+            signal_integral_range.second);
+    profiles["Pulser_SignalMinusPedestal"] = new TProfile(hName,hTitle,1,0,1000);
+    profiles["Pulser_SignalMinusPedestal"]->SetStats(false);
 
     hName = TString::Format("h_Pulser_ProfilePulser_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: Profile Pulser (%5.1f - %5.1f); event number / 5000events; signal/mV",
@@ -309,6 +325,8 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
                 it->second->Fill(event_no,signalSpread);
             else if (it->first == "Pedestal")
                 it->second->Fill(event_no,pedestalSpread);
+            else if (it->first == "SignalMinusPedestal")
+                it->second->Fill(event_no,signalSpread-pedestalSpread);
             // if (event_no % 5000 == 0 && event_no >20000){
             //     TF1* fit = new TF1("expoFit", "pol0(0)+expo(1)",0,event_no+5000);
             //     it->second->Fit(fit,"Q");
@@ -322,6 +340,8 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
                 it->second->Fill(event_no,signalSpread);
             else if (it->first == "Pulser_Pedestal")
                 it->second->Fill(event_no,pedestalSpread);
+            else if (it->first == "Pulser_SignalMinusPedestal")
+                it->second->Fill(event_no,signalSpread-pedestalSpread);
             //if (event_no % 5000 == 0 && event_no >20000){
             //    TF1* fit = new TF1("expoFit", "pol0(0)+expo(1)",0,event_no+5000);
             //    it->second->Fit(fit,"Q");

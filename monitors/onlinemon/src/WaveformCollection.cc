@@ -181,6 +181,11 @@ void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
 		std::cout<<tree<<endl;
 				_mon->getOnlineMon()->registerTreeItem(tree);
 				_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getProfilePedestal(), "",0);
+
+		sprintf(tree,"%s/Ch %i - %s/SignalMinusPedestalProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+		std::cout<<tree<<endl;
+				_mon->getOnlineMon()->registerTreeItem(tree);
+				_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getProfileSignalMinusPedestal(), "",0);
 //
         // ===================================================================
         // ====== PULSER EVENTS ==============================================
@@ -224,6 +229,11 @@ void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
 		std::cout<<tree<<endl;
 				_mon->getOnlineMon()->registerTreeItem(tree);
 				_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getPulserProfilePedestal(), "",0);
+
+		sprintf(tree,"%s/Ch %i - %s/Pulser_SignalMinusPedestalProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+		std::cout<<tree<<endl;
+				_mon->getOnlineMon()->registerTreeItem(tree);
+				_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getPulserProfileSignalMinusPedestal(), "",0);
 //=====================================================================
 //=============== WAVEFORM STACKS =====================================
 //=====================================================================
