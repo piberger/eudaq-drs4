@@ -109,7 +109,7 @@ void WaveformHistos::InitIntegralHistos(){
     hTitle = TString::Format("%s %d: Pulser Pulser; pulser /mV (%5.1f - %5.1f); number of entries",
             _sensor.c_str(),_id,pulser_integral_range.first,pulser_integral_range.second);
     histos["Pulser_Pulser"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
-    SetMaxRangeX((string)hName,-50,50);
+//    SetMaxRangeX((string)hName,-50,50);
 
     hName = TString::Format("h_Pulser_Signal_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: Pulser Signal Range (%5.1f - %5.1f); signal /mV; number of entries",
@@ -336,7 +336,7 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     histos[prefix+"FullAverage"]->Fill(sign*integral);
     histos[prefix+"Signal"]     ->Fill(signalSpread);
     histos[prefix+"Pedestal"]   ->Fill(pedestalSpread);
-    histos[prefix+"Pulser"]   ->Fill(pedestalSpread);
+    histos[prefix+"Pulser"]   ->Fill(pulserSpread);
     histos[prefix+"SignalMinusPedestal"] -> Fill(signalSpread-pedestalSpread);
     histos[prefix+"PulserMinusPedestal"] -> Fill(signalSpread-pedestalSpread);
     for (std::map<std::string, TH1*>::iterator it = profiles.begin();it!=profiles.end();it++){
