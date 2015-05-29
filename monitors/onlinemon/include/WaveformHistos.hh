@@ -98,6 +98,10 @@ class WaveformHistos {
     void InitHistos();
     void InitIntegralHistos();
     void InitProfiles();
+    void InitPulserProfiles();
+    void InitSignalProfiles();
+    void InitPedestalProfiles();
+    void InitWaveformStacks();
     void Reinitialize_Waveforms();
     void UpdateRanges();
     void UpdateRange(TH1* histo);
@@ -105,6 +109,7 @@ class WaveformHistos {
     int SetHistoAxisLabely(TH1* histo,std::string ylabel);
     int SetHistoAxisLabels(TH1* histo,std::string xlabel, std::string ylabel);
     RootMonitor * _mon;
+    bool do_fitting;
     float min_wf;
     float max_wf;
 };

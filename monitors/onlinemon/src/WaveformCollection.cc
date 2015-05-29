@@ -190,17 +190,17 @@ void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
         // ===================================================================
         // ====== PULSER EVENTS ==============================================
         // ===================================================================
-		sprintf(tree,"%s/Ch %i - %s/Pulser_FullAverage",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+		sprintf(tree,"%s/Ch %i - %s/Pulser/FullAverage",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
 		std::cout<<tree<<endl;
 		_mon->getOnlineMon()->registerTreeItem(tree);
 		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getPulserFullAverageVoltageHisto(), "",0);
 
-		sprintf(tree,"%s/Ch %i - %s/Pulser_Signal",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+		sprintf(tree,"%s/Ch %i - %s/Pulser/Signal",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
 		std::cout<<tree<<endl;
 		_mon->getOnlineMon()->registerTreeItem(tree);
 		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getPulserSignalHisto(), "",0);
 
-		sprintf(tree,"%s/Ch %i - %s/Pulser_Pedestal",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+		sprintf(tree,"%s/Ch %i - %s/Pulser/Pedestal",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
 		std::cout<<tree<<endl;
 		_mon->getOnlineMon()->registerTreeItem(tree);
 		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getPulserPedestalHisto(), "",0);
@@ -210,7 +210,7 @@ void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
 		// _mon->getOnlineMon()->registerTreeItem(tree);
 		// _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getPulserDeltaIntegralVoltageHisto(), "",0);
 
-		sprintf(tree,"%s/Ch %i - %s/Pulser_SignalMinusPedestal",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+		sprintf(tree,"%s/Ch %i - %s/Pulser/SignalMinusPedestal",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
 		std::cout<<tree<<endl;
 		_mon->getOnlineMon()->registerTreeItem(tree);
 		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getPulserSignalMinusPedestalHisto(), "",0);
@@ -220,17 +220,17 @@ void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
 		// _mon->getOnlineMon()->registerTreeItem(tree);
 		// _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getPulserProfileDeltaIntegral(), "",0);
 
-		sprintf(tree,"%s/Ch %i - %s/Pulser_SignalProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+		sprintf(tree,"%s/Ch %i - %s/Pulser/SignalProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
 		std::cout<<tree<<endl;
 		_mon->getOnlineMon()->registerTreeItem(tree);
 		_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getPulserProfileSignal(), "",0);
 
-		sprintf(tree,"%s/Ch %i - %s/Pulser_PedestalProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+		sprintf(tree,"%s/Ch %i - %s/Pulser/PedestalProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
 		std::cout<<tree<<endl;
 				_mon->getOnlineMon()->registerTreeItem(tree);
 				_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getPulserProfilePedestal(), "",0);
 
-		sprintf(tree,"%s/Ch %i - %s/Pulser_SignalMinusPedestalProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+		sprintf(tree,"%s/Ch %i - %s/Pulser/SignalMinusPedestalProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
 		std::cout<<tree<<endl;
 				_mon->getOnlineMon()->registerTreeItem(tree);
 				_mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getPulserProfileSignalMinusPedestal(), "",0);
@@ -254,8 +254,7 @@ void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
 #endif
 		_mon->getOnlineMon()->addTreeItemSummary(folder,tree);
 
-
-        sprintf(tree,"%s/Ch %i - %s",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+		sprintf(tree,"%s/Ch %i - %s",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
         _mon->getOnlineMon()->makeTreeItemSummary(tree); //make summary page
 	}
 }

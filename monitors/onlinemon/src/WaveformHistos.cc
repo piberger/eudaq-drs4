@@ -18,10 +18,12 @@ WaveformHistos::WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon): _n_
     _mon=mon;
     min_wf = 1e9;
     max_wf = -1e9;
+    do_fitting = false;
 
     // signal_integral_range = make_pair(500.,800.);
     signal_integral_range   = make_pair(   25, 125.);
     pedestal_integral_range = make_pair(  350, 450.);// should be the same length as signal
+    pulser_integral_range = make_pair(760,860);
     //	std::cout << "WaveformHistos::Sensorname: " << _sensor << " "<< _id<< std::endl;
     this->InitHistos();
 }
@@ -38,6 +40,7 @@ void WaveformHistos::InitHistos() {
 
     InitIntegralHistos();
     InitProfiles();
+    InitWaveformStacks();
 }
 
 void WaveformHistos::InitIntegralHistos(){
@@ -45,17 +48,21 @@ void WaveformHistos::InitIntegralHistos(){
     float minVolt = -500; //-1000;
     float maxVolt = 500; //+1000;
     int nbins =  1000; //2000;
-
     //=====================================================================
     //======== SIGNAL HISTOGRAMS ==========================================
     //=====================================================================
-    TString hName = TString::Format("h_FullAverage_%s_%d",_sensor.c_str(),_id);
-    TString hTitle = TString::Format("%s %d: FullAverage; full average/mV; number of entries",_sensor.c_str(),_id);
+    TString hName, hTitle;
+    hName = TString::Format("h_PulserEvents_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: no of pulser events ; is pulser event; number of entries",_sensor.c_str(),_id);
+    histos["PulserEvents"]= new TH1F(hName,hTitle,2,-.5,1.5);
+//    PulserEvents
+    hName = TString::Format("h_FullAverage_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: FullAverage; full average/mV; number of entries",_sensor.c_str(),_id);
     histos["FullAverage"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
     SetMaxRangeX((string)hName,-50,50);
 
-    hName = TString::Format("h_PulserIntegral_%s_%d",_sensor.c_str(),_id);
-    hTitle = TString::Format("%s %d: PulserIntegral; pulser integral/mV (%5.1f - %5.1f); number of entries",
+    hName = TString::Format("h_Pulser_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Pulser range (%5.1f - %5.1f); pulser /mV ; number of entries",
             _sensor.c_str(),_id,pulser_integral_range.first,pulser_integral_range.second);
     histos["Pulser"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
     SetMaxRangeX((string)hName,-50,50);
@@ -81,6 +88,10 @@ void WaveformHistos::InitIntegralHistos(){
     hTitle = TString::Format("%s %d: SignalMinusPedestal; (signalSpread-pedestalSpread)/mV; number of entries",_sensor.c_str(),_id);
     histos["SignalMinusPedestal"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
 
+    hName = TString::Format("h_PulserMinusPedestal_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: PulserMinusPedestal; (pulserSpread-pedestalSpread)/mV; number of entries",_sensor.c_str(),_id);
+    histos["PulserMinusPedestal"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
+
     //=====================================================================
     //======== PULSER HISTOGRAMS ==========================================
     //=====================================================================
@@ -105,6 +116,7 @@ void WaveformHistos::InitIntegralHistos(){
     hTitle = TString::Format("%s %d: Pulser Pedestal Range (%5.1f - %5.1f); pedestal /mV; number of entries",
             _sensor.c_str(),_id,pedestal_integral_range.first,pedestal_integral_range.second);
     histos["Pulser_Pedestal"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
+
     // SetMaxRangeX((string)hName,-30, 30);
 
     // hName = TString::Format("h_Pulser_DeltaIntegral_%s_%d",_sensor.c_str(),_id);
@@ -115,6 +127,10 @@ void WaveformHistos::InitIntegralHistos(){
     hName = TString::Format("h_Pulser_SignalMinusPedestal_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: Pulser SignalMinusPedestal; (signalSpread-pedestalSpread)/mV; number of entries",_sensor.c_str(),_id);
     histos["Pulser_SignalMinusPedestal"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
+
+    hName = TString::Format("h_Pulser_PulserMinusPedestal_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Pulser PulserMinusPedestal; (pulserSpread-pedestalSpread)/mV; number of entries",_sensor.c_str(),_id);
+    histos["Pulser_PulserMinusPedestal"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
 }
 
 void WaveformHistos::InitProfiles(){
@@ -125,8 +141,13 @@ void WaveformHistos::InitProfiles(){
     //=====================================================================
     //======== SIGNAL PROFILES   ==========================================
     //=====================================================================
-    TString hName = TString::Format("h_ProfileDelta_%s_%d",_sensor.c_str(),_id);
-    TString hTitle = TString::Format("%s %d: Profile Delta; event number / 5000events; signal/mV",_sensor.c_str(),_id);
+    TString hName;
+    TString hTitle;
+
+    hName = TString::Format("h_ProfilePulserEvents_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Profile no of PulserEvents; event number / 5000events; rel. no of PulserEvents",_sensor.c_str(),_id);
+    profiles["PulserEvents"] = new TProfile(hName,hTitle,1,0,1000);
+    profiles["PulserEvents"]->SetStats(false);
 
     hName = TString::Format("h_ProfileFullAverage_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: Profile FullAverage; event number / 5000events; signal/mV",_sensor.c_str(),_id);
@@ -149,14 +170,6 @@ void WaveformHistos::InitProfiles(){
     profiles["SignalMinusPedestal"] = new TProfile(hName,hTitle,1,0,1000);
     profiles["SignalMinusPedestal"]->SetStats(false);
 
-    hName = TString::Format("h_ProfilePulser_%s_%d",_sensor.c_str(),_id);
-    hTitle = TString::Format("%s %d: Profile Pulser (%5.1f - %5.1f); event number / 5000events; signal/mV",
-            _sensor.c_str(),_id,
-            pulser_integral_range.first,
-            pulser_integral_range.second);
-    profiles["Pulser"] = new TProfile(hName,hTitle,1,0,1000);
-    profiles["Pulser"]->SetStats(false);
-
     hName = TString::Format("h_ProfilePedestal_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: Profile Pedestal (%5.1f - %5.1f); event number / 5000events; signal/mV",
             _sensor.c_str(),_id,
@@ -165,16 +178,22 @@ void WaveformHistos::InitProfiles(){
     profiles["Pedestal"] = new TProfile(hName,hTitle,1,0,1000);
     profiles["Pedestal"]->SetStats(false);
 
+    InitPulserProfiles();
     // hName = TString::Format("h_ProfileDeltaIntegral_%s_%d",_sensor.c_str(),_id);
     // hTitle = TString::Format("%s %d: Profile Signal-PedestalIntegral; event number / 5000events; signal/mV",_sensor.c_str(),_id);
     // profiles["DeltaIntegral"] = new TProfile(hName,hTitle,1,0,1000);
     // profiles["DeltaIntegral"]->SetStats(false);
+}
 
-    //=====================================================================
-    //======== PULSER PROFILES   ==========================================
-    //=====================================================================
-    hName = TString::Format("h_Pulser_ProfileDelta_%s_%d",_sensor.c_str(),_id);
-    hTitle = TString::Format("%s %d: Profile Delta; event number / 5000events; signal/mV",_sensor.c_str(),_id);
+//=====================================================================
+//======== PULSER PROFILES   ==========================================
+//=====================================================================
+void WaveformHistos::InitPulserProfiles(){
+    float minVolt = -500; //-1000;
+    float maxVolt = 500; //+1000;
+    int nbins =  1000; //2000;
+    TString hName = TString::Format("h_Pulser_ProfileDelta_%s_%d",_sensor.c_str(),_id);
+    TString hTitle = TString::Format("%s %d: Profile Delta; event number / 5000events; signal/mV",_sensor.c_str(),_id);
 
     hName = TString::Format("h_Pulser_ProfileFullAverage_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: Profile FullAverage; event number / 5000events; signal/mV",_sensor.c_str(),_id);
@@ -217,13 +236,14 @@ void WaveformHistos::InitProfiles(){
     // hTitle = TString::Format("%s %d: Profile Signal-PedestalIntegral; event number / 5000events; signal/mV",_sensor.c_str(),_id);
     // profiles["Pulser_DeltaIntegral"] = new TProfile(hName,hTitle,1,0,1000);
     // profiles["Pulser_DeltaIntegral"]->SetStats(false);
+}
 
-    //=====================================================================
-    //======== waveform stacks   ==========================================
-    //=====================================================================
-
-    hName = TString::Format("h_wf_stack_%s_%d",_sensor.c_str(),_id);
-    hTitle = TString::Format("%s %d: Waveform Stack;time; signal/mV",_sensor.c_str(),_id);
+//=====================================================================
+//======== waveform stacks   ==========================================
+//=====================================================================
+void WaveformHistos::InitWaveformStacks(){
+    TString hName = TString::Format("h_wf_stack_%s_%d",_sensor.c_str(),_id);
+    TString hTitle = TString::Format("%s %d: Waveform Stack;time; signal/mV",_sensor.c_str(),_id);
     h_wf_stack = new THStack(hName,hTitle);
 
     for (int i = 0; i < _n_wfs; i++){
@@ -259,19 +279,7 @@ void WaveformHistos::Reinitialize_Waveforms() {
         //		hTitle = TString::Format("Waveform ID %d - %d",_id,i);
         TH1F* histo = _Waveforms.at(i);
         histo->SetBins(_n_samples,0,_n_samples);
-        //		_Waveforms.push_back(new TH1F(hName,hTitle,_n_samples,0,_n_samples));
-        //		FixRangeY(string)
-        ////		_Waveforms.back()->SetPoint(0,0,0);
-        //		_Waveforms.back()->SetPoint(1,1,1);
-        //		_Waveforms.back()->Draw("APL");
-        //		if (_Waveforms.back()->GetXaxis())
-        //			_Waveforms.back()->GetXaxis()->SetTitle("n");
-        //		if (_Waveforms.back()->GetYaxis())
-        //			_Waveforms.back()->GetYaxis()->SetTitle("Signal / mV");
-        //		h_wf_stack->Add(_Waveforms.back());
     }
-
-
 
 }
 
@@ -301,16 +309,22 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     float integral = wf.getIntegral();
     float signalSpread   = wf.maxSpreadInRegion(signal_integral_range.first  ,signal_integral_range.second);
     float pedestalSpread = wf.maxSpreadInRegion(pedestal_integral_range.first,pedestal_integral_range.second);
+    float pulserSpread = wf.maxSpreadInRegion(pulser_integral_range.first,pulser_integral_range.second);
 
     float signal_integral   = wf.getIntegral(signal_integral_range.first  ,signal_integral_range.second);
     float signal_maximum    = wf.getMaximum (signal_integral_range.first  ,signal_integral_range.second);
     float signal_minimum    = wf.getMinimum (signal_integral_range.first  ,signal_integral_range.second);
     float pedestal_integral = wf.getIntegral(pedestal_integral_range.first,pedestal_integral_range.second);
 
-    isPulserEvent ? histos["Pulser_FullAverage"]->Fill(sign*integral) : histos["FullAverage"]->Fill(sign*integral);
-    isPulserEvent ? histos["Pulser_Signal"]     ->Fill(signalSpread)  : histos["Signal"]     ->Fill(signalSpread);
-    isPulserEvent ? histos["Pulser_Pedestal"]   ->Fill(pedestalSpread): histos["Pedestal"]   ->Fill(pedestalSpread);
-    isPulserEvent ? histos["Pulser_SignalMinusPedestal"] -> Fill(signalSpread-pedestalSpread) : histos["SignalMinusPedestal"] -> Fill(signalSpread-pedestalSpread);
+    string prefix = "";
+    if (isPulserEvent) prefix = "Pulser_";
+    histos["PulserEvents"]->Fill(isPulserEvent);
+    histos[prefix+"FullAverage"]->Fill(sign*integral);
+    histos[prefix+"Signal"]     ->Fill(signalSpread);
+    histos[prefix+"Pedestal"]   ->Fill(pedestalSpread);
+    histos[prefix+"Pulser"]   ->Fill(pedestalSpread);
+    histos[prefix+"SignalMinusPedestal"] -> Fill(signalSpread-pedestalSpread);
+    histos[prefix+"PulserMinusPedestal"] -> Fill(signalSpread-pedestalSpread);
     for (std::map<std::string, TH1*>::iterator it = profiles.begin();it!=profiles.end();it++){
         if (it->second->GetXaxis()->GetXmax() < event_no){
             int bins = (event_no+5000)/5000;
@@ -318,36 +332,24 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
             it->second->SetBins(bins,0,max);
             //			cout<<it->first<<": Extend Profile "<<bins<<" "<<max<<endl;
         }
-        if(!isPulserEvent){
-            if (it->first == "FullIntegral")
-                it->second->Fill(event_no,sign*integral);
-            else if (it->first == "Signal")
-                it->second->Fill(event_no,signalSpread);
-            else if (it->first == "Pedestal")
-                it->second->Fill(event_no,pedestalSpread);
-            else if (it->first == "SignalMinusPedestal")
-                it->second->Fill(event_no,signalSpread-pedestalSpread);
-            // if (event_no % 5000 == 0 && event_no >20000){
-            //     TF1* fit = new TF1("expoFit", "pol0(0)+expo(1)",0,event_no+5000);
-            //     it->second->Fit(fit,"Q");
-            //     delete fit;
-            // }
+        if(it->first == "PulserEvents")
+            histos["PulserEvents"]->Fill(event_no,isPulserEvent);
+        else if (it->first == prefix+"FullIntegral")
+            it->second->Fill(event_no,sign*integral);
+        else if (it->first == prefix+"Signal")
+            it->second->Fill(event_no,signalSpread);
+        else if (it->first == prefix+"Pedestal")
+            it->second->Fill(event_no,pedestalSpread);
+        else if (it->first == prefix+"SignalMinusPedestal")
+            it->second->Fill(event_no,signalSpread-pedestalSpread);
+        if (do_fitting){
+            if (event_no % 5000 == 0 && event_no >20000){
+                TF1* fit = new TF1("expoFit", "pol0(0)+expo(1)",0,event_no+5000);
+                it->second->Fit(fit,"Q");
+                delete fit;
+            }
         }
-        else{
-            if (it->first == "Pulser_FullIntegral")
-                it->second->Fill(event_no,sign*integral);
-            else if (it->first == "Pulser_Signal")
-                it->second->Fill(event_no,signalSpread);
-            else if (it->first == "Pulser_Pedestal")
-                it->second->Fill(event_no,pedestalSpread);
-            else if (it->first == "Pulser_SignalMinusPedestal")
-                it->second->Fill(event_no,signalSpread-pedestalSpread);
-            //if (event_no % 5000 == 0 && event_no >20000){
-            //    TF1* fit = new TF1("expoFit", "pol0(0)+expo(1)",0,event_no+5000);
-            //    it->second->Fit(fit,"Q");
-            //    delete fit;
-            //}
-        }
+
     }
     UpdateRanges();
     TH1F* gr = _Waveforms[n_fills%_n_wfs];
