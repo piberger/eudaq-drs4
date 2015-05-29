@@ -314,7 +314,7 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     // do not record events with a flat line due to leakage current
     if(maxSpread < 10) goodEvent = false;
     if(!goodEvent) {
-        cout << " not a good event" << endl;
+        cout << " not a good event" << "this is the spread "<< maxSpread << endl;
         histos["nFlatLineEvents"]->Fill(!goodEvent);
         return;
     }
