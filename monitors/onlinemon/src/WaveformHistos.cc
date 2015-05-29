@@ -542,8 +542,8 @@ TProfile* WaveformHistos::getProfile(std::string key) const {
 
 TH1F* WaveformHistos::getHisto(std::string key) const {
 //    std::cout<<"WaveformHistos::getHisto"<<key<<std::endl;
-    std::map<std::string, TH1*>::const_iterator it = profiles.find(key);
-    if ( it == profiles.end()) return 0;
+    std::map<std::string, TH1*>::const_iterator it = histos.find(key);
+    if ( it == histos.end()) return 0;
     return (TH1F*)histos.at(key);
 }
 
