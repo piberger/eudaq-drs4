@@ -145,17 +145,17 @@ void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
         _mon->getOnlineMon()->registerHisto(tree,
                 getWaveformHistos(p.getName(),p.getID())->getHisto("PulserEvents"), "",0);
 
-        sprintf(tree,"%s/Ch %i - %s/nFlatLineEvents",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        std::cout<<tree<<endl;
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree,
-                getWaveformHistos(p.getName(),p.getID())->getHisto("nFlatLineEvents"), "",0);
-
         sprintf(tree,"%s/Ch %i - %s/PulserEventsProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
                 std::cout<<tree<<endl;
                 _mon->getOnlineMon()->registerTreeItem(tree);
                 _mon->getOnlineMon()->registerHisto(tree,
                         getWaveformHistos(p.getName(),p.getID())->getProfile("PulserEvents"), "",0);
+
+        sprintf(tree,"%s/Ch %i - %s/nFlatLineEvents",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+        std::cout<<tree<<endl;
+        _mon->getOnlineMon()->registerTreeItem(tree);
+        _mon->getOnlineMon()->registerHisto(tree,
+                getWaveformHistos(p.getName(),p.getID())->getHisto("nFlatLineEvents"), "",0);
 
 		// ===================================================================
         // ====== SIGNAL EVENTS ==============================================
