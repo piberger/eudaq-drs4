@@ -55,6 +55,11 @@ void WaveformHistos::InitIntegralHistos(){
     hName = TString::Format("h_PulserEvents_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: no of pulser events ; is pulser event; number of entries",_sensor.c_str(),_id);
     histos["PulserEvents"]= new TH1F(hName,hTitle,2,-.5,1.5);
+
+    hName = TString::Format("h_nFlatLineEvents_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: no of flat line events ; number of entries",_sensor.c_str(),_id);
+    histos["nFlatLineEvents"]= new TH1F(hName,hTitle,2,-.5,1.5);
+
 //    PulserEvents
     hName = TString::Format("h_FullAverage_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: FullAverage; full average/mV; number of entries",_sensor.c_str(),_id);
@@ -303,6 +308,17 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     ULong64_t timestamp = wf.getTimestamp();
     int sign = wf.getSign(); //why is this here? it's never properly assigned
 
+
+    float maxSpread   = wf.maxSpreadInRegion(20,500);
+    bool goodEvent = true;
+    // do not record events with a flat line due to leakage current
+    if(maxSpread < 10) goodEvent = false;
+    if(!goodEvent) {
+        histos["nFlatLineEvents"]->Fill(!goodEvent);
+        return;
+    }
+
+
     float min      = wf.getMin();
     float max      = wf.getMax();
     float delta    = fabs(max-min);
@@ -349,8 +365,8 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
                 delete fit;
             }
         }
-
     }
+
     UpdateRanges();
     TH1F* gr = _Waveforms[n_fills%_n_wfs];
     for (int n = 0; n < wf.getNSamples();n++)
