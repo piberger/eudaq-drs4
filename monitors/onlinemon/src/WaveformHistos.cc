@@ -309,15 +309,12 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     int sign = wf.getSign(); //why is this here? it's never properly assigned
 
 
-    float maxSpread   = wf.maxSpreadInRegion(20,500);
+    float maxSpread   = wf.maxSpreadInRegion(200,400);
     bool goodEvent = true;
     // do not record events with a flat line due to leakage current
     if(maxSpread < 10) goodEvent = false;
-    if(!goodEvent) {
-        cout << " not a good event" << "this is the spread "<< maxSpread << endl;
-        histos["nFlatLineEvents"]->Fill(!goodEvent);
-        return;
-    }
+    histos["nFlatLineEvents"]->Fill(!goodEvent);
+    if(!goodEvent) return;
 
 
     float min      = wf.getMin();
