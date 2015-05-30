@@ -36,6 +36,7 @@ private:
 	virtual void SendRawEvent();
 	void SetTimeStamp();
 	unsigned m_run, m_ev;
+	unsigned m_tlu_waiting_time;
 	std::string m_verbosity, m_producerNamem,m_event_type, m_producerName;
 	bool m_terminated, m_running, triggering,m_self_triggering;;
 	int m_n_self_trigger;

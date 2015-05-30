@@ -148,7 +148,7 @@ void DRS4Producer::OnStopRun() {
 
 	    // Output information for the logbook:
 	    std::cout << "RUN " << m_run << " DRS4 " << std::endl
-	          << "\t Total triggers:   \t" << m_ev << std::endl
+	          << "\t Total triggers:   \t" << m_ev << std::endl;
 	    EUDAQ_USER(string("Run " + std::to_string(m_run) + ", ended with " + std::to_string(m_ev)
 	              + " Events"));
 
