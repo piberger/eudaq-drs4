@@ -125,7 +125,7 @@ void WaveformCollection::Fill(const SimpleStandardEvent &simpev)
 }
 
 void WaveformCollection::registerSignalWaveforms(const SimpleStandardWaveform &p){
-    registerDataWaveforms(p,"","Signal");
+    registerDataWaveforms(p,"","SignalEvents");
 }
 
 void WaveformCollection::registerDataWaveforms(const SimpleStandardWaveform &p,string prefix, string desc){
@@ -169,6 +169,11 @@ void WaveformCollection::registerDataWaveforms(const SimpleStandardWaveform &p,s
     std::cout<<tree<<endl;
     _mon->getOnlineMon()->registerTreeItem(tree);
     _mon->getOnlineMon()->registerHisto(tree,wf_histo->getProfile(prefix+"Pedestal"), "",0);
+
+    sprintf(tree,"%s/PulserProfile",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getProfile(prefix+"Pulser"), "",0);
 
     sprintf(tree,"%s/SignalMinusPedestalProfile",main_path.c_str());
     std::cout<<tree<<endl;
@@ -232,7 +237,7 @@ void WaveformCollection::registerGlobalWaveforms(const SimpleStandardWaveform &p
 }
 
 void WaveformCollection::registerPulserWaveforms(const SimpleStandardWaveform &p){
-    registerDataWaveforms(p,"Pulser_","Pulser");
+    registerDataWaveforms(p,"Pulser_","PulserEvents");
 }
 
 void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
