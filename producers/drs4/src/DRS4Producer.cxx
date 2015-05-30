@@ -124,19 +124,33 @@ void DRS4Producer::OnStartRun(unsigned runnumber) {
 	}
 
 };
+
 void DRS4Producer::OnStopRun() {
 	// Break the readout loop
+
+    // Wait before we stop the DAQ because TLU takes some time to pick up the OnRunStop signal
+    // otherwise the last triggers get lost.
+    eudaq::mSleep(m_tlu_waiting_time);
 	m_running = false;
-	std::cout << "Stopping Run" << std::endl;
-
-
+	std::cout << "Run stopped." << std::endl;
 	try {
-
+	    // Stop DRS Board
 		if (m_b && m_b->IsBusy()) {
 			m_b->SoftTrigger();
 			for (int i=0 ; i<10 && m_b->IsBusy() ; i++)
 				usleep(10);//todo not mt save
 		}
+
+	    // Sending the final end-of-run event:
+	    SendEvent(eudaq::RawDataEvent::EORE(m_event_type, m_run, m_ev));
+	    std::cout << "Stopped" << std::endl;
+
+	    // Output information for the logbook:
+	    std::cout << "RUN " << m_run << " DRS4 " << std::endl
+	          << "\t Total triggers:   \t" << m_ev << std::endl
+	    EUDAQ_USER(string("Run " + std::to_string(m_run) + ", ended with " + std::to_string(m_ev)
+	              + " Events"));
+
 		SetStatus(eudaq::Status::LVL_OK, "Stopped");
 	} catch ( ... ){
 		EUDAQ_ERROR(string("Unknown exception."));
