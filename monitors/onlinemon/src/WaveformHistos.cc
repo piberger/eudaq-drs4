@@ -264,6 +264,14 @@ void WaveformHistos::InitPulserProfiles(){
     profiles["Pulser_Pulser"] = new TProfile(hName,hTitle,1,0,1000);
     profiles["Pulser_Pulser"]->SetStats(false);
 
+    hName = TString::Format("h_ProfilePulser_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Profile Pulser (%5.1f - %5.1f); event number / 5000events; signal/mV",
+            _sensor.c_str(),_id,
+            pulser_integral_range.first,
+            pulser_integral_range.second);
+    profiles["Pulser"] = new TProfile(hName,hTitle,1,0,1000);
+    profiles["Pulser"]->SetStats(false);
+
     hName = TString::Format("h_Pulser_ProfilePedestal_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: Profile Pedestal (%5.1f - %5.1f); event number / 5000events; signal/mV",
             _sensor.c_str(),_id,
