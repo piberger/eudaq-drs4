@@ -44,6 +44,7 @@ public:
     float getMaxInRange(int min, int max) const{return (*std::max_element(&m_samples.at(min), &m_samples.at(max)));};
     int getIndexMin(int min, int max) const{return find(m_samples.begin()+min, m_samples.begin()+min+max+1,getMinInRange(min, max)) - (m_samples.begin()+min);};
     int getIndexMax(int min, int max) const{return find(m_samples.begin()+min, m_samples.begin()+min+max+1,getMaxInRange(min, max)) - (m_samples.begin()+min);};
+    float getSpreadInRange(int min, int max) const{return (getMaxInRange(min,max)-getMinInRange(min,max));};
 
 private:
 	uint64_t m_timestamp;

@@ -93,6 +93,7 @@ namespace eudaq {
         std::vector<float>  * v_sig;
         std::vector<float>  * v_sig_time;
         std::vector<float>  * v_ped;
+        std::vector<float>  * v_pul;
         
         // std::vector<float> * f_wf0;
         // std::vector<float> * f_wf1;
@@ -133,6 +134,7 @@ namespace eudaq {
         v_sensor_name = new std::vector< std::string >;
         v_type_name   = new std::vector< std::string >;
         v_ped       = new std::vector<float>;
+        v_pul       = new std::vector<float>;
         v_sig       = new std::vector<float>;
         v_sig_time  = new std::vector<float>;
         
@@ -184,6 +186,7 @@ namespace eudaq {
         // DUT
         m_ttree->Branch("sensor_name" , &v_sensor_name);
         m_ttree->Branch("type_name"   , &v_type_name);
+        m_ttree->Branch("pul"         , &v_pul);
         m_ttree->Branch("ped"         , &v_ped);
         m_ttree->Branch("sig"         , &v_sig);
         m_ttree->Branch("sig_time"    , &v_sig_time);
@@ -238,6 +241,7 @@ namespace eudaq {
         // --------------------------------------------------------------------
         v_sensor_name->clear();
         v_type_name->clear();
+        v_pul->clear();
         v_ped->clear();
         v_sig->clear();
         v_sig_time->clear();
@@ -290,30 +294,29 @@ namespace eudaq {
                 // load the waveforms into the vector
                 data = waveform.GetData();
                 
-                // calculate the signal and the baseline. this is very hardcoded!!!
+                // calculate the signal and so on
                 // float sig = CalculatePeak(data, 1075, 1150);
-                std::pair<int, float> sig = FindMaxAndValue(data,    0, 1000);
-                float sig = CalculateMax (data,    0, 1000);
-                float ped = Calculate    (data,  500, 1000);
-                float pul = Calculate    (data,  500, 1000);
+                float signal   = waveform.getSpreadInRange( 25,  125);
+                float pedestal = waveform.getSpreadInRange(350,  450);
+                float pulser   = waveform.getSpreadInRange(760,  860);
 
                 // float mini = waveform.getMinInRange(10,1000);
                 // float minind = waveform.getIndexMin(10,1000);
                 // cout << "minimum of the waveform in range 10, 1000: " << mini << " at index " << minind<< endl;
         
                 // save the values in the event
-                v_sig     ->push_back(sig.second);
-                v_sig_time->push_back(sig.first);
-
-                v_ped->push_back(ped);
+                v_sig     ->push_back(signal);
+                v_sig_time->push_back(42); // this does not make sense yet!!
+                v_ped->push_back(pedestal);
+                v_pul->push_back(pulser);
     
                 if(iwf == 1){ // trigger WF
                     for (int j=0; j<data->size(); j++){
-                        if( abs(data->at(j)) > 20. ) {f_trig_time = j; break;}
+                        if( abs(data->at(j)) > 90. ) {f_trig_time = j; break;}
                     }
                 }
                 if(iwf == 2){ // pulser WF
-                    f_pulser_int = Calculate(data, 0, n_samples, true);
+                    f_pulser_int = Calculate(data, 500, 900, true);
                     f_pulser     = (f_pulser_int > 20.);
                 }
         
