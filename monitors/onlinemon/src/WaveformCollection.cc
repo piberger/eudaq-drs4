@@ -215,7 +215,7 @@ void WaveformCollection::registerDataWaveforms(const SimpleStandardWaveform &p,s
 
 void WaveformCollection::registerGlobalWaveforms(const SimpleStandardWaveform &p){
     char tree[1024], folder[1024];
-    sprintf(tree,"%s/Ch %i - %s/PulserEvents",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+    sprintf(tree,"%s/Ch %i - %s/IsPulserEvent",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
     std::cout<<tree<<endl;
     WaveformHistos* wf_histo =getWaveformHistos(p.getName(),p.getID());
     _mon->getOnlineMon()->registerTreeItem(tree);
