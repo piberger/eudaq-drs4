@@ -124,6 +124,117 @@ void WaveformCollection::Fill(const SimpleStandardEvent &simpev)
 
 }
 
+void WaveformCollection::registerSignalWaveforms(const SimpleStandardWaveform &p){
+    registerDataWaveforms(p,"","Signal");
+}
+
+void WaveformCollection::registerDataWaveforms(const SimpleStandardWaveform &p,string prefix, string desc){
+    char tree[1024], folder[1024];
+
+    WaveformHistos* wf_histo =getWaveformHistos(p.getName(),p.getID());
+    string main_path = (string)TString::Format("%s/Ch %i - %s/%s",p.getName().c_str(),p.getID(),p.getChannelName().c_str(),desc.c_str());
+
+    sprintf(tree,"%s/FullAverage",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getHisto(prefix+"FullAverage"), "",0);
+
+    sprintf(tree,"%s/Signal",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getHisto(prefix+"Signal"), "",0);
+
+
+    sprintf(tree,"%s/Pedestal",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getHisto(prefix+"Pedestal"), "",0);
+
+    sprintf(tree,"%s/Pulser",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getHisto(prefix+"Pulser"), "",0);
+
+    sprintf(tree,"%s/SignalMinusPedestal",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getHisto(prefix+"SignalMinusPedestal"), "",0);
+
+    sprintf(tree,"%s/SignalProfile",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getProfile(prefix+"Signal"), "",0);
+
+    sprintf(tree,"%s/PedestalProfile",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getProfile(prefix+"Pedestal"), "",0);
+
+    sprintf(tree,"%s/SignalMinusPedestalProfile",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getProfile(prefix+"SignalMinusPedestal"), "",0);
+
+    //    sprintf(folder,"%s/Signal",p.getName().c_str());
+    sprintf(folder,"%s",main_path.c_str());
+#ifdef DEBUG
+    cout << "DEBUG "<< p.getName().c_str() <<endl;
+    cout << "DEBUG "<< folder << " "<<tree<<  endl;
+#endif
+    _mon->getOnlineMon()->addTreeItemSummary(folder,tree);
+
+    sprintf(tree,"%s",main_path.c_str());//p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+    _mon->getOnlineMon()->makeTreeItemSummary(tree); //make summary page
+
+
+    sprintf(tree,"%s/Integral/Signal",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getHisto(prefix+"SignalIntegral"), "",0);
+
+    sprintf(tree,"%s/Integral/Pedestal",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getHisto(prefix+"PedestalIntegral"), "",0);
+
+    sprintf(tree,"%s/Integral/Pulser",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getHisto(prefix+"PulserIntegral"), "",0);
+    sprintf(folder,"%s/Integral",main_path.c_str());
+    _mon->getOnlineMon()->addTreeItemSummary(folder,tree);
+
+    sprintf(tree,"%s/Integral",main_path.c_str());//p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+    _mon->getOnlineMon()->makeTreeItemSummary(tree); //make summary page
+}
+
+void WaveformCollection::registerGlobalWaveforms(const SimpleStandardWaveform &p){
+    char tree[1024], folder[1024];
+    sprintf(tree,"%s/Ch %i - %s/PulserEvents",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+    std::cout<<tree<<endl;
+    WaveformHistos* wf_histo =getWaveformHistos(p.getName(),p.getID());
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,
+            wf_histo->getHisto("PulserEvents"), "",0);
+
+    sprintf(tree,"%s/Ch %i - %s/PulserEventsProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,
+            getWaveformHistos(p.getName(),p.getID())->getProfile("PulserEvents"), "",0);
+
+    sprintf(tree,"%s/Ch %i - %s/nFlatLineEvents",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,
+            getWaveformHistos(p.getName(),p.getID())->getHisto("nFlatLineEvents"), "",0);
+
+}
+
+void WaveformCollection::registerPulserWaveforms(const SimpleStandardWaveform &p){
+    registerDataWaveforms(p,"Pulser_","Pulser");
+}
+
 void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
     //	cout<<"WaveformCollection::registerWaveform \t\""<<p.getName()<<"\" "<<p.getID()<<" \""<<p.getChannelName()<<"\" mon:"<<_mon<<endl;
     WaveformHistos *tmphisto = new WaveformHistos(p,_mon);
@@ -139,88 +250,10 @@ void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
         }
         //		cout << "WaveformCollection:: Monitor running in online-mode" << endl;
         char tree[1024], folder[1024];
-WaveformHistos* wf_histo =getWaveformHistos(p.getName(),p.getID());
-        sprintf(tree,"%s/Ch %i - %s/PulserEvents",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        std::cout<<tree<<endl;
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree,
-                wf_histo->getHisto("PulserEvents"), "",0);
+        WaveformHistos* wf_histo =getWaveformHistos(p.getName(),p.getID());
+        registerGlobalWaveforms(p);
 
-        sprintf(tree,"%s/Ch %i - %s/PulserEventsProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        std::cout<<tree<<endl;
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree,
-                getWaveformHistos(p.getName(),p.getID())->getProfile("PulserEvents"), "",0);
-
-        sprintf(tree,"%s/Ch %i - %s/nFlatLineEvents",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        std::cout<<tree<<endl;
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree,
-                getWaveformHistos(p.getName(),p.getID())->getHisto("nFlatLineEvents"), "",0);
-
-        // ===================================================================
-        // ====== SIGNAL EVENTS ==============================================
-        // ===================================================================
-        sprintf(tree,"%s/Ch %i - %s/Signal/FullAverage",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        std::cout<<tree<<endl;
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getFullAverageVoltageHisto(), "",0);
-
-        sprintf(tree,"%s/Ch %i - %s/Signal/Signal",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        std::cout<<tree<<endl;
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getSignalHisto(), "",0);
-
-        sprintf(tree,"%s/Ch %i - %s/Signal/Pedestal",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        std::cout<<tree<<endl;
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getPedestalHisto(), "",0);
-
-        sprintf(tree,"%s/Ch %i - %s/Signal/Pulser",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        std::cout<<tree<<endl;
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getHisto("Pulser"), "",0);
-
-        // sprintf(tree,"%s/Ch %i - %s/DeltaIntegral",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        // std::cout<<tree<<endl;
-        // _mon->getOnlineMon()->registerTreeItem(tree);
-        // _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getDeltaIntegralVoltageHisto(), "",0);
-
-        sprintf(tree,"%s/Ch %i - %s/Signal/SignalMinusPedestal",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        std::cout<<tree<<endl;
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getSignalMinusPedestalHisto(), "",0);
-
-        // sprintf(tree,"%s/Ch %i - %s/DeltaIntegralProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        // std::cout<<tree<<endl;
-        // _mon->getOnlineMon()->registerTreeItem(tree);
-        // _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getProfileDeltaIntegral(), "",0);
-
-        sprintf(tree,"%s/Ch %i - %s/Signal/SignalProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        std::cout<<tree<<endl;
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getProfileSignal(), "",0);
-
-        sprintf(tree,"%s/Ch %i - %s/Signal/PedestalProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        std::cout<<tree<<endl;
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getProfilePedestal(), "",0);
-
-        sprintf(tree,"%s/Ch %i - %s/Signal/SignalMinusPedestalProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        std::cout<<tree<<endl;
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getProfileSignalMinusPedestal(), "",0);
-
-        sprintf(folder,"%s/Signal",p.getName().c_str());
-#ifdef DEBUG
-        cout << "DEBUG "<< p.getName().c_str() <<endl;
-        cout << "DEBUG "<< folder << " "<<tree<<  endl;
-#endif
-        _mon->getOnlineMon()->addTreeItemSummary(folder,tree);
-
-        sprintf(tree,"%s/Ch %i - %s/Signal",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        _mon->getOnlineMon()->makeTreeItemSummary(tree); //make summary page
-
+        registerSignalWaveforms(p);
         //
         //=====================================================================
         //=============== WAVEFORM STACKS =====================================
@@ -245,70 +278,6 @@ WaveformHistos* wf_histo =getWaveformHistos(p.getName(),p.getID());
         sprintf(tree,"%s/Ch %i - %s",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
         _mon->getOnlineMon()->makeTreeItemSummary(tree); //make summary page
 
-
-        // ===================================================================
-        // ====== PULSER EVENTS ==============================================
-        // ===================================================================
-
-
-        sprintf(tree,"%s/Ch %i - %s/Pulser/FullAverage",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        std::cout<<tree<<endl;
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getHisto("Pulser_FullAverage"), "",0);
-
-        sprintf(tree,"%s/Ch %i - %s/Pulser/Signal",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        std::cout<<tree<<endl;
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getPulserSignalHisto(), "",0);
-
-        sprintf(tree,"%s/Ch %i - %s/Pulser/Pedestal",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        std::cout<<tree<<endl;
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getPulserPedestalHisto(), "",0);
-
-        sprintf(tree,"%s/Ch %i - %s/Pulser/Pulser",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        std::cout<<tree<<endl;
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getHisto("Pulser_Pulser"), "",0);
-        // sprintf(tree,"%s/Ch %i - %s/Pulser_DeltaIntegral",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        // std::cout<<tree<<endl;
-        // _mon->getOnlineMon()->registerTreeItem(tree);
-        // _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getPulserDeltaIntegralVoltageHisto(), "",0);
-
-        sprintf(tree,"%s/Ch %i - %s/Pulser/SignalMinusPedestal",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        std::cout<<tree<<endl;
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getPulserSignalMinusPedestalHisto(), "",0);
-
-        // sprintf(tree,"%s/Ch %i - %s/Pulser_DeltaIntegralProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        // std::cout<<tree<<endl;
-        // _mon->getOnlineMon()->registerTreeItem(tree);
-        // _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getPulserProfileDeltaIntegral(), "",0);
-
-        sprintf(tree,"%s/Ch %i - %s/Pulser/SignalProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        std::cout<<tree<<endl;
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getPulserProfileSignal(), "",0);
-
-        sprintf(tree,"%s/Ch %i - %s/Pulser/PedestalProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        std::cout<<tree<<endl;
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getPulserProfilePedestal(), "",0);
-
-        sprintf(tree,"%s/Ch %i - %s/Pulser/SignalMinusPedestalProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        std::cout<<tree<<endl;
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getPulserProfileSignalMinusPedestal(), "",0);
-
-        sprintf(folder,"%s/Pulser",p.getName().c_str());
-#ifdef DEBUG
-        cout << "DEBUG "<< p.getName().c_str() <<endl;
-        cout << "DEBUG "<< folder << " "<<tree<<  endl;
-#endif
-        _mon->getOnlineMon()->addTreeItemSummary(folder,tree);
-
-        sprintf(tree,"%s/Ch %i - %s/Pulser",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        _mon->getOnlineMon()->makeTreeItemSummary(tree); //make summary page
-
+        registerPulserWaveforms(p);
     }
 }

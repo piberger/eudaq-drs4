@@ -46,8 +46,6 @@ class WaveformHistos {
     std::string getName() const {return (std::string)TString::Format("%s_%d",_sensor.c_str(),_id);};
     virtual ~WaveformHistos(){}
     void Fill(const SimpleStandardWaveform & wf);
-    void FillPulserEvent(const SimpleStandardWaveform & wf);
-    void FillSignalEvent(const SimpleStandardWaveform & wf);
     void FillEvent(const SimpleStandardWaveform & wf, bool isPulserEvent);
     unsigned int getNSamples() const {return _n_samples;}
     void Reset();
@@ -97,6 +95,7 @@ class WaveformHistos {
     unsigned int n_fills;
     void InitHistos();
     void InitIntegralHistos();
+    void InitSpreadHistos();
     void InitProfiles();
     void InitPulserProfiles();
     void InitSignalProfiles();

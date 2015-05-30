@@ -37,20 +37,6 @@ void WaveformHistos::InitHistos() {
     //	for (int i = 0; i < _n_wfs; i++)
     //		_Waveforms.push_back(new TGraph());
 //    std::cout<<"maxSignalVoltage"<<std::endl;
-
-    InitIntegralHistos();
-    InitProfiles();
-    InitWaveformStacks();
-}
-
-void WaveformHistos::InitIntegralHistos(){
-//    std::cout<<"WaveformHistos::InitIntegralHistos"<<std::endl;
-    float minVolt = -500; //-1000;
-    float maxVolt = 500; //+1000;
-    int nbins =  1000; //2000;
-    //=====================================================================
-    //======== SIGNAL HISTOGRAMS ==========================================
-    //=====================================================================
     TString hName, hTitle;
     hName = TString::Format("h_PulserEvents_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: no of pulser events ; is pulser event; number of entries",_sensor.c_str(),_id);
@@ -59,6 +45,66 @@ void WaveformHistos::InitIntegralHistos(){
     hName = TString::Format("h_nFlatLineEvents_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: no of flat line events ; number of entries",_sensor.c_str(),_id);
     histos["nFlatLineEvents"]= new TH1F(hName,hTitle,2,-.5,1.5);
+
+    InitIntegralHistos();
+    InitSpreadHistos();
+    InitProfiles();
+    InitWaveformStacks();
+}
+
+void WaveformHistos::InitIntegralHistos(){
+    float minVolt = -500; //-1000;
+    float maxVolt = 500; //+1000;
+    int nbins =  1000; //2000;
+    //=====================================================================
+    //======== SIGNAL HISTOGRAMS ==========================================
+    //=====================================================================
+    TString hName, hTitle;
+    hName = TString::Format("h_SignalIntegral_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Signal Integral Range (%5.1f - %5.1f); signal /mV; number of entries",
+            _sensor.c_str(),_id,signal_integral_range.first,signal_integral_range.second);
+    histos["SignalIntegral"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
+    SetMaxRangeX((string)hName,-50,500);
+
+    hName = TString::Format("h_PedestalIntegral_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Pedestal Integral Range (%5.1f - %5.1f); signal /mV; number of entries",
+            _sensor.c_str(),_id,pedestal_integral_range.first,pedestal_integral_range.second);
+    histos["PedestalIntegral"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
+    SetMaxRangeX((string)hName,-50,500);
+
+    hName = TString::Format("h_PulserIntegral_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Pulser Integral Range (%5.1f - %5.1f); signal /mV; number of entries",
+            _sensor.c_str(),_id,pulser_integral_range.first,pulser_integral_range.second);
+    histos["PulserIntegral"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
+    SetMaxRangeX((string)hName,-50,500);
+
+    hName = TString::Format("h_Pulser_SignalIntegral_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Signal Integral Range (%5.1f - %5.1f); signal /mV; number of entries",
+            _sensor.c_str(),_id,signal_integral_range.first,signal_integral_range.second);
+    histos["Pulser_SignalIntegral"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
+    SetMaxRangeX((string)hName,-50,500);
+
+    hName = TString::Format("h_Pulser_PedestalIntegral_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Pedestal Integral Range (%5.1f - %5.1f); signal /mV; number of entries",
+            _sensor.c_str(),_id,pedestal_integral_range.first,pedestal_integral_range.second);
+    histos["Pulser_PedestalIntegral"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
+    SetMaxRangeX((string)hName,-50,500);
+
+    hName = TString::Format("h_Pulser_PulserIntegral_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Pulser Integral Range (%5.1f - %5.1f); signal /mV; number of entries",
+            _sensor.c_str(),_id,pulser_integral_range.first,pulser_integral_range.second);
+    histos["Pulser_PulserIntegral"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
+    SetMaxRangeX((string)hName,-50,500);
+
+}
+void WaveformHistos::InitSpreadHistos(){
+    float minVolt = -500; //-1000;
+    float maxVolt = 500; //+1000;
+    int nbins =  1000; //2000;
+    //=====================================================================
+    //======== SIGNAL HISTOGRAMS ==========================================
+    //=====================================================================
+    TString hName, hTitle;
 
 //    PulserEvents
     hName = TString::Format("h_FullAverage_%s_%d",_sensor.c_str(),_id);
@@ -84,11 +130,6 @@ void WaveformHistos::InitIntegralHistos(){
     histos["Pedestal"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
     // SetMaxRangeX((string)hName,-30, 30);
 
-    // hName = TString::Format("h_DeltaIntegral_%s_%d",_sensor.c_str(),_id);
-    // hTitle = TString::Format("%s %d: DeltaIntegral; signal integral/mV; number of entries",_sensor.c_str(),_id);
-    // histos["DeltaIntegral"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
-    // //SetMaxRangeX((string)hName,-5,200);
-
     hName = TString::Format("h_SignalMinusPedestal_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: SignalMinusPedestal; (signalSpread-pedestalSpread)/mV; number of entries",_sensor.c_str(),_id);
     histos["SignalMinusPedestal"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
@@ -96,6 +137,7 @@ void WaveformHistos::InitIntegralHistos(){
     hName = TString::Format("h_PulserMinusPedestal_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: PulserMinusPedestal; (pulserSpread-pedestalSpread)/mV; number of entries",_sensor.c_str(),_id);
     histos["PulserMinusPedestal"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
+
 
     //=====================================================================
     //======== PULSER HISTOGRAMS ==========================================
@@ -121,13 +163,6 @@ void WaveformHistos::InitIntegralHistos(){
     hTitle = TString::Format("%s %d: Pulser Pedestal Range (%5.1f - %5.1f); pedestal /mV; number of entries",
             _sensor.c_str(),_id,pedestal_integral_range.first,pedestal_integral_range.second);
     histos["Pulser_Pedestal"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
-
-    // SetMaxRangeX((string)hName,-30, 30);
-
-    // hName = TString::Format("h_Pulser_DeltaIntegral_%s_%d",_sensor.c_str(),_id);
-    // hTitle = TString::Format("%s %d: Pulser DeltaIntegral; signal integral/mV; number of entries",_sensor.c_str(),_id);
-    // histos["Pulser_DeltaIntegral"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
-    // //SetMaxRangeX((string)hName,-5,200);
 
     hName = TString::Format("h_Pulser_SignalMinusPedestal_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: Pulser SignalMinusPedestal; (signalSpread-pedestalSpread)/mV; number of entries",_sensor.c_str(),_id);
@@ -308,14 +343,12 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     ULong64_t timestamp = wf.getTimestamp();
     int sign = wf.getSign(); //why is this here? it's never properly assigned
 
-
     float maxSpread   = wf.maxSpreadInRegion(200,400);
     bool goodEvent = true;
     // do not record events with a flat line due to leakage current
     if(maxSpread < 10) goodEvent = false;
     histos["nFlatLineEvents"]->Fill(!goodEvent);
     if(!goodEvent) return;
-
 
     float min      = wf.getMin();
     float max      = wf.getMax();
@@ -325,10 +358,13 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     float pedestalSpread = wf.maxSpreadInRegion(pedestal_integral_range.first,pedestal_integral_range.second);
     float pulserSpread = wf.maxSpreadInRegion(pulser_integral_range.first,pulser_integral_range.second);
 
-    float signal_integral   = wf.getIntegral(signal_integral_range.first  ,signal_integral_range.second);
+
     float signal_maximum    = wf.getMaximum (signal_integral_range.first  ,signal_integral_range.second);
     float signal_minimum    = wf.getMinimum (signal_integral_range.first  ,signal_integral_range.second);
+
+    float signal_integral   = wf.getIntegral(signal_integral_range.first  ,signal_integral_range.second);
     float pedestal_integral = wf.getIntegral(pedestal_integral_range.first,pedestal_integral_range.second);
+    float pulser_integral   = wf.getIntegral(pulser_integral_range.first,pulser_integral_range.second);
 
     string prefix = "";
     if (isPulserEvent) prefix = "Pulser_";
@@ -339,6 +375,10 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     histos[prefix+"Pulser"]   ->Fill(pulserSpread);
     histos[prefix+"SignalMinusPedestal"] -> Fill(signalSpread-pedestalSpread);
     histos[prefix+"PulserMinusPedestal"] -> Fill(signalSpread-pedestalSpread);
+
+    histos[prefix+"SignalIntegral"]     ->Fill(sign*signal_integral);
+    histos[prefix+"PedestalIntegral"]   ->Fill(sign*pedestal_integral);
+    histos[prefix+"PulserIntegral"]     ->Fill(sign*pulser_integral);
     for (std::map<std::string, TH1*>::iterator it = profiles.begin();it!=profiles.end();it++){
         if (it->second->GetXaxis()->GetXmax() < event_no){
             int bins = (event_no+5000)/5000;
