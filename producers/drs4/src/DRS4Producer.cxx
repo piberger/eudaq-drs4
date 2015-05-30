@@ -26,6 +26,7 @@ DRS4Producer::DRS4Producer(const std::string & name, const std::string & runcont
 		m_run(0),
 		m_ev(0),
 		m_producerName(name),
+	    m_tlu_waiting_time(4000),
 		m_event_type(EVENT_TYPE),
 		m_self_triggering(false),
 		m_inputRange(0.),
