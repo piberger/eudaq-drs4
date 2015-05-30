@@ -403,7 +403,7 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
         else if (it->first == prefix+"Pedestal")
             it->second->Fill(event_no,pedestalSpread);
         else if (it->first == prefix+"Pulser")
-            it->second->Fill(event_no,sign*pulserSpread);
+            it->second->Fill(event_no,pulserSpread);
         else if (it->first == prefix+"SignalMinusPedestal")
             it->second->Fill(event_no,signalSpread-pedestalSpread);
         if (do_fitting){
