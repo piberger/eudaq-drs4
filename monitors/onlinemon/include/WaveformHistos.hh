@@ -38,9 +38,11 @@ class WaveformHistos {
     int _n_wfs;
     unsigned int _n_samples;
     std::map<std::string, TH1*> profiles;
+    std::map<std::string, TH1*> time_profiles;
     std::map<std::string, TH1*> histos;
     std::map<std::string, std::pair<float,float> > rangesX;
     std::map<std::string, std::pair<float,float> > rangesY;
+    ULong64_t time_start;
   public:
     WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon);
     std::string getName() const {return (std::string)TString::Format("%s_%d",_sensor.c_str(),_id);};
@@ -83,6 +85,7 @@ class WaveformHistos {
     TProfile* getPulserProfile(std::string key) const;
 
     TH1* getHisto(std::string key) const;
+    TProfile* getTimeProfile(std::string key) const;
     void SetMaxRangeX(std::string,float minx, float maxx);
     void SetMaxRangeY(std::string,float min, float max);
     void SetPedestalIntegralRange(float min, float max);
@@ -97,6 +100,7 @@ class WaveformHistos {
     void InitIntegralHistos();
     void InitSpreadHistos();
     void InitProfiles();
+    void InitTimeProfiles();
     void InitPulserProfiles();
     void InitSignalProfiles();
     void InitPedestalProfiles();
