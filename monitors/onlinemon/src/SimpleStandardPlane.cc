@@ -37,6 +37,7 @@ SimpleStandardPlane::SimpleStandardPlane(const std::string & name, const int id,
   setPixelType(name); //set the pixel type
   _tlu_event=tlu_event;
   _pivot_pixel=pivot_pixel;
+
 }
 
 SimpleStandardPlane::SimpleStandardPlane(const std::string & name, const int id) : _name(name), _id(id), _maxX(-1), _maxY(-1) //FIXME we actually only need this type of constructor to form a map for histogramm allocation

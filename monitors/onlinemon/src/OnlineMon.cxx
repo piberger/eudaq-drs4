@@ -415,13 +415,15 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 
         }
       }
+      if (simpPlane.is_CMSPIXEL){
+          simpPlane.setTriggerPhase(plane.GetTrigPhase());
+      }
       simpEv.addPlane(simpPlane);
 #ifdef DEBUG
       cout << "Type: " << plane.Type() << endl;
       cout << "StandardPlane: "<< plane.Sensor() <<  " " << plane.ID() << " " << plane.XSize() << " " << plane.YSize() << endl;
       cout << "PlaneAddress: " << &plane << endl;
 #endif
-
     }
 
     my_event_inner_operations_time.Start(true);
