@@ -111,6 +111,8 @@ namespace eudaq {
 
 	// We are using the event's "sensor" (m_detector) to distinguish DUT and REF:
 	StandardPlane plane(plane_id + roc, m_event_type, m_detector);
+	plane.SetTrigCount(evt->triggerCount());
+	plane.SetTrigPhase(evt->triggerPhase());
 
 	// Initialize the plane size (zero suppressed), set the number of pixels
 	// Check which carrier PCB has been used and book planes accordingly:
@@ -130,6 +132,7 @@ namespace eudaq {
 	// Add plane to the output event:
 	out.AddPlane(plane);
       }
+      return true;
     }
 
     #if USE_LCIO && USE_EUTELESCOPE

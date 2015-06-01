@@ -12,7 +12,7 @@
 
 #include <math.h>
 
-WaveformHistos::WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon): _n_wfs(10),_sensor(p.getName()), _id(p.getID()),n_fills(0),_n_samples(1024)
+WaveformHistos::WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon): _n_wfs(10),_sensor(p.getName()), _id(p.getID()),n_fills(0),_n_samples(1024),time_start(0)
 {
     char out[1024], out2[1024];
     _mon=mon;
@@ -138,7 +138,6 @@ void WaveformHistos::InitSpreadHistos(){
     hTitle = TString::Format("%s %d: PulserMinusPedestal; (pulserSpread-pedestalSpread)/mV; number of entries",_sensor.c_str(),_id);
     histos["PulserMinusPedestal"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
 
-
     //=====================================================================
     //======== PULSER HISTOGRAMS ==========================================
     //=====================================================================
@@ -170,10 +169,37 @@ void WaveformHistos::InitSpreadHistos(){
 
     hName = TString::Format("h_Pulser_PulserMinusPedestal_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: Pulser PulserMinusPedestal; (pulserSpread-pedestalSpread)/mV; number of entries",_sensor.c_str(),_id);
+
     histos["Pulser_PulserMinusPedestal"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
 }
 
+
+void WaveformHistos::InitTimeProfiles() {
+    TString hName = TString::Format("h_TimeProfileSignalMinusPedestal_%s_%d",_sensor.c_str(),_id);
+    TString hTitle = TString::Format("%s %d: Time Profile Signal-Pedestal (%5.1f - %5.1f); event number / 5000events; signal/mV",
+            _sensor.c_str(),_id,
+            signal_integral_range.first,
+            signal_integral_range.second);
+    time_profiles["SignalMinusPedestal"] = new TProfile(hName,hTitle,1,0,10);
+    time_profiles["SignalMinusPedestal"]->SetStats(false);
+
+    hName = TString::Format("h_TimeProfilePulserSignalMinusPedestal_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Time Profile Pulser Signal-Pedestal (%5.1f - %5.1f); event number / 5000events; signal/mV",
+            _sensor.c_str(),_id,
+            signal_integral_range.first,
+            signal_integral_range.second);
+    time_profiles["Pulser_SignalMinusPedestal"] = new TProfile(hName,hTitle,1,0,10);
+    time_profiles["Pulser_SignalMinusPedestal"]->SetStats(false);
+
+    std::map<std::string, TH1*>::iterator it;
+    for (it = time_profiles.begin();it!=time_profiles.end();it++){
+//        it->second->GetXaxis()->SetTimeDisplay(1);
+//        it->second->GetXaxis()->SetTimeFormat("%M:%S");
+    }
+}
+
 void WaveformHistos::InitProfiles(){
+    InitTimeProfiles();
 //    std::cout<<"WaveformHistos::InitProfiles"<<std::endl;
     float minVolt = -500; //-1000;
     float maxVolt = 500; //+1000;
@@ -373,7 +399,18 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     float signal_integral   = wf.getIntegral(signal_integral_range.first  ,signal_integral_range.second);
     float pedestal_integral = wf.getIntegral(pedestal_integral_range.first,pedestal_integral_range.second);
     float pulser_integral   = wf.getIntegral(pulser_integral_range.first,pulser_integral_range.second);
+    ULong64_t time_stamp = wf.getTimestamp();
 
+    std::map<std::string, TH1*>::iterator it ;
+    if (time_start == 0){
+        time_start = time_stamp;
+        float timestamp = (float)time_stamp/1e7;
+        TDatime time = timestamp;
+        TString hTitle = (TString)"time/s   -  Start Time: "+time.AsString();
+        for (it = time_profiles.begin();it!=time_profiles.end();it++)
+            it->second->GetXaxis()->SetTitle(hTitle);
+        std::cout<<event_no<<":Setting Timestamp to: "<<time_start<<" "<<timestamp<<endl;
+    }
     string prefix = "";
     if (isPulserEvent) prefix = "Pulser_";
     histos["PulserEvents"]->Fill(isPulserEvent);
@@ -387,7 +424,19 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     histos[prefix+"SignalIntegral"]     ->Fill(sign*signal_integral);
     histos[prefix+"PedestalIntegral"]   ->Fill(sign*pedestal_integral);
     histos[prefix+"PulserIntegral"]     ->Fill(sign*pulser_integral);
-    for (std::map<std::string, TH1*>::iterator it = profiles.begin();it!=profiles.end();it++){
+
+    for (it = time_profiles.begin();it!=time_profiles.end();it++){
+        float delta_t = (time_stamp-time_start)/1e7;
+//        std::cout<<event_no<<"delta_t: "<<delta_t<<std::endl;
+        if (it->second->GetXaxis()->GetXmax() < delta_t){
+            int t_bin = 10;
+            int bins = (delta_t+t_bin)/t_bin;
+            int max = (bins)*t_bin;
+            it->second->SetBins(bins,0,max);
+        }
+            time_profiles[prefix+"SignalMinusPedestal"]->Fill(delta_t,signalSpread-pedestalSpread);
+    }
+    for (it = profiles.begin();it!=profiles.end();it++){
         if (it->second->GetXaxis()->GetXmax() < event_no){
             int bins = (event_no+5000)/5000;
             int max = (bins)*5000;
@@ -456,7 +505,15 @@ void WaveformHistos::Calculate(const int currentEventNum)
 
 void WaveformHistos::Write()
 {
-    //	_Waveform->Write();
+
+    for (UInt_t i = 0; i< _Waveforms.size();i++)
+        _Waveforms.at(i)->Write();
+    h_wf_stack->Write();
+    std::map<std::string, TH1*>::iterator it;
+    for (it = profiles.begin();it!=profiles.end();it++)
+        it->second->Write();
+    for(it = histos.begin();it!=histos.end();it++)
+        it->second->Write();
 }
 
 int WaveformHistos::SetHistoAxisLabelx(TH1* histo,string xlabel)
@@ -494,6 +551,13 @@ TH1* WaveformHistos::getHisto(std::string key) const {
     std::map<std::string, TH1*>::const_iterator it = histos.find(key);
     if ( it == histos.end()) return 0;
     return histos.at(key);
+}
+
+TProfile* WaveformHistos::getTimeProfile(std::string key) const {
+//    std::cout<<"WaveformHistos::getHisto"<<key<<std::endl;
+    std::map<std::string, TH1*>::const_iterator it = time_profiles.find(key);
+    if ( it == time_profiles.end()) return 0;
+    return (TProfile*)time_profiles.at(key);
 }
 
 int WaveformHistos::SetHistoAxisLabels(TH1* histo,string xlabel, string ylabel)
@@ -581,3 +645,4 @@ void WaveformHistos::UpdateRange(TH1* histo) {
     }
     histo->GetXaxis()->SetRange(binLow,binHigh);
 }
+

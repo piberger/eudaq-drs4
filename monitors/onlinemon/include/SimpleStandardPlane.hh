@@ -41,6 +41,7 @@ class SimpleStandardPlane {
     std::vector<SimpleStandardCluster> _section_clusters[4];//FIXME hard-coded for Mimosa
     int _tlu_event;
     int _pivot_pixel;
+    unsigned char _trigger_phase;
   public:
     SimpleStandardPlane(const std::string & name, const int id, const int maxX, const int maxY, const int tlu_event, const int pivot_pixel, OnlineMonConfiguration* mymon);
     SimpleStandardPlane(const std::string & name, const int id);
@@ -59,6 +60,8 @@ class SimpleStandardPlane {
     SimpleStandardHit getHit(const int i) const { return _hits.at(i); }
     SimpleStandardHit getRawHit(const int i) const { return _rawhits.at(i); }
     std::string getName() const {return _name; }
+    void setTriggerPhase(unsigned char trig_phase){_trigger_phase=trig_phase;}
+    unsigned char getTriggerPhase() const {return _trigger_phase;}
     int getID() const {return _id;}
     int getMaxX() { return _maxX; }
     int getMaxY() { return _maxY; }
