@@ -180,7 +180,7 @@ void WaveformCollection::registerDataWaveforms(const SimpleStandardWaveform &p,s
     _mon->getOnlineMon()->registerTreeItem(tree);
     _mon->getOnlineMon()->registerHisto(tree,wf_histo->getProfile(prefix+"SignalMinusPedestal"), "",0);
 
-    sprintf(tree,"%s/SignalMinusPedestalTimeProfile",main_path.c_str());
+    sprintf(tree,"%s/TimeSignalMinusPedestalProfile",main_path.c_str());
     std::cout<<tree<<endl;
     _mon->getOnlineMon()->registerTreeItem(tree);
     _mon->getOnlineMon()->registerHisto(tree,wf_histo->getTimeProfile(prefix+"SignalMinusPedestal"), "",0);
