@@ -180,6 +180,15 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 #endif
   _checkEOF.EventReceived();
 
+  if (ev.IsBORE())
+  {
+    std::cout << "This is a BORE" << std::endl;
+//ev.GetRunNumber();
+  }
+  if (ev.GetEventNumber()<10)
+      if (ev.GetRunNumber()!=0)
+          this->onlinemon->setRunNumber(ev.GetRunNumber());
+
   //    cout << "Called onEvent " << ev.GetEventNumber()<< endl;
 
   //start timing to measure processing time
@@ -406,13 +415,15 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 
         }
       }
+      if (simpPlane.is_CMSPIXEL){
+          simpPlane.setTriggerPhase(plane.GetTrigPhase());
+      }
       simpEv.addPlane(simpPlane);
 #ifdef DEBUG
       cout << "Type: " << plane.Type() << endl;
       cout << "StandardPlane: "<< plane.Sensor() <<  " " << plane.ID() << " " << plane.XSize() << " " << plane.YSize() << endl;
       cout << "PlaneAddress: " << &plane << endl;
 #endif
-
     }
 
     my_event_inner_operations_time.Start(true);
@@ -488,6 +499,10 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
   if (ev.IsBORE())
   {
     std::cout << "This is a BORE" << std::endl;
+//ev.GetRunNumber();
+    if (ev.GetRunNumber() != 0)
+        this->onlinemon->setRunNumber(ev.GetRunNumber());
+
   }
 
 

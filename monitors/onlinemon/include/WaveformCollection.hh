@@ -44,6 +44,10 @@ public:
 	}
 	virtual ~WaveformCollection() {};
 	void registerWaveform(const SimpleStandardWaveform &p);
+	void registerGlobalWaveforms(const SimpleStandardWaveform &p);
+	void registerDataWaveforms(const SimpleStandardWaveform &p,std::string prefix,std::string desc);
+	void registerSignalWaveforms(const SimpleStandardWaveform &p);
+	void registerPulserWaveforms(const SimpleStandardWaveform &p);
 	void bookHistograms(const SimpleStandardEvent &simpev);
 	void setRootMonitor(RootMonitor *mon)  {_mon = mon; }
 	void Fill(const SimpleStandardEvent &simpev);

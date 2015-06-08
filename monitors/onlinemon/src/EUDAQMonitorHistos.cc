@@ -14,6 +14,8 @@ EUDAQMonitorHistos::EUDAQMonitorHistos(const SimpleStandardEvent &ev)
   Hits_vs_Events=new TProfile*[nplanes];
   TLUdelta_perEventHisto=new TProfile*[nplanes];
 
+//  TriggerPhasePerEvent.resize(nplanes,0);
+
   Planes_perEventHisto= new TH1F("Planes in Event","Planes in Event",nplanes*2,0,nplanes*2);
   Waveforms_perEventHisto= new TH1F("Waveforms in Event","Waveforms in Event",nwfs*2,0,nwfs*2);
   Hits_vs_PlaneHisto =new TProfile("Hits vs Plane", "Hits vs Plane",nplanes,0, nplanes);
@@ -40,10 +42,27 @@ EUDAQMonitorHistos::EUDAQMonitorHistos(const SimpleStandardEvent &ev)
     Hits_vs_Events[i]=new TProfile(histolabel.str().c_str(), histolabel.str().c_str(),1000,0, 20000);
     TLUdelta_perEventHisto[i]=new TProfile(histolabel_tlu.str().c_str(), histolabel_tlu.str().c_str(),1000,0, 20000);
 
+    TString hName = "hTriggerPhasePerEvent_"+(TString)ev.getPlane(i).getName()+"_"+number.str();
+    TString hTitle = "Trigger Phase vs Event No. "+(TString) name;
+    hTitle+=";event no;Trigger Phase";
+    std::cout<<i<<" "<<hName<<" "<<hTitle<<std::endl;
+    TriggerPhasePerEvent.push_back( new TH2D(hName,hTitle,1000,0,20000,10,0,10));
+    TriggerPhasePerEvent.back()->SetStats(false);
+    std::cout<<TriggerPhasePerEvent.at(i)<<std::endl;
+
+    hName = "hTriggerPhase_"+(TString)ev.getPlane(i).getName()+"_"+number.str();
+    hTitle = "Trigger Phase"+(TString) name;
+    hTitle+=";Trigger Phase;event no";
+    std::cout<<i<<" "<<hName<<" "<<hTitle<<std::endl;
+    TriggerPhaseHisto.push_back( new TH1D(hName,hTitle,10,0,10));
+    TriggerPhaseHisto.back()->SetStats(false);
+    std::cout<<TriggerPhaseHisto.at(i)<<std::endl;
+
     Hits_vs_Events[i]->SetLineColor(i+1);
     Hits_vs_Events[i]->SetMarkerColor(i+1);
     TLUdelta_perEventHisto[i]->SetLineColor(i+1);
     TLUdelta_perEventHisto[i]->SetMarkerColor(i+1);
+
 
     //fix for root being stupid
     if (i==9) //root features //FIXME
@@ -54,6 +73,7 @@ EUDAQMonitorHistos::EUDAQMonitorHistos(const SimpleStandardEvent &ev)
       TLUdelta_perEventHisto[i]->SetMarkerColor(i+2);
     }
     Hits_vs_Events[i]->SetBit(TH1::kCanRebin);
+    TriggerPhasePerEvent[i]->SetBit(TH1::kCanRebin);
     TLUdelta_perEventHisto[i]->SetBit(TH1::kCanRebin);
   }
 
@@ -66,7 +86,6 @@ EUDAQMonitorHistos::~EUDAQMonitorHistos()
 
 void EUDAQMonitorHistos::Fill(const SimpleStandardEvent &ev)
 {
-
   unsigned int event_nr=ev.getEvent_number();
   Planes_perEventHisto->Fill(ev.getNPlanes());
   Waveforms_perEventHisto->Fill(ev.getNWaveforms());
@@ -78,6 +97,14 @@ void EUDAQMonitorHistos::Fill(const SimpleStandardEvent &ev)
     Hits_vs_Events[i]->Fill(event_nr,ev.getPlane(i).getNHits());
     TLUdelta_perEventHisto[i]->Fill(event_nr,ev.getPlane(i).getTLUEvent()-(event_nr%32768));// TLU counter can only hnadel 32768 counts
     nhits_total+=ev.getPlane(i).getNHits();
+//    if (TriggerPhasePerEvent[i]->GetXaxis()->GetXmax() < event_nr){
+//        int bins = (event_nr+2000)/2000;
+//        int max = (bins+2)*2000;
+//        TriggerPhasePerEvent[i]->SetBins(bins,0,max,10,0,10);
+//        cout<<TriggerPhasePerEvent[i]<<": Extend Profile "<<bins<<" "<<max<<endl;
+//    }
+    TriggerPhaseHisto[i]->Fill(ev.getPlane(i).getTriggerPhase());
+    (TriggerPhasePerEvent[i])->Fill(event_nr,ev.getPlane(i).getTriggerPhase());
   }
   Hits_vs_EventsTotal->Fill(event_nr,nhits_total);
 }
@@ -98,6 +125,8 @@ void EUDAQMonitorHistos::Write()
   {
     Hits_vs_Events[i]->Write();
     TLUdelta_perEventHisto[i]->Write();
+    TriggerPhasePerEvent[i]->Write();
+    TriggerPhaseHisto[i]->Write();
   }
   Hits_vs_EventsTotal->Write();
   TracksPerEvent->Write();
@@ -148,6 +177,10 @@ unsigned int EUDAQMonitorHistos::getNplanes() const
 
 TH1F* EUDAQMonitorHistos::getWaveforms_AmplitudeHisto(unsigned int i) const {
 	return 0;
+}
+
+TH2D* EUDAQMonitorHistos::getTriggerPhase_vs_Events(unsigned int i) const {
+    return TriggerPhasePerEvent.at(i);
 }
 
 unsigned int EUDAQMonitorHistos::getNwaveforms() const
