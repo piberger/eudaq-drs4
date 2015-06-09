@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <cmath>
 //#include <TString.h>
 
 namespace eudaq {
@@ -63,7 +64,7 @@ public:
         return std::distance(&m_samples.at(0),max_el);//-m_samples.begin();
     };
     float getSpreadInRange(int min, int max) const{return (getMaxInRange(min,max)-getMinInRange(min,max));};
-    float getIntegral(int min, int max) const;
+    float getIntegral(int min, int max,bool _abs=false) const;
 
 private:
 	uint64_t m_timestamp;

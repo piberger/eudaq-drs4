@@ -46,16 +46,19 @@ unsigned StandardWaveform::ID() const {
 }
 
 
-float StandardWaveform::getIntegral(int min, int max) const {
-    if (max>this->GetNSamples())
+float StandardWaveform::getIntegral(int min, int max, bool _abs) const {
+    if ( max + 1 > this->GetNSamples())
         max = this->GetNSamples();
     if (min < 0)
         min = 0;
     float integral = 0;
     for (unsigned i = min; i <= max; i++){
-        integral += m_samples.at(i);
+        if(!_abs)
+            integral += m_samples.at(i);
+        else
+            integral += abs(m_samples.at(i));
     }
-    return integral/=(float)(max-min);
+    return integral/(float)(max-(int)min);
 }
 
 
