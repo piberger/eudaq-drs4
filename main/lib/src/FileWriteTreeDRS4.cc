@@ -91,9 +91,12 @@ namespace eudaq {
         std::vector< std::string >  * v_sensor_name;
         std::vector< std::string >  * v_type_name;
         std::vector<float>  * v_sig;
+        std::vector<float>  * v_sig_int;
         std::vector<float>  * v_sig_time;
         std::vector<float>  * v_ped;
+        std::vector<float>  * v_ped_int;
         std::vector<float>  * v_pul;
+        std::vector<float>  * v_pul_int;
         
         // std::vector<float> * f_wf0;
         // std::vector<float> * f_wf1;
@@ -134,8 +137,11 @@ namespace eudaq {
         v_sensor_name = new std::vector< std::string >;
         v_type_name   = new std::vector< std::string >;
         v_ped       = new std::vector<float>;
+        v_ped_int       = new std::vector<float>;
         v_pul       = new std::vector<float>;
+        v_pul_int       = new std::vector<float>;
         v_sig       = new std::vector<float>;
+        v_sig_int       = new std::vector<float>;
         v_sig_time  = new std::vector<float>;
         
         // f_wf0 = new std::vector<float>;
@@ -187,8 +193,11 @@ namespace eudaq {
         m_ttree->Branch("sensor_name" , &v_sensor_name);
         m_ttree->Branch("type_name"   , &v_type_name);
         m_ttree->Branch("pul"         , &v_pul);
+        m_ttree->Branch("pul_int"         , &v_pul_int);
         m_ttree->Branch("ped"         , &v_ped);
+        m_ttree->Branch("ped_int"         , &v_ped_int);
         m_ttree->Branch("sig"         , &v_sig);
+        m_ttree->Branch("sig_int"         , &v_sig_int);
         m_ttree->Branch("sig_time"    , &v_sig_time);
         
         
@@ -242,8 +251,11 @@ namespace eudaq {
         v_sensor_name->clear();
         v_type_name->clear();
         v_pul->clear();
+        v_pul_int->clear();
         v_ped->clear();
+        v_ped_int->clear();
         v_sig->clear();
+        v_sig_int->clear();
         v_sig_time->clear();
         
         // f_wf0->clear();
@@ -297,8 +309,13 @@ namespace eudaq {
                 // calculate the signal and so on
                 // float sig = CalculatePeak(data, 1075, 1150);
                 float signal   = waveform.getSpreadInRange( 25,  125);
+                float signal_integral   = waveform.getIntegral( 25,  125);
+                int signal_time = waveform.getIndexAbsMax(25,125);
                 float pedestal = waveform.getSpreadInRange(350,  450);
+                float pedestal_integral   = waveform.getIntegral(350,  450);
                 float pulser   = waveform.getSpreadInRange(760,  860);
+                float pulser_integral   = waveform.getIntegral(760,  860);
+//                waveform.getIndexMin(25,125);
 
                 // float mini = waveform.getMinInRange(10,1000);
                 // float minind = waveform.getIndexMin(10,1000);
@@ -306,9 +323,12 @@ namespace eudaq {
         
                 // save the values in the event
                 v_sig     ->push_back(signal);
-                v_sig_time->push_back(42); // this does not make sense yet!!
+                v_sig_int ->push_back(signal_integral);
+                v_sig_time->push_back(signal_time); // this does not make sense yet!!
                 v_ped->push_back(pedestal);
+                v_ped_int->push_back(pedestal_integral);
                 v_pul->push_back(pulser);
+                v_pul_int->push_back(pulser_integral);
     
                 if(iwf == 1){ // trigger WF
                     for (int j=0; j<data->size(); j++){

@@ -45,6 +45,20 @@ unsigned StandardWaveform::ID() const {
 	return m_id;
 }
 
+
+float StandardWaveform::getIntegral(int min, int max) const {
+    if (max>this->GetNSamples())
+        max = this->GetNSamples();
+    if (min < 0)
+        min = 0;
+    float integral = 0;
+    for (unsigned i = min; i <= max; i++){
+        integral += m_samples.at(i);
+    }
+    return integral/=(float)(max-min);
+}
+
+
 /************************************************************************************************/
 /*************************************** Standard Plane *****************************************/
 /************************************************************************************************/
@@ -439,4 +453,5 @@ StandardWaveform & StandardEvent::AddWaveform(const StandardWaveform & waveform)
 	m_waveforms.push_back(waveform);
 	return m_waveforms.back();
 }
+
 }
