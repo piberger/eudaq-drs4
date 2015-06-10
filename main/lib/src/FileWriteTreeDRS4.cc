@@ -65,6 +65,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         virtual uint64_t FileBytes() const;
         float Calculate(std::vector<float> * data, int min, int max, bool _abs=false);
         float CalculatePeak(std::vector<float> * data, int min, int max);
+        float CalculateMedian(std::vector<float> * data, int min, int max);
         std::pair<int, float> FindMaxAndValue(std::vector<float> * data, int min, int max);
         float avgWF(float, float, int);
         virtual ~FileWriterTreeDRS4();
@@ -415,6 +416,20 @@ float FileWriterTreeDRS4::CalculatePeak(std::vector<float> * data, int min, int 
     float integral = Calculate(data, mid-3, mid+6);
     return integral;
 
+}
+float FileWriterTreeDRS4::CalculateMedian(std::vector<float> * data, int min, int max) {
+	float median;
+	int n = max - min + 1;
+	float* cropDataArray = new float[n];
+	int i = 0;
+	for (vector<float,allocator<float>>::iterator iterator = data->begin()+min; iterator != data->begin()+max+1; iterator++) { 
+		cropDataArray[i] = *iterator;
+		i++;
+	}
+	median = (float)TMath::Median(n, cropDataArray);
+	
+	delete[] cropDataArray;
+	return median;
 }
 std::pair<int, float> FileWriterTreeDRS4::FindMaxAndValue(std::vector<float> * data, int min, int max) {
     float maxVal = -999;
