@@ -102,6 +102,7 @@ namespace eudaq {
         std::vector<float>  * v_sig_integral54;
         std::vector<float>  * v_ped;
         std::vector<float>  * v_ped_int;
+        std::vector<float>  *  v_ped_median	      ;
         std::vector<float>  * v_pul;
         std::vector<float>  * v_pul_int;
         std::vector<bool>  	* v_is_saturated;
@@ -150,6 +151,7 @@ namespace eudaq {
     	v_sig_peak     	= new std::vector<float>;
     	v_ped       	= new std::vector<float>;
     	v_ped_int       = new std::vector<float>;
+    	v_ped_median	= new std::vector<float>;
     	v_pul       	= new std::vector<float>;
     	v_pul_int       = new std::vector<float>;
     	v_sig       	= new std::vector<float>;
@@ -214,6 +216,7 @@ namespace eudaq {
     	m_ttree->Branch("pul_int"     , &v_pul_int);
     	m_ttree->Branch("ped"         , &v_ped);
     	m_ttree->Branch("ped_int"     , &v_ped_int);
+    	m_ttree->Branch("v_ped_median",&v_ped_median);
     	m_ttree->Branch("sig"         , &v_sig);
     	m_ttree->Branch("sig_int"     , &v_sig_int);
     	m_ttree->Branch("sig_time"    , &v_sig_time);
@@ -276,6 +279,7 @@ namespace eudaq {
     	v_pul_int		->clear();
     	v_ped			->clear();
     	v_ped_int		->clear();
+    	v_ped_median	->clear();
     	v_sig			->clear();
     	v_sig_int		->clear();
     	v_sig_time		->clear();
@@ -343,6 +347,7 @@ namespace eudaq {
             float int_54 			= Calculate(data, maxAndValue.first-18, maxAndValue.first+36);
     		float pedestal 			= waveform.getSpreadInRange(350,  500);
     		float pedestal_integral = waveform.getIntegral(350,  500);
+    		float pedestal_median	= CalculateMedian(data, 350, 500);
     		float pulser   			= waveform.getSpreadInRange(760,  910);
     		float pulser_integral   = waveform.getIntegral(760,  910);
     		float abs_max			= waveform.getAbsMaxInRange(0,1023)
@@ -363,6 +368,7 @@ namespace eudaq {
             v_sig_integral54->push_back(int_54); 				// signal: integral [pk-18, pk+36]
     		v_ped			->push_back(pedestal);				// SpreadInRange(350,  500)
     		v_ped_int		->push_back(pedestal_integral);		// Integral(350,  500)
+    		v_ped_median	->push_back(pedestal_median); 		// pedestrial: median in [350, 500]
     		v_pul			->push_back(pulser);				// SpreadInRange(760,  910)
     		v_pul_int		->push_back(pulser_integral);		// Integral(760,  910)
     		if(abs_max<=498){
