@@ -87,6 +87,7 @@ namespace eudaq {
         float f_pulser_int;
         int   f_trig_time;
         
+        
         // Vector Branches     
         
         // DUT
@@ -103,6 +104,8 @@ namespace eudaq {
         std::vector<float>  * v_ped_int;
         std::vector<float>  * v_pul;
         std::vector<float>  * v_pul_int;
+        std::vector<bool>  	* v_is_saturated;
+        
         
         std::vector<float> * f_wf0;
         // std::vector<float> * f_wf1;
@@ -155,6 +158,7 @@ namespace eudaq {
     	v_sig_integral9	= new std::vector<float>;
         v_sig_integral27= new std::vector<float>;
         v_sig_integral54= new std::vector<float>;
+        v_is_saturated	= new std::vector<bool>;
     	
     	f_wf0 = new std::vector<float>;
     	// f_wf1 = new std::vector<float>;
@@ -196,6 +200,7 @@ namespace eudaq {
     	m_ttree->Branch("trig_time"     ,&f_trig_time    , "trig_time/I");
     	m_ttree->Branch("nwfs"          , &f_nwfs        , "n_waveforms/I");
     	
+    	
     	m_ttree->Branch("wf0" , &f_wf0);
     	// m_ttree->Branch("wf1" , &f_wf1);
     	// m_ttree->Branch("wf2" , &f_wf2);
@@ -215,6 +220,7 @@ namespace eudaq {
     	m_ttree->Branch("v_sig_integral9", 	&v_sig_integral9);
         m_ttree->Branch("v_sig_integral27" ,&v_sig_integral27);
         m_ttree->Branch("v_sig_integral54" ,&v_sig_integral54);
+    	m_ttree->Branch("v_is_saturated" ,&v_is_saturated);
     	
     	// telescope
     	m_ttree->Branch("plane", &f_plane);
@@ -276,6 +282,7 @@ namespace eudaq {
     	v_sig_integral9	->clear();
         v_sig_integral27->clear();
         v_sig_integral54->clear();
+        v_is_saturated	->Clear();
     	
     	f_wf0->clear();
     	// f_wf1->clear();
@@ -336,8 +343,9 @@ namespace eudaq {
             float int_54 			= Calculate(data, maxAndValue.first-18, maxAndValue.first+36);
     		float pedestal 			= waveform.getSpreadInRange(350,  500);
     		float pedestal_integral = waveform.getIntegral(350,  500);
-    		float pulser   			= waveform.getSpreadInRange(760,  860);
+    		float pulser   			= waveform.getSpreadInRange(760,  910);
     		float pulser_integral   = waveform.getIntegral(760,  910);
+    		float abs_max			= waveform.getAbsMaxInRange(0,1023)
     		
     		//                waveform.getIndexMin(25,125);
     		
@@ -346,17 +354,23 @@ namespace eudaq {
     		// cout << "minimum of the waveform in range 10, 1000: " << mini << " at index " << minind<< endl;
     		
     		// SAVE THE VALUES IN THE EVENT
-    		v_sig_peak 		->push_back(maxAndValue.second); 	// signal: peak in [0,200]
-    		v_sig     		->push_back(signal);				// SpreadInRange( 25,  125)
-    		v_sig_int 		->push_back(signal_integral); 		// Integral( 25,  125)
-    		v_sig_time		->push_back(signal_time); 			// IndexAbsMax(25,125)
+    		v_sig_peak 		->push_back(maxAndValue.second); 	// signal: peak in [25, 175]
+    		v_sig     		->push_back(signal);				// SpreadInRange( 25, 175)
+    		v_sig_int 		->push_back(signal_integral); 		// Integral( 25, 175)
+    		v_sig_time		->push_back(signal_time); 			// IndexAbsMax(25, 175)
     		v_sig_integral9	->push_back(int_9); 				// signal: integral [pk-3, pk+6]
             v_sig_integral27->push_back(int_27); 				// signal: integral [pk-9, pk+18]
             v_sig_integral54->push_back(int_54); 				// signal: integral [pk-18, pk+36]
-    		v_ped			->push_back(pedestal);				// SpreadInRange(350,  450)
-    		v_ped_int		->push_back(pedestal_integral);		// Integral(350,  450)
-    		v_pul			->push_back(pulser);				// SpreadInRange(760,  860)
-    		v_pul_int		->push_back(pulser_integral);		// Integral(760,  860)
+    		v_ped			->push_back(pedestal);				// SpreadInRange(350,  500)
+    		v_ped_int		->push_back(pedestal_integral);		// Integral(350,  500)
+    		v_pul			->push_back(pulser);				// SpreadInRange(760,  910)
+    		v_pul_int		->push_back(pulser_integral);		// Integral(760,  910)
+    		if(abs_max<=498){
+    			v_is_saturated -> push_back(false);
+    		}
+    		else{
+    			v_is_saturated -> push_back(true);
+    		};
     		
     		if(iwf == 1){ // trigger WF
     			for (int j=0; j<data->size(); j++){
