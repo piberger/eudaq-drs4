@@ -95,6 +95,9 @@ namespace eudaq {
         std::vector<float>  * v_sig;
         std::vector<float>  * v_sig_int;
         std::vector<float>  * v_sig_time;
+        std::vector<float>  * v_sig_integral9;
+        std::vector<float>  * v_sig_integral27;
+        std::vector<float>  * v_sig_integral54;
         std::vector<float>  * v_ped;
         std::vector<float>  * v_ped_int;
         std::vector<float>  * v_pul;
@@ -148,6 +151,9 @@ namespace eudaq {
     	v_sig       	= new std::vector<float>;
     	v_sig_int       = new std::vector<float>;
     	v_sig_time  	= new std::vector<float>;
+    	v_sig_integral9	= new std::vector<float>;
+        v_sig_integral27= new std::vector<float>;
+        v_sig_integral54= new std::vector<float>;
     	
     	f_wf0 = new std::vector<float>;
     	// f_wf1 = new std::vector<float>;
@@ -205,6 +211,9 @@ namespace eudaq {
     	m_ttree->Branch("sig"         , &v_sig);
     	m_ttree->Branch("sig_int"     , &v_sig_int);
     	m_ttree->Branch("sig_time"    , &v_sig_time);
+    	m_ttree->Branch("v_sig_integral9", 	&v_sig_integral9);
+        m_ttree->Branch("v_sig_integral27" ,&v_sig_integral27);
+        m_ttree->Branch("v_sig_integral54" ,&v_sig_integral54);
     	
     	// telescope
     	m_ttree->Branch("plane", &f_plane);
@@ -263,6 +272,9 @@ namespace eudaq {
     	v_sig			->clear();
     	v_sig_int		->clear();
     	v_sig_time		->clear();
+    	v_sig_integral9	->clear();
+        v_sig_integral27->clear();
+        v_sig_integral54->clear();
     	
     	f_wf0->clear();
     	// f_wf1->clear();
@@ -318,6 +330,9 @@ namespace eudaq {
     		float signal   			= waveform.getSpreadInRange( 25,  125);
     		float signal_integral   = waveform.getIntegral( 25,  125);
     		int   signal_time 		= waveform.getIndexAbsMax(25,125);
+    		float int_9 			= Calculate(data, maxAndValue.first-3, maxAndValue.first+6);
+            float int_27 			= Calculate(data, maxAndValue.first-9, maxAndValue.first+18);
+            float int_54 			= Calculate(data, maxAndValue.first-18, maxAndValue.first+36);
     		float pedestal 			= waveform.getSpreadInRange(350,  450);
     		float pedestal_integral = waveform.getIntegral(350,  450);
     		float pulser   			= waveform.getSpreadInRange(760,  860);
@@ -330,14 +345,17 @@ namespace eudaq {
     		// cout << "minimum of the waveform in range 10, 1000: " << mini << " at index " << minind<< endl;
     		
     		// SAVE THE VALUES IN THE EVENT
-    		v_sig_peak 	->push_back(maxAndValue.second); 		// signal: peak in [0,200]
-    		v_sig     	->push_back(signal);					// SpreadInRange( 25,  125)
-    		v_sig_int 	->push_back(signal_integral); 			// Integral( 25,  125)
-    		v_sig_time	->push_back(signal_time); 				// IndexAbsMax(25,125)
-    		v_ped		->push_back(pedestal);					// SpreadInRange(350,  450)
-    		v_ped_int	->push_back(pedestal_integral);			// Integral(350,  450)
-    		v_pul		->push_back(pulser);					// SpreadInRange(760,  860)
-    		v_pul_int	->push_back(pulser_integral);			// Integral(760,  860)
+    		v_sig_peak 		->push_back(maxAndValue.second); 	// signal: peak in [0,200]
+    		v_sig     		->push_back(signal);				// SpreadInRange( 25,  125)
+    		v_sig_int 		->push_back(signal_integral); 		// Integral( 25,  125)
+    		v_sig_time		->push_back(signal_time); 			// IndexAbsMax(25,125)
+    		v_sig_integral9	->push_back(int_9); 				// signal: integral [pk-3, pk+6]
+            v_sig_integral27->push_back(int_27); 				// signal: integral [pk-9, pk+18]
+            v_sig_integral54->push_back(int_54); 				// signal: integral [pk-18, pk+36]
+    		v_ped			->push_back(pedestal);				// SpreadInRange(350,  450)
+    		v_ped_int		->push_back(pedestal_integral);		// Integral(350,  450)
+    		v_pul			->push_back(pulser);				// SpreadInRange(760,  860)
+    		v_pul_int		->push_back(pulser_integral);		// Integral(760,  860)
     		
     		if(iwf == 1){ // trigger WF
     			for (int j=0; j<data->size(); j++){
