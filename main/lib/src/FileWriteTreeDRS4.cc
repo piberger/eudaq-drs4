@@ -327,17 +327,17 @@ namespace eudaq {
     		
     		// CALCULATE SIGNALS AND SO ON
     		// float sig = CalculatePeak(data, 1075, 1150);
-    		std::pair<int, float> maxAndValue = FindMaxAndValue(data,   0, 200);
-    		float signal   			= waveform.getSpreadInRange( 25,  125);
-    		float signal_integral   = waveform.getIntegral( 25,  125);
-    		int   signal_time 		= waveform.getIndexAbsMax(25,125);
+    		std::pair<int, float> maxAndValue = FindMaxAndValue(data,   25, 175);
+    		float signal   			= waveform.getSpreadInRange( 25,  175);
+    		float signal_integral   = waveform.getIntegral( 25,  175);
+    		int   signal_time 		= waveform.getIndexAbsMax(25,175);
     		float int_9 			= Calculate(data, maxAndValue.first-3, maxAndValue.first+6);
             float int_27 			= Calculate(data, maxAndValue.first-9, maxAndValue.first+18);
             float int_54 			= Calculate(data, maxAndValue.first-18, maxAndValue.first+36);
-    		float pedestal 			= waveform.getSpreadInRange(350,  450);
-    		float pedestal_integral = waveform.getIntegral(350,  450);
+    		float pedestal 			= waveform.getSpreadInRange(350,  500);
+    		float pedestal_integral = waveform.getIntegral(350,  500);
     		float pulser   			= waveform.getSpreadInRange(760,  860);
-    		float pulser_integral   = waveform.getIntegral(760,  860);
+    		float pulser_integral   = waveform.getIntegral(760,  910);
     		
     		//                waveform.getIndexMin(25,125);
     		
