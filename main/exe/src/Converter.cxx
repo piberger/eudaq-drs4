@@ -3,7 +3,7 @@
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
-
+#include "eudaq/Configuration.hh"
 #include <iostream>
 #include "eudaq/MultiFileReader.hh"
 
@@ -25,18 +25,31 @@ int main(int, char ** argv) {
   eudaq::Option<uint64_t> syncDelay(op, "d" ,"longDelay",20,"uint64_t","us time long time delay");
   eudaq::Option<std::string> level(op, "l", "log-level", "INFO", "level",
       "The minimum level for displaying log messages locally");
+  eudaq::Option<std::string> configFileName(op,"c","config", "", "string","Configuration filename");
   op.ExtraHelpText("Available output types are: " + to_string(eudaq::FileWriterFactory::GetTypes(), ", "));
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
     std::vector<unsigned> numbers = parsenumbers(events.Value());
 	std::sort(numbers.begin(),numbers.end());
-		eudaq::multiFileReader reader(!async.Value());
+	eudaq::multiFileReader reader(!async.Value());
     for (size_t i = 0; i < op.NumArgs(); ++i) {
-	
       reader.addFileReader(op.GetArg(i), ipat.Value());
 	}
-      std::shared_ptr<eudaq::FileWriter> writer(FileWriterFactory::Create(type.Value()));
+    Configuration config("");
+    if (configFileName.Value() != ""){
+        std::cout << "Read config file: "<<configFileName.Value()<<std::endl;
+        std::ifstream file(configFileName.Value().c_str());
+        if (file.is_open()) {
+          config.Load(file,"");
+          std::string name = configFileName.Value().substr(0, configFileName.Value().find("."));
+          config.Set("Name",name);
+        } else {
+          std::cout<<"Unable to open file '" << configFileName.Value() << "'" << std::endl;
+        }
+    }
+      std::shared_ptr<eudaq::FileWriter> writer(FileWriterFactory::Create(type.Value(),&config));
+      writer->SetConfig(&config);
       writer->SetFilePattern(opat.Value());
       writer->StartRun(reader.RunNumber());
 	  int event_nr=0;

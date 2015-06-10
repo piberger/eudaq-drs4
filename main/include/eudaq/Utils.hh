@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <iostream>
 #include <iomanip>
 #include <stdexcept>
 #include <fstream>
@@ -28,7 +29,8 @@ namespace eudaq {
 
   std::string DLLEXPORT ucase(const std::string &);
   std::string DLLEXPORT lcase(const std::string &);
-  std::string DLLEXPORT trim(const std::string & s);
+//  std::string DLLEXPORT trim(const std::string & s);
+  std::string DLLEXPORT trim(const std::string & s, std::string trim_characters="\t\n\r\v");
   std::string DLLEXPORT firstline(const std::string & s);
   std::string DLLEXPORT escape(const std::string &);
   std::vector<std::string> DLLEXPORT split(const std::string & str, const std::string & delim = "\t");
@@ -53,6 +55,12 @@ namespace eudaq {
       s << std::setfill('0') << std::setw(digits) << x;
       return s.str();
     }
+  template <typename T, typename Q>
+      inline std::string to_string(const std::pair<T,Q> & x) {
+        std::ostringstream s;
+        s << "["<<to_string(x.first)<<","<<to_string(x.second)<<"]";
+        return s.str();
+      }
 
   template <typename T>
     inline std::string to_string(const std::vector<T> & x, const std::string & sep, int digits = 0) {
@@ -140,6 +148,16 @@ namespace eudaq {
     inline uint32_t from_string(const std::string & x, const uint32_t & def) {
       return static_cast<uint32_t>(from_string(x, (uint64_t)def));
     }
+
+  template<typename P,typename Q>
+  std::pair<P,Q> DLLEXPORT from_string(const  std::string & x, const std::pair<P,Q>  & def) {
+      std::string trimmed_string = trim(x," \t\n\r\v");
+      trimmed_string = trim(trimmed_string,"{}[]()<>");
+      std::vector<std::string> splitted_string = split(trimmed_string,",");
+      P first = from_string(splitted_string.at(0),(P)def.first);
+      Q second = from_string(splitted_string.at(1),(Q)def.second);
+      return std::make_pair((Q)first,(P)second);
+  }
 
   template <typename T>
     struct Holder {

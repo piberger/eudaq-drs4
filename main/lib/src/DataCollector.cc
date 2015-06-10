@@ -68,7 +68,7 @@ namespace eudaq {
 
   void DataCollector::OnConfigure(const Configuration & param) {
     m_config = param;
-    m_writer =  std::shared_ptr<eudaq::FileWriter>(FileWriterFactory::Create(m_config.Get("FileType", "")));
+    m_writer =  std::shared_ptr<eudaq::FileWriter>(FileWriterFactory::Create(m_config.Get("FileType", ""), &m_config) );
     m_writer->SetFilePattern(m_config.Get("FilePattern", ""));
   }
 
