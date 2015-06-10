@@ -286,7 +286,7 @@ namespace eudaq {
     	v_sig_integral9	->clear();
         v_sig_integral27->clear();
         v_sig_integral54->clear();
-        v_is_saturated	->Clear();
+        v_is_saturated	->clear();
     	
     	f_wf0->clear();
     	// f_wf1->clear();
@@ -350,7 +350,7 @@ namespace eudaq {
     		float pedestal_median	= CalculateMedian(data, 350, 500);
     		float pulser   			= waveform.getSpreadInRange(760,  910);
     		float pulser_integral   = waveform.getIntegral(760,  910);
-    		float abs_max			= waveform.getAbsMaxInRange(0,1023)
+    		float abs_max			= waveform.getAbsMaxInRange(0,1023);
     		
     		//                waveform.getIndexMin(25,125);
     		
