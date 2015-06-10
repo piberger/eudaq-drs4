@@ -97,7 +97,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         std::vector<float>  * v_ped_int;
         std::vector<float>  * v_pul;
         std::vector<float>  * v_pul_int;
-
+        
         std::vector<float> * f_wf0;
         // std::vector<float> * f_wf1;
         // std::vector<float> * f_wf2;
@@ -126,6 +126,8 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
 : m_tfile(0), m_ttree(0),m_noe(0),chan(4),n_pixels(90*90+60*60)
 {
 
+	gROOT->ProcessLine(".L loader.C+");
+	
     f_nwfs          =  0;
     f_event_number  = -1;
     f_time          = -1.;
@@ -134,15 +136,15 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     f_trig_time     =  0.;
 
     // dut
-    v_sensor_name = new std::vector< std::string >;
-    v_type_name   = new std::vector< std::string >;
-    v_ped       = new std::vector<float>;
+    v_sensor_name 	= new std::vector< std::string >;
+    v_type_name   	= new std::vector< std::string >;
+    v_ped       	= new std::vector<float>;
     v_ped_int       = new std::vector<float>;
-    v_pul       = new std::vector<float>;
+    v_pul       	= new std::vector<float>;
     v_pul_int       = new std::vector<float>;
-    v_sig       = new std::vector<float>;
+    v_sig       	= new std::vector<float>;
     v_sig_int       = new std::vector<float>;
-    v_sig_time  = new std::vector<float>;
+    v_sig_time  	= new std::vector<float>;
 
     f_wf0 = new std::vector<float>;
     // f_wf1 = new std::vector<float>;
@@ -199,7 +201,6 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("sig"         , &v_sig);
     m_ttree->Branch("sig_int"         , &v_sig_int);
     m_ttree->Branch("sig_time"    , &v_sig_time);
-
 
     // telescope
     m_ttree->Branch("plane", &f_plane);
@@ -308,12 +309,12 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
 
         // calculate the signal and so on
         // float sig = CalculatePeak(data, 1075, 1150);
-        float signal   = waveform.getSpreadInRange( 25,  125);
+        float signal   			= waveform.getSpreadInRange( 25,  125);
         float signal_integral   = waveform.getIntegral( 25,  125);
-        int signal_time = waveform.getIndexAbsMax(25,125);
-        float pedestal = waveform.getSpreadInRange(350,  450);
-        float pedestal_integral   = waveform.getIntegral(350,  450);
-        float pulser   = waveform.getSpreadInRange(760,  860);
+        int signal_time 		= waveform.getIndexAbsMax(25,125);
+        float pedestal 			= waveform.getSpreadInRange(350,  450);
+        float pedestal_integral = waveform.getIntegral(350,  450);
+        float pulser   			= waveform.getSpreadInRange(760,  860);
         float pulser_integral   = waveform.getIntegral(760,  860);
         //                waveform.getIndexMin(25,125);
 
@@ -322,13 +323,13 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         // cout << "minimum of the waveform in range 10, 1000: " << mini << " at index " << minind<< endl;
 
         // save the values in the event
-        v_sig     ->push_back(signal);
-        v_sig_int ->push_back(signal_integral);
-        v_sig_time->push_back(signal_time); // this does not make sense yet!!
-        v_ped->push_back(pedestal);
-        v_ped_int->push_back(pedestal_integral);
-        v_pul->push_back(pulser);
-        v_pul_int->push_back(pulser_integral);
+        v_sig     	->push_back(signal);
+        v_sig_int 	->push_back(signal_integral);
+        v_sig_time	->push_back(signal_time); // this does not make sense yet!!
+        v_ped		->push_back(pedestal);
+        v_ped_int	->push_back(pedestal_integral);
+        v_pul		->push_back(pulser);
+        v_pul_int	->push_back(pulser_integral);
 
         if(iwf == 1){ // trigger WF
             for (int j=0; j<data->size(); j++){
