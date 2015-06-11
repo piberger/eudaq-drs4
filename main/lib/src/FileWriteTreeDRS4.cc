@@ -157,15 +157,15 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     f_trig_time     =  0.;
 
     // dut
-    v_sensor_name = new std::vector< std::string >;
-    v_type_name   = new std::vector< std::string >;
-    v_ped       = new std::vector<float>;
+    v_sensor_name 	= new std::vector< std::string >;
+    v_type_name   	= new std::vector< std::string >;
+    v_ped       	= new std::vector<float>;
     v_ped_int       = new std::vector<float>;
-    v_pul       = new std::vector<float>;
+    v_pul       	= new std::vector<float>;
     v_pul_int       = new std::vector<float>;
-    v_sig       = new std::vector<float>;
+    v_sig       	= new std::vector<float>;
     v_sig_int       = new std::vector<float>;
-    v_sig_time  = new std::vector<float>;
+    v_sig_time  	= new std::vector<float>;
 
     v_sensor_name       = new std::vector< std::string >;
     v_type_name         = new std::vector< std::string >;
@@ -179,7 +179,7 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     v_ped_spread        = new std::vector<float>;
     v_ped_median        = new std::vector<float>;
     v_pul_spread        = new std::vector<float>;
-    v_is_saturated  = new std::vector<bool>;
+    v_is_saturated  	= new std::vector<bool>;
 
     f_wf0 = new std::vector<float>;
     f_wf1 = new std::vector<float>;
@@ -246,7 +246,7 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("pulser"        ,&f_pulser       , "pulser/I");
     m_ttree->Branch("pulser_int"    ,&f_pulser_int   , "pulser_int/F");
     m_ttree->Branch("trig_time"     ,&f_trig_time    , "trig_time/I");
-    m_ttree->Branch("nwfs"          , &f_nwfs        , "n_waveforms/I");
+    m_ttree->Branch("nwfs"          ,&f_nwfs        , "n_waveforms/I");
 
     if ((save_waveforms & 1<<0) == 1<<0)
         m_ttree->Branch("wf0" , &f_wf0);
@@ -292,22 +292,22 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
 }
 
 void FileWriterTreeDRS4::ClearVectors(){
-    v_sensor_name->clear();
-    v_type_name->clear();
+    v_sensor_name	->clear();
+    v_type_name		->clear();
 
-    v_is_saturated->clear();
+    v_is_saturated	->clear();
 
-    v_pul->clear();
-    v_pul_int->clear();
+    v_pul			->clear();
+    v_pul_int		->clear();
     v_pul_spread    ->clear();
 
-    v_ped->clear();
-    v_ped_int->clear();
+    v_ped			->clear();
+    v_ped_int		->clear();
     v_ped_spread    ->clear();
     v_ped_median    ->clear();
-    v_sig->clear();
-    v_sig_int->clear();
-    v_sig_time->clear();
+    v_sig			->clear();
+    v_sig_int		->clear();
+    v_sig_time		->clear();
     v_sig_peak      ->clear();
     v_peaktime      ->clear();
     v_sig_spread    ->clear();
@@ -316,16 +316,16 @@ void FileWriterTreeDRS4::ClearVectors(){
     v_sig_integral54->clear();
     v_sig_static    ->clear();
 
-    f_wf0->clear();
-    f_wf1->clear();
-    f_wf2->clear();
-    f_wf3->clear();
+    f_wf0			->clear();
+    f_wf1			->clear();
+    f_wf2			->clear();
+    f_wf3			->clear();
 
-    f_plane->clear();
-    f_col->clear();
-    f_row->clear();
-    f_adc->clear();
-    f_charge->clear();
+    f_plane			->clear();
+    f_col			->clear();
+    f_row			->clear();
+    f_adc			->clear();
+    f_charge		->clear();
 }
 
 void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
@@ -393,20 +393,20 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         // calculate the signal and so on
         // float sig = CalculatePeak(data, 1075, 1150);
         std::pair<int, float> maxAndValue =waveform.getAbsMaxAndValue(0,200);
-        float signal   = waveform.getSpreadInRange( signal_range.first,  signal_range.second);
+        float signal   			= waveform.getSpreadInRange( signal_range.first,  signal_range.second);
         float signal_integral   = waveform.getIntegral(signal_range.first,  signal_range.second);
-        int signal_time = waveform.getIndexAbsMax(signal_range.first,  signal_range.second);
+        int signal_time 		= waveform.getIndexAbsMax(signal_range.first,  signal_range.second);
         float int_9             = waveform.getIntegral( maxAndValue.first-3, maxAndValue.first+6);
         float int_27            = waveform.getIntegral( maxAndValue.first-9, maxAndValue.first+18);
-        float int_54            =waveform.getIntegral( maxAndValue.first-18, maxAndValue.first+36);
-        float sig_static= waveform.getIntegral( 25, 175);
-        float pedestal = waveform.getSpreadInRange(pedestal_range.first,  pedestal_range.second);
-        float pedestal_integral   = waveform.getIntegral(pedestal_range.first,  pedestal_range.second);
+        float int_54            = waveform.getIntegral( maxAndValue.first-18, maxAndValue.first+36);
+        float sig_static		= waveform.getIntegral( 25, 175);
+        float pedestal 			= waveform.getSpreadInRange(pedestal_range.first,  pedestal_range.second);
+        float pedestal_integral = waveform.getIntegral(pedestal_range.first,  pedestal_range.second);
         float pedestal_median   = waveform.getMedian( 350, 500);
-        float median    = waveform.getMedian(300, 800);
-        float pulser   = waveform.getSpreadInRange(pulser_range.first,  pulser_range.second);
+        float median    		= waveform.getMedian(300, 800);
+        float pulser   			= waveform.getSpreadInRange(pulser_range.first,  pulser_range.second);
         float pulser_integral   = waveform.getIntegral(pulser_range.first,  pulser_range.second);
-        float signalSpread   = waveform.getSpreadInRange(signal_range.first,  signal_range.second);
+        float signalSpread   	= waveform.getSpreadInRange(signal_range.first,  signal_range.second);
         float abs_max           = waveform.getAbsMaxInRange(0,1023);
 
 
@@ -420,15 +420,15 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         //float ped         = waveform.getIntegral( 300,  700);
         //                waveform.getIndexMin(25,125);
         // save the values in the event
-        v_sig     ->push_back(signal);
-        v_sig_int ->push_back(signal_integral);
-        v_sig_time->push_back(signal_time); // this does not make sense yet!!
+        v_sig     		->push_back(signal);
+        v_sig_int 		->push_back(signal_integral);
+        v_sig_time		->push_back(signal_time); // this does not make sense yet!!
 
-        v_ped->push_back(pedestal);
-        v_ped_int->push_back(pedestal_integral);
+        v_ped			->push_back(pedestal);
+        v_ped_int		->push_back(pedestal_integral);
         v_ped_median    ->push_back(pedestal_median);       // pedestrial: median in [350, 500]
-        v_pul->push_back(pulser);
-        v_pul_int->push_back(pulser_integral);
+        v_pul			->push_back(pulser);
+        v_pul_int		->push_back(pulser_integral);
 
         v_sig_peak      ->push_back(maxAndValue.second);    // signal: peak in [0,200]
         v_peaktime      ->push_back(maxAndValue.first);     // time of peak
@@ -440,7 +440,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         v_ped_spread    ->push_back(pedestal);              // pedestrial: spread in [350, 450]
         v_ped_median    ->push_back(median);                // pedestrial: median in [300, 800]
         v_pul_spread    ->push_back(pulser);                // pulser: spread in [760, 860]
-        v_is_saturated -> push_back(abs_max<=498);
+        v_is_saturated 	->push_back(abs_max>498);
 
         if(iwf == 1){ // trigger WF
             for (int j=0; j<data->size(); j++){
