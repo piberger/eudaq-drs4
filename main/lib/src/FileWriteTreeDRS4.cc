@@ -108,7 +108,6 @@ namespace eudaq {
         std::vector<float>  * v_sig_integral9;
         std::vector<float>  * v_sig_integral27;
         std::vector<float>  * v_sig_integral54;
-        std::vector<float>  *  v_sig_static       ;
         std::vector<float>  * v_ped;
         std::vector<float>  * v_ped_int;
         std::vector<float>  *  v_ped_spread       ;
@@ -175,7 +174,6 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     v_sig_integral9     = new std::vector<float>;
     v_sig_integral27    = new std::vector<float>;
     v_sig_integral54    = new std::vector<float>;
-    v_sig_static        = new std::vector<float>;
     v_ped_spread        = new std::vector<float>;
     v_ped_median        = new std::vector<float>;
     v_pul_spread        = new std::vector<float>;
@@ -271,7 +269,6 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("v_sig_integral9",  &v_sig_integral9        );
     m_ttree->Branch("v_sig_integral27" ,&v_sig_integral27       );
     m_ttree->Branch("v_sig_integral54" ,&v_sig_integral54       );
-    m_ttree->Branch("v_sig_static" ,    &v_sig_static           );
 
     m_ttree->Branch("v_ped_spread" ,    &v_ped_spread           );
     m_ttree->Branch("v_ped_median" ,    &v_ped_median           );
@@ -314,7 +311,6 @@ void FileWriterTreeDRS4::ClearVectors(){
     v_sig_integral9 ->clear();
     v_sig_integral27->clear();
     v_sig_integral54->clear();
-    v_sig_static    ->clear();
 
     f_wf0			->clear();
     f_wf1			->clear();
@@ -392,22 +388,21 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         data = waveform.GetData();
         // calculate the signal and so on
         // float sig = CalculatePeak(data, 1075, 1150);
-        std::pair<int, float> maxAndValue =waveform.getAbsMaxAndValue(0,200);
+        std::pair<int, float> maxAndValue =waveform.getAbsMaxAndValue(signal_range.first,  signal_range.second);
         float signal   			= waveform.getSpreadInRange( signal_range.first,  signal_range.second);
         float signal_integral   = waveform.getIntegral(signal_range.first,  signal_range.second);
         int signal_time 		= waveform.getIndexAbsMax(signal_range.first,  signal_range.second);
         float int_9             = waveform.getIntegral( maxAndValue.first-3, maxAndValue.first+6);
         float int_27            = waveform.getIntegral( maxAndValue.first-9, maxAndValue.first+18);
         float int_54            = waveform.getIntegral( maxAndValue.first-18, maxAndValue.first+36);
-        float sig_static		= waveform.getIntegral( 25, 175);
         float pedestal 			= waveform.getSpreadInRange(pedestal_range.first,  pedestal_range.second);
         float pedestal_integral = waveform.getIntegral(pedestal_range.first,  pedestal_range.second);
-        float pedestal_median   = waveform.getMedian( 350, 500);
-        float median    		= waveform.getMedian(300, 800);
+        float pedestal_median   = waveform.getMedian(pedestal_range.first,  pedestal_range.second);
         float pulser   			= waveform.getSpreadInRange(pulser_range.first,  pulser_range.second);
         float pulser_integral   = waveform.getIntegral(pulser_range.first,  pulser_range.second);
         float signalSpread   	= waveform.getSpreadInRange(signal_range.first,  signal_range.second);
         float abs_max           = waveform.getAbsMaxInRange(0,1023);
+        float median    		= waveform.getMedian(0, 1023);
 
 
         // float mini = waveform.getMinInRange(10,1000);
@@ -436,10 +431,9 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         v_sig_integral9 ->push_back(int_9);                 // signal: integral [pk-3, pk+6]
         v_sig_integral27->push_back(int_27);                // signal: integral [pk-9, pk+18]
         v_sig_integral54->push_back(int_54);                // signal: integral [pk-18, pk+36]
-        v_sig_static    ->push_back(sig_static);            // signal: static integral [25, 175]
         v_ped_spread    ->push_back(pedestal);              // pedestrial: spread in [350, 450]
-        v_ped_median    ->push_back(median);                // pedestrial: median in [300, 800]
-        v_pul_spread    ->push_back(pulser);                // pulser: spread in [760, 860]
+        v_ped_median    ->push_back(median);                // pedestrial: median in [350, 450]
+        v_pul_spread    ->push_back(pulser);                // pulser: spread in [770, 860]
         v_is_saturated 	->push_back(abs_max>498);
 
         if(iwf == 1){ // trigger WF
