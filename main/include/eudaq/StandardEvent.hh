@@ -63,6 +63,13 @@ public:
         float* max_el = std::max_element(&m_samples.at(min), &m_samples.at(max));
         return std::distance(&m_samples.at(0),max_el);//-m_samples.begin();
     };
+
+    std::pair<int,float> getAbsMaxAndValue(int min, int max) const{
+        int index = getIndexAbsMax(min,max);
+        return std::make_pair(index,m_samples.at(index));
+    }
+    float getMedian(int min, int max) const;
+
     float getSpreadInRange(int min, int max) const{return (getMaxInRange(min,max)-getMinInRange(min,max));};
     float getIntegral(int min, int max,bool _abs=false) const;
 

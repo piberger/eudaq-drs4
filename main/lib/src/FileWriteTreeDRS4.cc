@@ -142,6 +142,7 @@ namespace eudaq {
 namespace {
 static RegisterFileWriter<FileWriterTreeDRS4> reg("drs4tree");      
 }
+
 FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
 : m_tfile(0), m_ttree(0),m_noe(0),chan(4),n_pixels(90*90+60*60)
 {
@@ -209,18 +210,20 @@ void FileWriterTreeDRS4::Configure(){
     if (m_config->NKeys()==0)
         return;
     EUDAQ_INFO("Configuring FileWriterTreeDRS4" );
-    m_config->Print();
 
-    pulser_range = m_config->Get("pulser_range",make_pair((int)760,(int)860));
-    std::cout<<"\npulser_range"<<to_string(pulser_range)<<std::endl;
-    pedestal_range = m_config->Get("pedestal_range",make_pair((int)760,(int)860));
-    std::cout<<"pedestal_range"<<to_string(pedestal_range)<<std::endl;
-    signal_range = m_config->Get("signal_range",make_pair((int)760,(int)860));
-    std::cout<<"signal_range"<<to_string(signal_range)<<std::endl;
+    ranges["pulser"] = m_config->Get("pulser_range",make_pair((int)760,(int)860));
+    EUDAQ_INFO("pulser_range: "+to_string(ranges["pulser"]));
+
+    ranges["pedestal"] = m_config->Get("pedestal_range",make_pair((int)760,(int)860));
+    EUDAQ_INFO("pedestal_range: "+to_string(ranges["pedestal"]));
+
+    ranges["signal"] = m_config->Get("signal_range",make_pair((int)760,(int)860));
+    EUDAQ_INFO("signal_range: "+to_string(ranges["signal"]));
+
     save_waveforms = m_config->Get("save_waveforms",0);
-    std::cout<<"save_waveforms: "<<save_waveforms<<std::endl;
+    EUDAQ_INFO("save_waveforms: "+ to_string(save_waveforms));
     for (UInt_t i = 0; i < 4; i++)
-        std::cout<<((save_waveforms & 1<<i) == 1<<i)<<" ";
+        std::cout<<"\tch"<<i<<":"<<to_string(((save_waveforms & 1<<i) == 1<<i));
     std::cout<<std::endl;
 }
 
@@ -291,10 +294,17 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
 void FileWriterTreeDRS4::ClearVectors(){
     v_sensor_name->clear();
     v_type_name->clear();
+
+    v_is_saturated->clear();
+
     v_pul->clear();
     v_pul_int->clear();
+    v_pul_spread    ->clear();
+
     v_ped->clear();
     v_ped_int->clear();
+    v_ped_spread    ->clear();
+    v_ped_median    ->clear();
     v_sig->clear();
     v_sig_int->clear();
     v_sig_time->clear();
@@ -305,9 +315,6 @@ void FileWriterTreeDRS4::ClearVectors(){
     v_sig_integral27->clear();
     v_sig_integral54->clear();
     v_sig_static    ->clear();
-    v_ped_spread    ->clear();
-    v_ped_median    ->clear();
-    v_pul_spread    ->clear();
 
     f_wf0->clear();
     f_wf1->clear();
@@ -385,18 +392,18 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         data = waveform.GetData();
         // calculate the signal and so on
         // float sig = CalculatePeak(data, 1075, 1150);
-        std::pair<int, float> maxAndValue = FindMaxAndValue(data,   0, 200);
+        std::pair<int, float> maxAndValue =waveform.getAbsMaxAndValue(0,200);
         float signal   = waveform.getSpreadInRange( signal_range.first,  signal_range.second);
         float signal_integral   = waveform.getIntegral(signal_range.first,  signal_range.second);
         int signal_time = waveform.getIndexAbsMax(signal_range.first,  signal_range.second);
-        float int_9             = Calculate(data, maxAndValue.first-3, maxAndValue.first+6);
-        float int_27            = Calculate(data, maxAndValue.first-9, maxAndValue.first+18);
-        float int_54            = Calculate(data, maxAndValue.first-18, maxAndValue.first+36);
+        float int_9             = waveform.getIntegral( maxAndValue.first-3, maxAndValue.first+6);
+        float int_27            = waveform.getIntegral( maxAndValue.first-9, maxAndValue.first+18);
+        float int_54            =waveform.getIntegral( maxAndValue.first-18, maxAndValue.first+36);
         float sig_static= waveform.getIntegral( 25, 175);
         float pedestal = waveform.getSpreadInRange(pedestal_range.first,  pedestal_range.second);
         float pedestal_integral   = waveform.getIntegral(pedestal_range.first,  pedestal_range.second);
-        float pedestal_median   = CalculateMedian(data, 350, 500);
-        float median    = CalculateMedian(data, 300, 800);
+        float pedestal_median   = waveform.getMedian( 350, 500);
+        float median    = waveform.getMedian(300, 800);
         float pulser   = waveform.getSpreadInRange(pulser_range.first,  pulser_range.second);
         float pulser_integral   = waveform.getIntegral(pulser_range.first,  pulser_range.second);
         float signalSpread   = waveform.getSpreadInRange(signal_range.first,  signal_range.second);
@@ -502,18 +509,7 @@ FileWriterTreeDRS4::~FileWriterTreeDRS4() {
 }
 
 float FileWriterTreeDRS4::CalculateMedian(std::vector<float> * data, int min, int max) {
-    float median;
-    int n = max - min + 1;
-    float* cropDataArray = new float[n];
-    int i = 0;
-    for (vector<float,allocator<float>>::iterator iterator = data->begin()+min; iterator != data->begin()+max+1; iterator++) {
-        cropDataArray[i] = *iterator;
-        i++;
-    }
-    median = (float)TMath::Median(n, cropDataArray);
 
-    delete[] cropDataArray;
-    return median;
 }
 
 float FileWriterTreeDRS4::Calculate(std::vector<float> * data, int min, int max, bool _abs) {
@@ -538,7 +534,6 @@ float FileWriterTreeDRS4::CalculatePeak(std::vector<float> * data, int min, int 
     float integral = Calculate(data, mid-3, mid+6);
     return integral;
 }
-
 
 std::pair<int, float> FileWriterTreeDRS4::FindMaxAndValue(std::vector<float> * data, int min, int max) {
     float maxVal = -999;
