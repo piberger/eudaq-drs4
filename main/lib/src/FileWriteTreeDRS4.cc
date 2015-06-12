@@ -202,27 +202,36 @@ void FileWriterTreeDRS4::Configure(){
     ranges["signal"] = make_pair(25,175);
     ranges["pedestal"] = make_pair(350,450);
     ranges["pulser"] = make_pair(760,860);
-    if (!this->m_config)
+    if (!this->m_config){
+    	std::cout<<"Configure: abortion [!this->m_config is True]"<<endl;
         return;
+    }
     m_config->SetSection("Converter.drs4tree");
-    if (m_config->NKeys()==0)
+    if (m_config->NSections()==0){
+    	std::cout<<"Configure: abortion [m_config->NSections()==0 is True]"<<endl;
         return;
+    }
     EUDAQ_INFO("Configuring FileWriterTreeDRS4" );
 
-    ranges["pulser"] = m_config->Get("pulser_range",make_pair((int)760,(int)860));
+    ranges["pulser"] = (std::pair<int,int>)m_config->Get("pulser_range",make_pair((int)770,(int)860));
+    pulser_range = ranges["pulser"];
     EUDAQ_INFO("pulser_range: "+to_string(ranges["pulser"]));
 
-    ranges["pedestal"] = m_config->Get("pedestal_range",make_pair((int)760,(int)860));
+    ranges["pedestal"] = (std::pair<int,int>)m_config->Get("pedestal_range",make_pair((int)350,(int)500));
+    pedestal_range = ranges["pedestal"];
     EUDAQ_INFO("pedestal_range: "+to_string(ranges["pedestal"]));
 
-    ranges["signal"] = m_config->Get("signal_range",make_pair((int)760,(int)860));
+    ranges["signal"] = (std::pair<int,int>)m_config->Get("signal_range",make_pair((int)25,(int)175));
+    signal_range = ranges["signal"];
     EUDAQ_INFO("signal_range: "+to_string(ranges["signal"]));
 
-    save_waveforms = m_config->Get("save_waveforms",0);
+    save_waveforms = (int)m_config->Get("save_waveforms",9);
     EUDAQ_INFO("save_waveforms: "+ to_string(save_waveforms));
-    for (UInt_t i = 0; i < 4; i++)
+    
+    for (int i = 0; i < 4; i++){
         std::cout<<"\tch"<<i<<":"<<to_string(((save_waveforms & 1<<i) == 1<<i));
-    std::cout<<std::endl;
+    	std::cout<<std::endl;
+    }
 }
 
 void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
@@ -234,6 +243,8 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     // the following line is needed to have std::vector<float> in the tree
     // ---------------------------------------------------------------------
     gROOT->ProcessLine("#include <vector>");
+    
+    Configure();
 
     m_tfile = new TFile(foutput.c_str(), "RECREATE");
     m_ttree = new TTree("tree", "a simple Tree with simple variables");
@@ -418,7 +429,6 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         v_sig     		->push_back(signal);
         v_sig_int 		->push_back(signal_integral);
         v_sig_time		->push_back(signal_time); // this does not make sense yet!!
-
         v_ped			->push_back(pedestal);
         v_ped_int		->push_back(pedestal_integral);
         v_ped_median    ->push_back(pedestal_median);       // pedestrial: median in [350, 500]
