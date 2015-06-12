@@ -68,7 +68,6 @@ namespace eudaq {
         virtual uint64_t FileBytes() const;
         float Calculate(std::vector<float> * data, int min, int max, bool _abs=false);
         float CalculatePeak(std::vector<float> * data, int min, int max);
-        float CalculateMedian(std::vector<float> * data, int min, int max);
         std::pair<int, float> FindMaxAndValue(std::vector<float> * data, int min, int max);
         float avgWF(float, float, int);
         virtual ~FileWriterTreeDRS4();
@@ -81,7 +80,7 @@ namespace eudaq {
         unsigned m_noe;
         short chan;
         int n_pixels;
-        std::map<std::string,std::pair<float,float> > ranges;
+        std::map<std::string,std::pair<float,float> *> ranges;
 
         // Scalar Branches     
         int   f_nwfs;
@@ -92,6 +91,7 @@ namespace eudaq {
         float f_pulser_int;
         int   f_trig_time;
         
+
         // Vector Branches     
         // DUT
         std::vector< std::string >  * v_sensor_name;
@@ -102,9 +102,9 @@ namespace eudaq {
         std::vector<float>  * v_sig_int;
         std::vector<float>  * v_sig_time;
         std::vector<float>  *  v_sig_spread       ;
-        std::vector<float>  * v_sig_integral9;
-        std::vector<float>  * v_sig_integral27;
-        std::vector<float>  * v_sig_integral54;
+        std::vector<float>  * v_sig_integral1;
+        std::vector<float>  * v_sig_integral2;
+        std::vector<float>  * v_sig_integral3;
         std::vector<float>  * v_ped;
         std::vector<float>  * v_ped_int;
         std::vector<float>  *  v_ped_spread       ;
@@ -168,9 +168,9 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     v_sig_peak          = new std::vector<float>;
     v_peaktime          = new std::vector<float>;
     v_sig_spread        = new std::vector<float>;
-    v_sig_integral9     = new std::vector<float>;
-    v_sig_integral27    = new std::vector<float>;
-    v_sig_integral54    = new std::vector<float>;
+    v_sig_integral1     = new std::vector<float>;
+    v_sig_integral2    = new std::vector<float>;
+    v_sig_integral3    = new std::vector<float>;
     v_ped_spread        = new std::vector<float>;
     v_ped_median        = new std::vector<float>;
     v_pul_spread        = new std::vector<float>;
@@ -196,9 +196,9 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
 }
 
 void FileWriterTreeDRS4::Configure(){
-    ranges["signal"] = make_pair(25,175);
-    ranges["pedestal"] = make_pair(350,450);
-    ranges["pulser"] = make_pair(760,860);
+    ranges["signal"] =  new pair<float,float>(25,175);
+    ranges["pedestal"] = new pair<float,float>(350,450);
+    ranges["pulser"] = new pair<float,float>(760,860);
     if (!this->m_config){
     	std::cout<<"Configure: abortion [!this->m_config is True]"<<endl;
         return;
@@ -210,18 +210,15 @@ void FileWriterTreeDRS4::Configure(){
     }
     EUDAQ_INFO("Configuring FileWriterTreeDRS4" );
 
-    ranges["pulser"] = (std::pair<int,int>)m_config->Get("pulser_range",make_pair((int)770,(int)860));
-    std::cout<<"  - pulser_range: "+to_string(ranges["pulser"]) <<std::endl;
-
-    ranges["pedestal"] = (std::pair<int,int>)m_config->Get("pedestal_range",make_pair((int)350,(int)500));
-    std::cout<<"  - pedestal_range: "+to_string(ranges["pedestal"])<<std::endl;
-
-    ranges["signal"] = (std::pair<int,int>)m_config->Get("signal_range",make_pair((int)25,(int)175));
-    std::cout<<"  - signal_range: "+to_string(ranges["signal"])<<std::endl;
-
-    ranges["PeakIntegral1"] = m_config->Get("PeakIntegral1_range",make_pair((int)3,(int)9));
-    std::cout<<"  - PeakIntegral1: "+to_string(ranges["PeakIntegral1"])<<std::endl;
-
+    ranges["pulser"] = new pair<float,float>(m_config->Get("pulser_range",make_pair((float)770,(float)860)));
+    ranges["pedestal"] =  new pair<float,float>(m_config->Get("pedestal_range",make_pair((float)350,(float)500)));
+    ranges["signal"] =  new pair<float,float>(m_config->Get("signal_range",make_pair((float)25,(float)175)));
+    ranges["PeakIntegral1"] =  new pair<float,float>(m_config->Get("PeakIntegral1_range",make_pair((int)3,(int)9)));
+    ranges["PeakIntegral2"] =  new pair<float,float>(m_config->Get("PeakIntegral2_range",make_pair((int)9,(int)18)));
+    ranges["PeakIntegral3"] =  new pair<float,float>(m_config->Get("PeakIntegral3_range",make_pair((int)18,(int)36)));
+    std::cout<<"  - Ranges: "<<ranges.size()<<std::endl;
+    for (auto& it: ranges)
+        cout<<"     * range_"<<it.first<<" "<<to_string(*(it.second))<<endl;
     save_waveforms = (int)m_config->Get("save_waveforms",9);
     std::cout<<"  - save_waveforms: "+ to_string(save_waveforms)<<std::endl;
     
@@ -240,6 +237,7 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     // the following line is needed to have std::vector<float> in the tree
     // ---------------------------------------------------------------------
     gROOT->ProcessLine("#include <vector>");
+    gROOT->ProcessLine("#include <pair>");
     
     m_tfile = new TFile(foutput.c_str(), "RECREATE");
     m_ttree = new TTree("tree", "a simple Tree with simple variables");
@@ -252,38 +250,43 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("trig_time"     ,&f_trig_time    , "trig_time/I");
     m_ttree->Branch("nwfs"          ,&f_nwfs        , "n_waveforms/I");
 
+    //settings
+    std::cout<<"Ranges: "<<std::endl;
+    for (auto& it: ranges){
+        m_ttree->Branch((TString)"range_" + (TString)it.first,"pair<float,float>",it.second);
+    }
     if ((save_waveforms & 1<<0) == 1<<0)
         m_ttree->Branch("wf0" , &f_wf0);
     if ((save_waveforms & 1<<1) == 1<<1)
         m_ttree->Branch("wf1" , &f_wf1);
     if ((save_waveforms & 1<<2) == 1<<2)
-        m_ttree->Branch("wf2" , &f_wf2);
-    if ((save_waveforms & 1<<3) == 1<<3)
-        m_ttree->Branch("wf3" , &f_wf3);
+        m_ttree->Branch("wf2", &f_wf2);
+    if ((save_waveforms & 1 << 3) == 1 << 3)
+        m_ttree->Branch("wf3", &f_wf3);
 
     // DUT
-    m_ttree->Branch("v_is_saturated" ,  &v_is_saturated);
+    m_ttree->Branch("is_saturated", &v_is_saturated);
     // DUT-2
-    m_ttree->Branch("v_sensor_name" ,   &v_sensor_name);
-    m_ttree->Branch("v_type_name" ,     &v_type_name);
-    m_ttree->Branch("v_peaktime" ,      &v_peaktime             );
-    m_ttree->Branch("sig_time"    ,     &v_sig_time);
-    m_ttree->Branch("sig"         ,     &v_sig);
-    m_ttree->Branch("sig_int"         , &v_sig_int);
-    m_ttree->Branch("v_sig_peak" ,      &v_sig_peak             );
-    m_ttree->Branch("v_sig_spread",     &v_sig_spread           );
-    m_ttree->Branch("v_sig_integral9",  &v_sig_integral9        );
-    m_ttree->Branch("v_sig_integral27" ,&v_sig_integral27       );
-    m_ttree->Branch("v_sig_integral54" ,&v_sig_integral54       );
+    m_ttree->Branch("sensor_name", &v_sensor_name);
+    m_ttree->Branch("type_name", &v_type_name);
+    m_ttree->Branch("peaktime", &v_peaktime);
+    m_ttree->Branch("sig_time", &v_sig_time);
+    m_ttree->Branch("sig", &v_sig);
+    m_ttree->Branch("sig_int", &v_sig_int);
+    m_ttree->Branch("sig_peak", &v_sig_peak);
+    m_ttree->Branch("sig_spread", &v_sig_spread);
+    m_ttree->Branch("sig_integral1", &v_sig_integral1);
+    m_ttree->Branch("sig_integral2", &v_sig_integral2);
+    m_ttree->Branch("sig_integral3", &v_sig_integral3);
 
-    m_ttree->Branch("v_ped_spread" ,    &v_ped_spread           );
-    m_ttree->Branch("v_ped_median" ,    &v_ped_median           );
-    m_ttree->Branch("ped"         ,     &v_ped);
-    m_ttree->Branch("ped_int"         , &v_ped_int);
+    m_ttree->Branch("ped_spread", &v_ped_spread);
+    m_ttree->Branch("ped_median", &v_ped_median);
+    m_ttree->Branch("ped", &v_ped);
+    m_ttree->Branch("ped_int", &v_ped_int);
 
-    m_ttree->Branch("v_pul_spread" ,    &v_pul_spread           );
-    m_ttree->Branch("pul"         ,     &v_pul);
-    m_ttree->Branch("pul_int"         , &v_pul_int);
+    m_ttree->Branch("v_pul_spread", &v_pul_spread);
+    m_ttree->Branch("pul", &v_pul);
+    m_ttree->Branch("pul_int", &v_pul_int);
 
     // telescope
     m_ttree->Branch("plane", &f_plane);
@@ -313,9 +316,9 @@ void FileWriterTreeDRS4::ClearVectors(){
     v_sig_peak      ->clear();
     v_peaktime      ->clear();
     v_sig_spread    ->clear();
-    v_sig_integral9 ->clear();
-    v_sig_integral27->clear();
-    v_sig_integral54->clear();
+    v_sig_integral1 ->clear();
+    v_sig_integral2->clear();
+    v_sig_integral3->clear();
 
     f_wf0			->clear();
     f_wf1			->clear();
@@ -393,31 +396,37 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         data = waveform.GetData();
         // calculate the signal and so on
         // float sig = CalculatePeak(data, 1075, 1150);
-        if (f_event_number<2)
-            std::cout<<"ranges[\"signal\"]: ["<<ranges["signal"].first<<", "<<ranges["signal"].second<<"]"<<std::endl;
-        std::pair<int, float> maxAndValue =waveform.getAbsMaxAndValue(ranges["signal"].first,  ranges["signal"].second);
-        float signal   			= waveform.getSpreadInRange( ranges["signal"].first,  ranges["signal"].second);
-        float signal_integral   = waveform.getIntegral(ranges["signal"].first,  ranges["signal"].second);
-        int signal_time 		= waveform.getIndexAbsMax(ranges["signal"].first,  ranges["signal"].second);
-        float int_9             = waveform.getIntegral( maxAndValue.first-3, maxAndValue.first+6);
-        float int_27            = waveform.getIntegral( maxAndValue.first-9, maxAndValue.first+18);
-        float int_54            = waveform.getIntegral( maxAndValue.first-18, maxAndValue.first+36);
-        float sig_static= waveform.getIntegral( 25, 175);
-        float signalSpread      = waveform.getSpreadInRange(ranges["signal"].first,  ranges["signal"].second);
+        std::pair<int, float> maxAndValue =waveform.getAbsMaxAndValue(ranges["signal"]->first,  ranges["signal"]->second);
+        float signal   			= waveform.getSpreadInRange( ranges["signal"]->first,  ranges["signal"]->second);
+        float signal_integral   = waveform.getIntegral(ranges["signal"]->first,  ranges["signal"]->second);
+        int signal_time 		= waveform.getIndexAbsMax(ranges["signal"]->first,  ranges["signal"]->second);
+//        cout<<f_event_number<<":\n  ";
+////        cout<<"[";
+////        for (float i: *data)
+////                cout<<" "<<i;
+////        cout<<"]"<<endl;
+//        cout<<"   abs max: "<<data->at(waveform.getIndexAbsMax(0,1023))<<"/"<<waveform.getIndexAbsMax(0,1023)<<endl;
+//        cout<<"       min: "<<*std::min_element(data->begin(),data->end())<<"/"<<std::min_element(data->begin(),data->end())-data->begin()<<endl;
+//        cout<<"       max: "<<*std::max_element(data->begin(),data->end())<<"/"<<std::max_element(data->begin(),data->end())-data->begin()<<endl;
+        pair<float,float>* r = ranges["PeakIntegral1"];
+        float int_9             = waveform.getIntegral( maxAndValue.first-r->first, maxAndValue.first+r->second);
+        r = ranges["PeakIntegral2"];
+        float int_27            = waveform.getIntegral( maxAndValue.first-r->first, maxAndValue.first+r->second);
+        r = ranges["PeakIntegral3"];
+        float int_54            = waveform.getIntegral( maxAndValue.first-r->first, maxAndValue.first+r->second);
 
-        if (f_event_number<2)
-            std::cout<<"ranges[\"pedestal\"]: ["<<ranges["pedestal"].first<<", "<<ranges["pedestal"].second<<"]"<<std::endl;
-        float pedestal = waveform.getSpreadInRange(ranges["pedestal"].first,  ranges["pedestal"].second);
-        float pedestal_integral   = waveform.getIntegral( ranges["pedestal"].first,  ranges["pedestal"].second);
-        float pedestal_median   = waveform.getMedian( 350, 500);
+        float sig_static = waveform.getIntegral( ranges["signal"]->first,  ranges["signal"]->second);
+        float signalSpread      = waveform.getSpreadInRange(ranges["signal"]->first,  ranges["signal"]->second);
+
+        float pedestal = waveform.getSpreadInRange(ranges["pedestal"]->first,  ranges["pedestal"]->second);
+        float pedestal_integral   = waveform.getIntegral( ranges["pedestal"]->first,  ranges["pedestal"]->second);
+        float pedestal_median   = waveform.getMedian( ranges["pedestal"]->first,  ranges["pedestal"]->second);
 
         float median    = waveform.getMedian(300, 800);
         float median2            = waveform.getMedian(0, 1023);
 
-        if (f_event_number<2)
-            std::cout<<"ranges[\"pulser\"]: ["<<ranges["pulser"].first<<", "<<ranges["pulser"].second<<"]"<<std::endl;
-        float pulser   = waveform.getSpreadInRange( ranges["pulser"].first,   ranges["pulser"].second);
-        float pulser_integral   = waveform.getIntegral( ranges["pulser"].first,   ranges["pulser"].second);
+        float pulser   = waveform.getSpreadInRange( ranges["pulser"]->first,   ranges["pulser"]->second);
+        float pulser_integral   = waveform.getIntegral( ranges["pulser"]->first,   ranges["pulser"]->second);
 
         float abs_max           = waveform.getAbsMaxInRange(0,1023);
 
@@ -443,9 +452,9 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         v_sig_peak      ->push_back(maxAndValue.second);    // signal: peak in [0,200]
         v_peaktime      ->push_back(maxAndValue.first);     // time of peak
         v_sig_spread    ->push_back(signalSpread);          // signal: spread in [25,125]
-        v_sig_integral9 ->push_back(int_9);                 // signal: integral [pk-3, pk+6]
-        v_sig_integral27->push_back(int_27);                // signal: integral [pk-9, pk+18]
-        v_sig_integral54->push_back(int_54);                // signal: integral [pk-18, pk+36]
+        v_sig_integral1 ->push_back(int_9);                 // signal: integral [pk-3, pk+6]
+        v_sig_integral2->push_back(int_27);                // signal: integral [pk-9, pk+18]
+        v_sig_integral3->push_back(int_54);                // signal: integral [pk-18, pk+36]
         v_ped_spread    ->push_back(pedestal);              // pedestrial: spread in [350, 450]
         v_ped_median    ->push_back(median);                // pedestrial: median in [350, 450]
         v_pul_spread    ->push_back(pulser);                // pulser: spread in [770, 860]
@@ -517,9 +526,6 @@ FileWriterTreeDRS4::~FileWriterTreeDRS4() {
     if(m_tfile->IsOpen()) m_tfile->Close();
 }
 
-float FileWriterTreeDRS4::CalculateMedian(std::vector<float> * data, int min, int max) {
-
-}
 
 float FileWriterTreeDRS4::Calculate(std::vector<float> * data, int min, int max, bool _abs) {
     float integral = 0;
