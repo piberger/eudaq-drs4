@@ -393,7 +393,8 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         data = waveform.GetData();
         // calculate the signal and so on
         // float sig = CalculatePeak(data, 1075, 1150);
-        std::cout<<"ranges[\"signal\"]: ["<<ranges["signal"].first<<", "<<ranges["signal"].second<<"]"<<std::endl;
+        if (f_event_number<2)
+            std::cout<<"ranges[\"signal\"]: ["<<ranges["signal"].first<<", "<<ranges["signal"].second<<"]"<<std::endl;
         std::pair<int, float> maxAndValue =waveform.getAbsMaxAndValue(ranges["signal"].first,  ranges["signal"].second);
         float signal   			= waveform.getSpreadInRange( ranges["signal"].first,  ranges["signal"].second);
         float signal_integral   = waveform.getIntegral(ranges["signal"].first,  ranges["signal"].second);
@@ -404,7 +405,8 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         float sig_static= waveform.getIntegral( 25, 175);
         float signalSpread      = waveform.getSpreadInRange(ranges["signal"].first,  ranges["signal"].second);
 
-        std::cout<<"ranges[\"pedestal\"]: ["<<ranges["pedestal"].first<<", "<<ranges["pedestal"].second<<"]"<<std::endl;
+        if (f_event_number<2)
+            std::cout<<"ranges[\"pedestal\"]: ["<<ranges["pedestal"].first<<", "<<ranges["pedestal"].second<<"]"<<std::endl;
         float pedestal = waveform.getSpreadInRange(ranges["pedestal"].first,  ranges["pedestal"].second);
         float pedestal_integral   = waveform.getIntegral( ranges["pedestal"].first,  ranges["pedestal"].second);
         float pedestal_median   = waveform.getMedian( 350, 500);
@@ -412,7 +414,8 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         float median    = waveform.getMedian(300, 800);
         float median2            = waveform.getMedian(0, 1023);
 
-        std::cout<<"ranges[\"pulser\"]: ["<<ranges["pulser"].first<<", "<<ranges["pulser"].second<<"]"<<std::endl;
+        if (f_event_number<2)
+            std::cout<<"ranges[\"pulser\"]: ["<<ranges["pulser"].first<<", "<<ranges["pulser"].second<<"]"<<std::endl;
         float pulser   = waveform.getSpreadInRange( ranges["pulser"].first,   ranges["pulser"].second);
         float pulser_integral   = waveform.getIntegral( ranges["pulser"].first,   ranges["pulser"].second);
 
