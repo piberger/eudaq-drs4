@@ -57,7 +57,7 @@ public:
     int getIndexAbsMax(int min,int max) const{
         float mi = getIndexMin(min,max);
         float ma = getIndexMax(min,max);
-        return abs(m_samples.at(mi))>abs(m_samples.at(mi))?mi:ma;
+        return abs(m_samples.at(mi))>abs(m_samples.at(ma))?mi:ma;
     }
     int getIndexMax(int min, int max) const{
         float* max_el = std::max_element(&m_samples.at(min), &m_samples.at(max));
