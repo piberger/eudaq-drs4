@@ -11,12 +11,12 @@
 #include <stdlib.h>
 
 //# include<inttypes.h>
-# include "TFile.h"
-# include "TTree.h"
-# include "TRandom.h"
-# include "TString.h"
-# include "TMath.h"
-# include "TH1F.h"
+#include "TFile.h"
+#include "TTree.h"
+#include "TRandom.h"
+#include "TString.h"
+#include "TMath.h"
+#include "TH1F.h"
 #include "TSystem.h"
 #include "TInterpreter.h"
 #include <TROOT.h>
@@ -220,6 +220,9 @@ void FileWriterTreeDRS4::Configure(){
     ranges["signal"] = m_config->Get("signal_range",make_pair((int)760,(int)860));
     EUDAQ_INFO("signal_range: "+to_string(ranges["signal"]));
 
+    ranges["PeakIntegral1"] = m_config->Get("PeakIntegral1_range",make_pair((int)3,(int)9));
+    EUDAQ_INFO("PeakIntegral1: "+to_string(ranges["PeakIntegral1"]));
+
     save_waveforms = m_config->Get("save_waveforms",0);
     EUDAQ_INFO("save_waveforms: "+ to_string(save_waveforms));
     for (UInt_t i = 0; i < 4; i++)
@@ -398,7 +401,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         int signal_time = waveform.getIndexAbsMax(signal_range.first,  signal_range.second);
         float int_9             = waveform.getIntegral( maxAndValue.first-3, maxAndValue.first+6);
         float int_27            = waveform.getIntegral( maxAndValue.first-9, maxAndValue.first+18);
-        float int_54            =waveform.getIntegral( maxAndValue.first-18, maxAndValue.first+36);
+        float int_54            = waveform.getIntegral( maxAndValue.first-18, maxAndValue.first+36);
         float sig_static= waveform.getIntegral( 25, 175);
         float pedestal = waveform.getSpreadInRange(pedestal_range.first,  pedestal_range.second);
         float pedestal_integral   = waveform.getIntegral(pedestal_range.first,  pedestal_range.second);
