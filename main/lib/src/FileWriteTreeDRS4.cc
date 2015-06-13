@@ -72,6 +72,7 @@ namespace eudaq {
         float avgWF(float, float, int);
         virtual ~FileWriterTreeDRS4();
     private:
+        long max_event_number;
         int save_waveforms;
         void ClearVectors();
         TFile * m_tfile; // book the pointer to a file (to store the otuput)
@@ -81,10 +82,15 @@ namespace eudaq {
         short chan;
         int n_pixels;
         std::map<std::string,std::pair<float,float> *> ranges;
+        std::vector<int> polarities;
+
+        vector<int> * v_polarities;
 
         // Scalar Branches     
         int   f_nwfs;
         int   f_event_number;
+        int f_pulser_events;
+        int f_signal_events;
         float f_time;
         
         int   f_pulser;
@@ -129,9 +135,13 @@ namespace eudaq {
         
         // average waveforms of channels
         TH1F * avgWF_0;
+        TH1F * avgWF_0_pul;
+        TH1F * avgWF_0_sig;
         TH1F * avgWF_1;
         TH1F * avgWF_2;
         TH1F * avgWF_3;
+        TH1F * avgWF_3_pul;
+        TH1F * avgWF_3_sig;
 
 };
 
@@ -145,8 +155,16 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     gROOT->ProcessLine("#include <vector>");
     gROOT->ProcessLine(".L loader.C+");
 
+    //Polarities of signals, default is positive signals
+    polarities.resize(4,1);
+
+    //how many events will be analyzed, 0 = all events
+    max_event_number = 0;
+
     f_nwfs          =  0;
     f_event_number  = -1;
+    f_pulser_events = 0;
+    f_signal_events = 0;
     f_time          = -1.;
     f_pulser        = -1;
     f_pulser_int    =  0.;
@@ -190,9 +208,13 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
 
     // average waveforms of channels
     avgWF_0 = new TH1F("avgWF_0","avgWF_0", 1024, 0, 1024);
+    avgWF_0_pul = new TH1F("avgWF_0_pul","avgWF_0_pul", 1024, 0, 1024);
+    avgWF_0_sig = new TH1F("avgWF_0_sig","avgWF_0_sig", 1024, 0, 1024);
     avgWF_1 = new TH1F("avgWF_1","avgWF_1", 1024, 0, 1024);
     avgWF_2 = new TH1F("avgWF_2","avgWF_2", 1024, 0, 1024);
     avgWF_3 = new TH1F("avgWF_3","avgWF_3", 1024, 0, 1024);
+    avgWF_3_pul = new TH1F("avgWF_3_pul","avgWF_3_pul", 1024, 0, 1024);
+    avgWF_3_sig = new TH1F("avgWF_3_sig","avgWF_3_sig", 1024, 0, 1024);
 }
 
 void FileWriterTreeDRS4::Configure(){
@@ -226,6 +248,15 @@ void FileWriterTreeDRS4::Configure(){
         std::cout<<"\t\t* ch"<<i<<":"<<to_string(((save_waveforms & 1<<i) == 1<<i));
     	std::cout<<std::endl;
     }
+
+    polarities = m_config->Get("polarities",polarities);
+    cout<<"POLARITIES: ";
+    for (auto& i:polarities)
+        cout<<" "<<i;
+    cout<<endl;
+    v_polarities = &polarities;
+
+    max_event_number = m_config->Get("max_event_number",0);
 }
 
 void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
@@ -250,6 +281,7 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("trig_time"     ,&f_trig_time    , "trig_time/I");
     m_ttree->Branch("nwfs"          ,&f_nwfs        , "n_waveforms/I");
 
+
     //settings
     std::cout<<"Ranges: "<<std::endl;
     for (auto& it: ranges){
@@ -265,6 +297,7 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
         m_ttree->Branch("wf3", &f_wf3);
 
     // DUT
+    m_ttree->Branch("polarities",&v_polarities);
     m_ttree->Branch("is_saturated", &v_is_saturated);
     // DUT-2
     m_ttree->Branch("sensor_name", &v_sensor_name);
@@ -342,6 +375,8 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         cout << "loading the last event...." << endl;
         return;
     }
+    if(max_event_number >0 &&f_event_number> max_event_number)
+        return;
     StandardEvent sev = eudaq::PluginManager::ConvertToStandard(ev);
 
     f_event_number = sev.GetEventNumber();
@@ -375,8 +410,12 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
     // ---------- get and save all info for all waveforms -----------------
     // --------------------------------------------------------------------
 
-    std::vector<float> * data;                           
-    for (unsigned int iwf = 0; iwf < nwfs;iwf++){
+    std::vector<float> * data;
+
+    //use different order of wfs in order to 'know' if its a pulser event or not.
+    vector<int> wf_order = {2,1,0,3};
+
+    for (auto iwf:wf_order){//unsigned int iwf = 0; iwf < nwfs;iwf++){
 
         const eudaq::StandardWaveform & waveform = sev.GetWaveform(iwf);
         // get the sensor name. see eventually what this actually does!
@@ -396,9 +435,10 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         data = waveform.GetData();
         // calculate the signal and so on
         // float sig = CalculatePeak(data, 1075, 1150);
+        int pol = polarities.at(iwf);
         std::pair<int, float> maxAndValue =waveform.getAbsMaxAndValue(ranges["signal"]->first,  ranges["signal"]->second);
         float signal   			= waveform.getSpreadInRange( ranges["signal"]->first,  ranges["signal"]->second);
-        float signal_integral   = waveform.getIntegral(ranges["signal"]->first,  ranges["signal"]->second);
+        float signal_integral   = pol*waveform.getIntegral(ranges["signal"]->first,  ranges["signal"]->second);
         int signal_time 		= waveform.getIndexAbsMax(ranges["signal"]->first,  ranges["signal"]->second);
 //        cout<<f_event_number<<":\n  ";
 ////        cout<<"[";
@@ -409,24 +449,24 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
 //        cout<<"       min: "<<*std::min_element(data->begin(),data->end())<<"/"<<std::min_element(data->begin(),data->end())-data->begin()<<endl;
 //        cout<<"       max: "<<*std::max_element(data->begin(),data->end())<<"/"<<std::max_element(data->begin(),data->end())-data->begin()<<endl;
         pair<float,float>* r = ranges["PeakIntegral1"];
-        float int_9             = waveform.getIntegral( maxAndValue.first-r->first, maxAndValue.first+r->second);
+        float int_9             = pol*waveform.getIntegral( maxAndValue.first-r->first, maxAndValue.first+r->second);
         r = ranges["PeakIntegral2"];
-        float int_27            = waveform.getIntegral( maxAndValue.first-r->first, maxAndValue.first+r->second);
+        float int_27            = pol*waveform.getIntegral( maxAndValue.first-r->first, maxAndValue.first+r->second);
         r = ranges["PeakIntegral3"];
-        float int_54            = waveform.getIntegral( maxAndValue.first-r->first, maxAndValue.first+r->second);
+        float int_54            = pol*waveform.getIntegral( maxAndValue.first-r->first, maxAndValue.first+r->second);
 
-        float sig_static = waveform.getIntegral( ranges["signal"]->first,  ranges["signal"]->second);
+        float sig_static = pol*waveform.getIntegral( ranges["signal"]->first,  ranges["signal"]->second);
         float signalSpread      = waveform.getSpreadInRange(ranges["signal"]->first,  ranges["signal"]->second);
 
         float pedestal = waveform.getSpreadInRange(ranges["pedestal"]->first,  ranges["pedestal"]->second);
-        float pedestal_integral   = waveform.getIntegral( ranges["pedestal"]->first,  ranges["pedestal"]->second);
-        float pedestal_median   = waveform.getMedian( ranges["pedestal"]->first,  ranges["pedestal"]->second);
+        float pedestal_integral   = pol*waveform.getIntegral( ranges["pedestal"]->first,  ranges["pedestal"]->second);
+        float pedestal_median   = pol*waveform.getMedian( ranges["pedestal"]->first,  ranges["pedestal"]->second);
 
-        float median    = waveform.getMedian(300, 800);
-        float median2            = waveform.getMedian(0, 1023);
+        float median    = pol*waveform.getMedian(300, 800);
+        float median2            = pol*waveform.getMedian(0, 1023);
 
         float pulser   = waveform.getSpreadInRange( ranges["pulser"]->first,   ranges["pulser"]->second);
-        float pulser_integral   = waveform.getIntegral( ranges["pulser"]->first,   ranges["pulser"]->second);
+        float pulser_integral   = pol*waveform.getIntegral( ranges["pulser"]->first,   ranges["pulser"]->second);
 
         float abs_max           = waveform.getAbsMaxInRange(0,1023);
 
@@ -468,10 +508,17 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         if(iwf == 2){ // pulser WF
             f_pulser_int = waveform.getIntegral(500, 900, true);
             f_pulser     = (f_pulser_int > 20.);
+            if (f_pulser)
+                f_pulser_events++;
+            else
+                f_signal_events++;
         }
-
         for (int j=0; j<data->size(); j++){
             if     (iwf == 0) {
+                if (f_pulser)
+                    avgWF_0_pul->SetBinContent(j+1, avgWF(avgWF_0_pul->GetBinContent(j+1),data->at(j),f_pulser_events));
+                else
+                    avgWF_0_sig->SetBinContent(j+1, avgWF(avgWF_0_sig->GetBinContent(j+1),data->at(j),f_signal_events));
                 avgWF_0->SetBinContent(j+1, avgWF(avgWF_0->GetBinContent(j+1),data->at(j),f_event_number+1));
                 if ((save_waveforms & 1<<0) == 1<<0)
                     f_wf0->push_back(data->at(j));
@@ -487,6 +534,10 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
                     f_wf2->push_back(data->at(j));
             }
             else if(iwf == 3) {
+                if (f_pulser)
+                    avgWF_3_pul->SetBinContent(j+1, avgWF(avgWF_3_pul->GetBinContent(j+1),data->at(j),f_pulser_events));
+                else
+                    avgWF_3_sig->SetBinContent(j+1, avgWF(avgWF_3_sig->GetBinContent(j+1),data->at(j),f_signal_events));
                 avgWF_3->SetBinContent(j+1, avgWF(avgWF_3->GetBinContent(j+1),data->at(j),f_event_number+1));
                 if ((save_waveforms & 1<<3) == 1<<3)
                     f_wf3->push_back(data->at(j));
@@ -519,9 +570,13 @@ FileWriterTreeDRS4::~FileWriterTreeDRS4() {
     std::cout<<"Tree has " << m_ttree->GetEntries() << " entries" << std::endl;
     m_ttree->Write();
     avgWF_0->Write();
+    avgWF_0_pul->Write();
+    avgWF_0_sig->Write();
     avgWF_1->Write();
     avgWF_2->Write();
     avgWF_3->Write();
+    avgWF_3_sig->Write();
+    avgWF_3_pul->Write();
 
     if(m_tfile->IsOpen()) m_tfile->Close();
 }

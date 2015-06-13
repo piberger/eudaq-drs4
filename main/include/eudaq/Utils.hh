@@ -159,6 +159,20 @@ namespace eudaq {
       return std::make_pair((Q)first,(P)second);
   }
 
+  template<typename P>
+  std::vector<P> DLLEXPORT from_string(const  std::string & x, const std::vector<P>  & def) {
+      std::string trimmed_string = trim(x," \t\n\r\v");
+      trimmed_string = trim(trimmed_string,"{}[]()<>");
+      std::vector<std::string> splitted_string = split(trimmed_string,",");
+      std::vector<P> vec;
+      if (splitted_string.size() > def.size())
+          return def;
+      for (int i =0; i < splitted_string.size();i++)
+          vec.push_back(from_string(splitted_string.at(i),def.at(i)));
+      std::cout<<"Converted \""<<x<<"\" to "<<to_string(vec)<<std::endl;
+      return vec;
+  }
+
   template <typename T>
     struct Holder {
       Holder(T val) : m_val(val) {}
