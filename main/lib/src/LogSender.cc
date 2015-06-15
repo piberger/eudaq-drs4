@@ -18,6 +18,7 @@ namespace eudaq {
     m_shownotconnected = true;
     delete m_logclient;
     m_name = type + " " + name;
+    m_server = server;
     m_logclient = TransportFactory::CreateClient(server);
 
     std::string packet;
@@ -48,6 +49,18 @@ namespace eudaq {
     if (std::string(packet, 0, i1) != "OK") EUDAQ_THROW("Connection refused by LogCollector server: " + packet);
   }
 
+  void LogSender::Reconnect(){
+      std::cout<<"LogSender::Reconnect: "<<std::endl;
+      Disconnect();
+      std::cout<<"\tdisconnected "<<std::endl;
+      std::string type = m_name.substr(0,m_name.find_first_of(' '));
+      std::string name = m_name.substr(m_name.find_first_of(' ')+1);
+      std::cout<<"\tM_NAME: "<<m_name<<"\t\""<<type<<"\" \""<<name<<std::endl;
+      std::cout<<"\tConnect: "<<std::endl;
+      Connect(type,name,m_server);
+      std::cout<<"\tDone "<<std::endl;
+  }
+
 
   void LogSender::Disconnect(){
     MutexLock m(m_mutex);
@@ -56,14 +69,12 @@ namespace eudaq {
   }
 
   void LogSender::SendLogMessage(const LogMessage & msg) {
-    
     SendLogMessage(msg, std::cout, std::cerr);
   }
 
 
     void LogSender::SendLogMessage(const LogMessage & msg, std::ostream& out, std::ostream& error_out)
   {
-
     MutexLock m(m_mutex);
     //std::cout << "Sending: " << msg << std::endl;
     if (msg.GetLevel() >= m_level) {
@@ -82,24 +93,39 @@ namespace eudaq {
     if (!m_logclient) {
       if (m_shownotconnected)
         error_out << "### Log message triggered but Logger not connected ###\n";
+      Reconnect();
     }
-    else {
+
+    if (m_logclient) {
       BufferSerializer ser;
       msg.Serialize(ser);
-      try {
-        m_logclient->SendPacket(ser);
-      }
-      catch (const eudaq::Exception & e) {
-        error_out << "Caught exception trying to log message '" << msg << "': " << e.what() << std::endl;
-        error_out << " -> will delete LogClient" << std::endl;
-        delete m_logclient;
-        m_logclient = 0;
-      }
-      catch (...) {
-        error_out << "Caught exception trying to log message '" << msg << "'! " << std::endl;
-        error_out << " -> will delete LogClient" << std::endl;
-        delete m_logclient;
-        m_logclient = 0;
+      int tries = 0;
+      while (tries < 2){
+          try {
+              tries ++;
+              m_logclient->SendPacket(ser);
+              return;
+          }
+          catch (const eudaq::Exception & e) {
+              delete m_logclient;
+              m_logclient = 0;
+              if (tries == 1)
+                  Reconnect();
+              else{
+                  error_out << "Caught exception trying to log message '" << msg << "': " << e.what() << std::endl;
+                  error_out << " -> will delete LogClient" << std::endl;
+              }
+          }
+          catch (...) {
+              delete m_logclient;
+              m_logclient = 0;
+              if (tries == 1)
+                  Reconnect();
+              else{
+                  error_out << "Caught exception trying to log message '" << msg << "'! " << std::endl;
+                  error_out << " -> will delete LogClient" << std::endl;
+              }
+          }
       }
     }
   }

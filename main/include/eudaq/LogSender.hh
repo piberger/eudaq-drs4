@@ -18,6 +18,7 @@ namespace eudaq {
       LogSender();
       ~LogSender();
       void Connect(const std::string & type, const std::string & name, const std::string & server);
+      void Reconnect();
       void Disconnect();
       void SendLogMessage(const LogMessage &);
       void SendLogMessage(const LogMessage & msg, std::ostream& out, std::ostream& error_out);
@@ -28,6 +29,7 @@ namespace eudaq {
       bool IsLogged(const std::string & level) { return Status::String2Level(level) >= m_level; }
     private:
       std::string m_name;
+      std::string m_server;
       TransportClient * m_logclient;
       int m_level;
       int m_errlevel;
@@ -35,7 +37,6 @@ namespace eudaq {
       bool isConnected = false;
       Mutex m_mutex;
   };
-
 }
 
 #endif // EUDAQ_INCLUDED_LogSender

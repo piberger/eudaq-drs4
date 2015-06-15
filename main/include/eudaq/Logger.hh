@@ -13,6 +13,8 @@ namespace eudaq {
 #define EUDAQ_ERR_LEVEL(level) ::eudaq::GetLogger().SetErrLevel(level)
 #define EUDAQ_IS_LOGGED(level) ::eudaq::GetLogger().IsLogged(level)
 #define EUDAQ_LOG_CONNECT(type, name, server) ::eudaq::GetLogger().Connect(type, name, server)
+#define EUDAQ_LOG_RECONNECT() ::eudaq::GetLogger().Reconnect()
+
 
 #define EUDAQ_LOG(level, msg) ::eudaq::GetLogger().SendLogMessage(::eudaq::LogMessage(msg, ::eudaq::LogMessage::LVL_##level) \
     .SetLocation(__FILE__, __LINE__, EUDAQ_FUNC))
