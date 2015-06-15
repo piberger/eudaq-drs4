@@ -75,6 +75,7 @@ namespace eudaq {
         long max_event_number;
         int save_waveforms;
         void ClearVectors();
+        void ResizeVectors(unsigned n_channels);
         TFile * m_tfile; // book the pointer to a file (to store the otuput)
         TTree * m_ttree; // book the tree (to store the needed event info)
         // Book variables for the Event_to_TTree conversion
@@ -408,7 +409,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
 
     //use different order of wfs in order to 'know' if its a pulser event or not.
     vector<int> wf_order = {2,1,0,3};
-
+    ResizeVectors(sev.GetNWaveforms());
     for (auto iwf:wf_order){//unsigned int iwf = 0; iwf < nwfs;iwf++){
 
         const eudaq::StandardWaveform & waveform = sev.GetWaveform(iwf);
@@ -432,6 +433,8 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         float signal   			= waveform.getSpreadInRange( ranges["signal"]->first,  ranges["signal"]->second);
         float signal_integral   = pol*waveform.getIntegral(ranges["signal"]->first,  ranges["signal"]->second);
         int signal_time 		= waveform.getIndexAbsMax(ranges["signal"]->first,  ranges["signal"]->second);
+//        if (iwf==0)
+//            cout<<"WF"<<iwf<<": "<<maxAndValue.first<<"/"<<maxAndValue.second<<"/"<<data->at(maxAndValue.first)<<"/"<<signal_time<<endl;
 //        cout<<f_event_number<<":\n  ";
 ////        cout<<"[";
 ////        for (float i: *data)
@@ -470,28 +473,28 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         // ---------- LOAD VALUES  ------------
         // ------------------------------------
         // save the values in the event
-        v_type_name		->push_back(type_name);				// Type Name
-        v_sensor_name	->push_back(sensor_name);			// Sensor Name
+        v_type_name		->at(iwf) = (type_name);				// Type Name
+        v_sensor_name	->at(iwf) = (sensor_name);			// Sensor Name
         
-        v_sig_int 		->push_back(signal_integral);		// Signal: Integral over Signalrange
-        v_sig_spread    ->push_back(signalSpread);      	// Signal: Spread in Signalrange
-        v_sig_peak      ->push_back(maxAndValue.second); 	// Signal: Value of peak (no pedestal correction)
-        v_sig_integral1 ->push_back(int_9);                 // Signal: Integral around peak with range set in config file
-        v_sig_integral2	->push_back(int_27);                // Signal: Integral around peak with range set in config file
-        v_sig_integral3	->push_back(int_54); 				// Signal: Integral around peak with range set in config file
+        v_sig_int 		->at(iwf) = (signal_integral);		// Signal: Integral over Signalrange
+        v_sig_spread    ->at(iwf) = (signalSpread);      	// Signal: Spread in Signalrange
+        v_sig_peak      ->at(iwf) = (maxAndValue.second); 	// Signal: Value of peak (no pedestal correction)
+        v_sig_integral1 ->at(iwf) = (int_9);                 // Signal: Integral around peak with range set in config file
+        v_sig_integral2	->at(iwf) = (int_27);                // Signal: Integral around peak with range set in config file
+        v_sig_integral3	->at(iwf) = (int_54); 				// Signal: Integral around peak with range set in config file
         
-        v_sig_time		->push_back(signal_time); 			// Peakposition: Calc by waveform.getIndexAbsMax()
-        v_peaktime      ->push_back(maxAndValue.first);  	// Peakposition: Calc by waveform.getAbsMaxAndValue() ( the same?? )
+        v_sig_time		->at(iwf) = (signal_time); 			// Peakposition: Calc by waveform.getIndexAbsMax()
+        v_peaktime      ->at(iwf) = (maxAndValue.first);  	// Peakposition: Calc by waveform.getAbsMaxAndValue() ( the same?? )
         
-        v_ped_int		->push_back(pedestal_integral);		// Pedestal: Integral over Pedestalrange
-        v_ped_spread    ->push_back(pedestal);              // Pedestal: Spread in Pedestalrange
-        v_ped_median    ->push_back(pedestal_median);       // Pedestal: Median in Pedestalrange
+        v_ped_int		->at(iwf) = (pedestal_integral);		// Pedestal: Integral over Pedestalrange
+        v_ped_spread    ->at(iwf) = (pedestal);              // Pedestal: Spread in Pedestalrange
+        v_ped_median    ->at(iwf) = (pedestal_median);       // Pedestal: Median in Pedestalrange
                                                             
-        v_pul_int		->push_back(pulser_integral);       // Pulser: Integral over Pulserrange
-        v_pul_spread    ->push_back(pulser);                // Pulser: Spread in Pulserrange
+        v_pul_int		->at(iwf) = (pulser_integral);       // Pulser: Integral over Pulserrange
+        v_pul_spread    ->at(iwf) = (pulser);                // Pulser: Spread in Pulserrange
            
-        v_is_saturated 	->push_back(abs_max>498);			// indicator if saturation is reached in sampling region (1-1024)
-        v_median		->push_back(median);				// Median over whole sampling region
+        v_is_saturated 	->at(iwf) = (abs_max>498);			// indicator if saturation is reached in sampling region (1-1024)
+        v_median		->at(iwf) = (median);				// Median over whole sampling region
                        
         
         if(iwf == 1){ // trigger WF
@@ -619,6 +622,31 @@ float FileWriterTreeDRS4::avgWF(float old_avg, float new_value, int n) {
 }
 
 uint64_t FileWriterTreeDRS4::FileBytes() const { return 0; }
-    
+
+inline void FileWriterTreeDRS4::ResizeVectors(unsigned n_channels) {
+    v_type_name->resize(n_channels);
+    v_sensor_name->resize(n_channels);
+
+    v_sig_int->resize(n_channels);
+    v_sig_spread->resize(n_channels);
+    v_sig_peak->resize(n_channels);
+    v_sig_integral1->resize(n_channels);
+    v_sig_integral2->resize(n_channels);
+    v_sig_integral3->resize(n_channels);
+
+    v_sig_time->resize(n_channels);
+    v_peaktime->resize(n_channels);
+
+    v_ped_int->resize(n_channels);
+    v_ped_spread->resize(n_channels);
+    v_ped_median->resize(n_channels);
+
+    v_pul_int->resize(n_channels);
+    v_pul_spread->resize(n_channels);
+
+    v_is_saturated->resize(n_channels);
+    v_median->resize(n_channels);
+}
+
 }
 #endif // ROOT_FOUND
