@@ -283,7 +283,7 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     //settings
 //    std::cout<<"Ranges: "<<std::endl;
     for (auto& it: ranges){
-//        m_ttree->Branch((TString)"range_" + (TString)it.first,"pair<float,float>",it.second);
+        m_ttree->Branch((TString)"range_" + (TString)it.first,"pair<float,float>",it.second);
 //        m_ttree->Branch((TString)"range_" + (TString)it.first, &it.second);//, (TString)"range_" + (TString)it.first + "/pair<float,float>");
     }
     if ((save_waveforms & 1<<0) == 1<<0)
