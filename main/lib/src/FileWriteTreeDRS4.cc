@@ -281,9 +281,10 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
 
 
     //settings
-    std::cout<<"Ranges: "<<std::endl;
+//    std::cout<<"Ranges: "<<std::endl;
     for (auto& it: ranges){
-        m_ttree->Branch((TString)"range_" + (TString)it.first,"pair<float,float>",it.second);
+//        m_ttree->Branch((TString)"range_" + (TString)it.first,"pair<float,float>",it.second);
+//        m_ttree->Branch((TString)"range_" + (TString)it.first, &it.second);//, (TString)"range_" + (TString)it.first + "/pair<float,float>");
     }
     if ((save_waveforms & 1<<0) == 1<<0)
         m_ttree->Branch("wf0" , &f_wf0);
@@ -468,6 +469,8 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         // float mini = waveform.getMinInRange(10,1000);
         // float minind = waveform.getIndexMin(10,1000);
         // cout << "minimum of the waveform in range 10, 1000: " << mini << " at index " << minind<< endl;
+//        cout<< "Signal Range: "<< ranges["signal"]->first << " / " << ranges["signal"]->second << endl;
+//        cout<< "Pedestal Range: "<< ranges["pedestal"]->first << " / " << ranges["pedestal"]->second << endl;
 
         // ------------------------------------
         // ---------- LOAD VALUES  ------------
