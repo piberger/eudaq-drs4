@@ -481,7 +481,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         
         v_sig_int 		->at(iwf) = (signal_integral);		// Signal: Integral over Signalrange
         v_sig_spread    ->at(iwf) = (signalSpread);      	// Signal: Spread in Signalrange
-        v_sig_peak      ->at(iwf) = (maxAndValue.second); 	// Signal: Value of peak (no pedestal correction)
+        v_sig_peak      ->at(iwf) = (pol*maxAndValue.second); 	// Signal: Value of peak (no pedestal correction)
         v_sig_integral1 ->at(iwf) = (int_9);                 // Signal: Integral around peak with range set in config file
         v_sig_integral2	->at(iwf) = (int_27);                // Signal: Integral around peak with range set in config file
         v_sig_integral3	->at(iwf) = (int_54); 				// Signal: Integral around peak with range set in config file
