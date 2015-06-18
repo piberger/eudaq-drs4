@@ -20,6 +20,8 @@
 #include "TSystem.h"
 #include "TInterpreter.h"
 #include <TROOT.h>
+#include "TF1.h"
+#include "TLinearFitter.h"
 
 using namespace std;
 
@@ -141,6 +143,16 @@ namespace eudaq {
         TH1F * avgWF_3;
         TH1F * avgWF_3_pul;
         TH1F * avgWF_3_sig;
+        TF1* f_pol1;
+        TLinearFitter* fitter;
+        std::vector<Double_t> v_x;
+        std::vector<Double_t> v_y;
+        std::vector<float>* chi2;
+        std::vector<float>* par0;
+        std::vector<float>* par1;
+        std::vector<float>* sigma;
+        std::vector<float>* kurtosis;
+        std::vector<float>* skewness;
 
 };
 
@@ -197,6 +209,15 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     f_wf2 = new std::vector<float>;
     f_wf3 = new std::vector<float>;
 
+    //linear pedestal fit
+    chi2 = new std::vector<float>;
+    par0 = new std::vector<float>;
+    par1 = new std::vector<float>;
+    sigma = new std::vector<float>;
+
+    skewness = new std::vector<float>;
+    kurtosis= new std::vector<float>;
+
     // telescope
     f_plane  = new std::vector<int>;
     f_col    = new std::vector<int>;
@@ -213,12 +234,20 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     avgWF_3 = new TH1F("avgWF_3","avgWF_3", 1024, 0, 1024);
     avgWF_3_pul = new TH1F("avgWF_3_pul","avgWF_3_pul", 1024, 0, 1024);
     avgWF_3_sig = new TH1F("avgWF_3_sig","avgWF_3_sig", 1024, 0, 1024);
+
+    fitter = new TLinearFitter();
+    f_pol1 = new TF1("f1", "pol1", 0,1024);
+    fitter->SetFormula(f_pol1);
+    for(auto i=0;i<1024;i++)
+        v_x.push_back(i);
+
 }
 
 void FileWriterTreeDRS4::Configure(){
     ranges["signal"] =  new pair<float,float>(25,175);
     ranges["pedestal"] = new pair<float,float>(350,450);
     ranges["pulser"] = new pair<float,float>(760,860);
+    ranges["pedestalFit"] = new pair<float,float>(250,650);
     if (!this->m_config){
     	std::cout<<"Configure: abortion [!this->m_config is True]"<<endl;
         return;
@@ -232,6 +261,7 @@ void FileWriterTreeDRS4::Configure(){
 
     ranges["pulser"] = new pair<float,float>(m_config->Get("pulser_range",make_pair((float)770,(float)860)));
     ranges["pedestal"] =  new pair<float,float>(m_config->Get("pedestal_range",make_pair((float)350,(float)450)));
+    ranges["pedestalFit"] =  new pair<float,float>(m_config->Get("pedestalFit_range",make_pair((float)250,(float)650)));
     ranges["signal"] =  new pair<float,float>(m_config->Get("signal_range",make_pair((float)25,(float)175)));
     ranges["PeakIntegral1"] =  new pair<float,float>(m_config->Get("PeakIntegral1_range",make_pair((int)3,(int)9)));
     ranges["PeakIntegral2"] =  new pair<float,float>(m_config->Get("PeakIntegral2_range",make_pair((int)9,(int)18)));
@@ -278,6 +308,13 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("pulser_int"    ,&f_pulser_int   , "pulser_int/F");
     m_ttree->Branch("trig_time"     ,&f_trig_time    , "trig_time/I");
     m_ttree->Branch("nwfs"          ,&f_nwfs        , "n_waveforms/I");
+    m_ttree->Branch("chi2",&chi2);
+    m_ttree->Branch("par0",&par0);
+    m_ttree->Branch("par1",&par1);
+    m_ttree->Branch("sigma",&sigma);
+    m_ttree->Branch("kurtosis",&kurtosis);
+    m_ttree->Branch("skewness",&skewness);
+
 
 
     //settings
@@ -359,6 +396,11 @@ void FileWriterTreeDRS4::ClearVectors(){
     f_row			->clear();
     f_adc			->clear();
     f_charge		->clear();
+
+    par0->clear();
+    par1->clear();
+    chi2->clear();
+    sigma->clear();
 }
 
 void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
@@ -427,6 +469,37 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         if (verbose > 3) std::cout << "number of samples in my wf " << n_samples << std::endl;
         // load the waveforms into the vector
         data = waveform.GetData();
+        v_y.clear();
+        for (auto d: *data)
+            v_y.push_back(d);
+
+        int n_start =ranges["pedestalFit"]->first;
+        int n_end = ranges["pedestalFit"]->second;
+        fitter->AssignData(n_end-n_start,1,&v_x[n_start],&v_y[n_start]);
+        fitter->Eval();
+        chi2->at(iwf) = f_pol1->GetChisquare()/f_pol1->GetNDF();
+        par0->at(iwf) = f_pol1->GetParameter(0);
+        par1->at(iwf) = f_pol1->GetParameter(1);
+        float sigma = 0;
+        float skewness = 0;
+        float kurtosis = 0;
+//        float sigma = 0;
+        for (auto i = 0; i<v_y.size();i++){
+            float delta = data->at(i)-f_pol1->Eval(i);
+            sigma += TMath::Power(delta,2);
+            kurtosis += TMath::Power(delta,3);
+            skewness += TMath::Power(delta,4);
+        }
+        sigma = TMath::Sqrt(sigma);
+        kurtosis = cbrt(kurtosis);
+        skewness = TMath::Power(skewness,1./4.);
+        this->sigma->at(iwf) = sigma;
+        this->kurtosis->at(iwf) = kurtosis;
+        this->skewness->at(iwf) = skewness;
+//        if (true|| f_event_number == 6137){
+//            std::cout<<setw(7)<<f_event_number<<" "<<iwf<<" "<<std::setw(8)<<par0->at(iwf)<<" + "<<std::setw(10)<<par1->at(iwf)<<" * x\t"<<setw(8)<<chi2->at(iwf)<<"\t";
+//            std::cout<<setw(8)<<sigma<<"/"<<setw(8)<<kurtosis<<"/"<<setw(8)<<skewness<<std::endl;
+//        }
         // calculate the signal and so on
         // float sig = CalculatePeak(data, 1075, 1150);
         int pol = polarities.at(iwf);
@@ -434,6 +507,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         float signal   			= waveform.getSpreadInRange( ranges["signal"]->first,  ranges["signal"]->second);
         float signal_integral   = pol*waveform.getIntegral(ranges["signal"]->first,  ranges["signal"]->second);
         int signal_time 		= waveform.getIndexAbsMax(ranges["signal"]->first,  ranges["signal"]->second);
+//        fitter->
 //        if (iwf==0)
 //            cout<<"WF"<<iwf<<": "<<maxAndValue.first<<"/"<<maxAndValue.second<<"/"<<data->at(maxAndValue.first)<<"/"<<signal_time<<endl;
 //        cout<<f_event_number<<":\n  ";
@@ -649,6 +723,13 @@ inline void FileWriterTreeDRS4::ResizeVectors(unsigned n_channels) {
 
     v_is_saturated->resize(n_channels);
     v_median->resize(n_channels);
+
+    par0->resize(n_channels);
+    par1->resize(n_channels);
+    chi2->resize(n_channels);
+    sigma->resize(n_channels);
+    skewness->resize(n_channels);
+    kurtosis->resize(n_channels);
 }
 
 }
