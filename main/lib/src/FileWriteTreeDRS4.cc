@@ -9,6 +9,7 @@
 
 #include "include/SimpleStandardEvent.hh"
 #include <stdlib.h>
+#include <cmath>
 
 //# include<inttypes.h>
 #include "TFile.h"
@@ -21,6 +22,7 @@
 #include "TInterpreter.h"
 #include <TROOT.h>
 #include "TF1.h"
+#include "TGraph.h"
 #include "TLinearFitter.h"
 
 using namespace std;
@@ -153,6 +155,8 @@ namespace eudaq {
         std::vector<float>* sigma;
         std::vector<float>* kurtosis;
         std::vector<float>* skewness;
+        float max_par0;
+        float max_par1;
 
 };
 
@@ -163,6 +167,8 @@ static RegisterFileWriter<FileWriterTreeDRS4> reg("drs4tree");
 FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
 : m_tfile(0), m_ttree(0),m_noe(0),chan(4),n_pixels(90*90+60*60)
 {
+    max_par0 = 0;
+    max_par1 = 0;
     gROOT->ProcessLine("#include <vector>");
     gROOT->ProcessLine(".L loader.C+");
 
@@ -238,6 +244,7 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     fitter = new TLinearFitter();
     f_pol1 = new TF1("f1", "pol1", 0,1024);
     fitter->SetFormula(f_pol1);
+    fitter->StoreData(false);
     for(auto i=0;i<1024;i++)
         v_x.push_back(i);
 
@@ -469,22 +476,40 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         if (verbose > 3) std::cout << "number of samples in my wf " << n_samples << std::endl;
         // load the waveforms into the vector
         data = waveform.GetData();
-        v_y.clear();
-        for (auto d: *data)
-            v_y.push_back(d);
-
+        v_y.resize(1024);
         int n_start =ranges["pedestalFit"]->first;
         int n_end = ranges["pedestalFit"]->second;
-        fitter->AssignData(n_end-n_start,1,&v_x[n_start],&v_y[n_start]);
+        for (unsigned i = 0; i < 1024; i++){
+            v_y.at(i) =  data->at(i);
+        }
+//        cout<<"\n"<<n_start<<"-"<<n_end<<"\n";
+
+        fitter->ClearPoints();
+        fitter->AssignData(n_end-n_start, 1, &v_x[n_start],&v_y[n_start]);
         fitter->Eval();
+//        cout<<fitter->GetParameter(0)<<"/"<<fitter->GetParameter(1)<<" "<<v_y.size()<<" "<<fitter->GetNpoints()<<" "<<fitter->GetNumberFreeParameters() <<std::endl;//<<fitter->GetNDF()<<std::endl;
         chi2->at(iwf) = f_pol1->GetChisquare()/f_pol1->GetNDF();
-        par0->at(iwf) = f_pol1->GetParameter(0);
+        par0->at(iwf) = f_pol1->Eval(((float)n_end-(float)n_end)/2.);//f_pol1->GetParameter(0);
         par1->at(iwf) = f_pol1->GetParameter(1);
+        int do_print = 0;
+        if (iwf==0 && (std::abs( par0->at(iwf) ) > max_par0)){
+            do_print = 1;
+            max_par0 = std::abs(par0->at(iwf));
+        }
+        if (iwf==0 && (std::abs(par1->at(iwf))>max_par1) ){
+            do_print = 2;
+            max_par1 = std::abs(par1->at(iwf));
+        }
+        if (do_print >0 || f_event_number == 6137){
+            std::cout<<setw(7)<<f_event_number<<" "<<iwf<<" "<<do_print<<" "<<std::setw(8)<<max_par0<<" "<<std::setw(8)<<max_par1<<" ";
+            std::cout<<std::setw(8)<<par0->at(iwf)<<" + "<<std::setw(10)<<par1->at(iwf)<<" * x\t"<<setw(8)<<chi2->at(iwf)<<"\t";
+            std::cout<<setw(8)<<sigma->at(iwf)<<"/"<<setw(8)<<kurtosis->at(iwf)<<"/"<<setw(8)<<skewness->at(iwf)<<std::endl;
+        }
         float sigma = 0;
         float skewness = 0;
         float kurtosis = 0;
 //        float sigma = 0;
-        for (auto i = 0; i<v_y.size();i++){
+        for (unsigned i = n_start; i< n_end && i<v_y.size();i++){
             float delta = data->at(i)-f_pol1->Eval(i);
             sigma += TMath::Power(delta,2);
             kurtosis += TMath::Power(delta,3);
@@ -496,10 +521,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         this->sigma->at(iwf) = sigma;
         this->kurtosis->at(iwf) = kurtosis;
         this->skewness->at(iwf) = skewness;
-//        if (true|| f_event_number == 6137){
-//            std::cout<<setw(7)<<f_event_number<<" "<<iwf<<" "<<std::setw(8)<<par0->at(iwf)<<" + "<<std::setw(10)<<par1->at(iwf)<<" * x\t"<<setw(8)<<chi2->at(iwf)<<"\t";
-//            std::cout<<setw(8)<<sigma<<"/"<<setw(8)<<kurtosis<<"/"<<setw(8)<<skewness<<std::endl;
-//        }
+
         // calculate the signal and so on
         // float sig = CalculatePeak(data, 1075, 1150);
         int pol = polarities.at(iwf);
@@ -642,6 +664,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
 
 FileWriterTreeDRS4::~FileWriterTreeDRS4() {
     std::cout<<"Tree has " << m_ttree->GetEntries() << " entries" << std::endl;
+    std::cout<<"Max parameter: :"<<max_par0<<"/"<<max_par1<<std::endl;
     m_ttree->Write();
     avgWF_0->Write();
     avgWF_0_pul->Write();
