@@ -554,7 +554,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         float pedestal_integral   = pol*waveform.getIntegral( ranges["pedestal"]->first,  ranges["pedestal"]->second);
         float pedestal_median   = pol*waveform.getMedian( ranges["pedestal"]->first,  ranges["pedestal"]->second);
 
-        float median    = pol*waveform.getMedian(300, 800);
+        float median    = pol*waveform.getMedian(200, 700);
         float median2            = pol*waveform.getMedian(0, 1023);
 
         float pulser   = waveform.getSpreadInRange( ranges["pulser"]->first,   ranges["pulser"]->second);
@@ -593,7 +593,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         v_pul_spread    ->at(iwf) = (pulser);                // Pulser: Spread in Pulserrange
            
         v_is_saturated 	->at(iwf) = (abs_max>498);			// indicator if saturation is reached in sampling region (1-1024)
-        v_median		->at(iwf) = (median);				// Median over whole sampling region
+        v_median		->at(iwf) = (median);				// Median over large sampling region
                        
         
         if(iwf == 1){ // trigger WF
