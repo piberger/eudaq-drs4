@@ -602,8 +602,8 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
             }
         }
         if(iwf == 2){ // pulser WF
-            f_pulser_int = waveform.getIntegral(500, 900, true);
-            f_pulser     = (f_pulser_int > 20.);
+            f_pulser_int = waveform.getIntegral(700, 950, true);
+            f_pulser     = (f_pulser_int > 80.);
             if (f_pulser)
                 f_pulser_events++;
             else
