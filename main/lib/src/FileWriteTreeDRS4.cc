@@ -23,7 +23,10 @@
 #include <TROOT.h>
 #include "TF1.h"
 #include "TGraph.h"
+#include "TCanvas.h"
 #include "TLinearFitter.h"
+#include "TSpectrum.h"
+#include "TPolyMarker.h"
 
 using namespace std;
 
@@ -76,6 +79,7 @@ namespace eudaq {
         float avgWF(float, float, int);
         virtual ~FileWriterTreeDRS4();
     private:
+        TH1F* histo;
         long max_event_number;
         int save_waveforms;
         void ClearVectors();
@@ -147,6 +151,7 @@ namespace eudaq {
         TH1F * avgWF_3_sig;
         TF1* f_pol1;
         TLinearFitter* fitter;
+        TSpectrum *spec;
         std::vector<Double_t> v_x;
         std::vector<Double_t> v_y;
         std::vector<float>* chi2;
@@ -155,8 +160,13 @@ namespace eudaq {
         std::vector<float>* sigma;
         std::vector<float>* kurtosis;
         std::vector<float>* skewness;
+        std::vector<float>* peaks0;
+        std::vector<float>* peaks3;
+        std::vector<float>* npeaks;
         float max_par0;
         float max_par1;
+
+        TCanvas *c1;
 
 };
 
@@ -165,7 +175,7 @@ static RegisterFileWriter<FileWriterTreeDRS4> reg("drs4tree");
 }
 
 FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
-: m_tfile(0), m_ttree(0),m_noe(0),chan(4),n_pixels(90*90+60*60)
+: m_tfile(0), m_ttree(0),m_noe(0),chan(4),n_pixels(90*90+60*60), histo(0)
 {
     max_par0 = 0;
     max_par1 = 0;
@@ -221,6 +231,10 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     par1 = new std::vector<float>;
     sigma = new std::vector<float>;
 
+    peaks0 = new std::vector<float>;
+    peaks3 = new std::vector<float>;
+    npeaks = new std::vector<float>;
+
     skewness = new std::vector<float>;
     kurtosis= new std::vector<float>;
 
@@ -248,6 +262,9 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     for(auto i=0;i<1024;i++)
         v_x.push_back(i);
 
+    spec = new TSpectrum(20,3);
+    spec->SetDeconIterations(10);
+    spec->SetAverageWindow(10);
 }
 
 void FileWriterTreeDRS4::Configure(){
@@ -299,6 +316,9 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     std::string foutput(FileNamer(m_filepattern).Set('X', ".root").Set('R', runnumber));
     EUDAQ_INFO("Preparing the outputfile: " + foutput);
 
+    c1 = new TCanvas();
+    c1->Draw();
+
     // ---------------------------------------------------------------------
     // the following line is needed to have std::vector<float> in the tree
     // ---------------------------------------------------------------------
@@ -321,7 +341,7 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("sigma",&sigma);
     m_ttree->Branch("kurtosis",&kurtosis);
     m_ttree->Branch("skewness",&skewness);
-
+//    m_ttree->Branch("histo",&histo);
 
 
     //settings
@@ -362,6 +382,10 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("pul_spread", &v_pul_spread);
     m_ttree->Branch("pul_int", 		&v_pul_int);
 
+    m_ttree->Branch("npeaks",      &npeaks);
+    m_ttree->Branch("peaks0",      &peaks0);
+    m_ttree->Branch("peaks3",      &peaks3);
+
     // telescope
     m_ttree->Branch("plane", 	&f_plane);
     m_ttree->Branch("col", 		&f_col);
@@ -393,6 +417,7 @@ void FileWriterTreeDRS4::ClearVectors(){
     v_sig_integral2->clear();
     v_sig_integral3->clear();
 
+
     f_wf0			->clear();
     f_wf1			->clear();
     f_wf2			->clear();
@@ -408,6 +433,8 @@ void FileWriterTreeDRS4::ClearVectors(){
     par1->clear();
     chi2->clear();
     sigma->clear();
+    peaks0->clear();
+    peaks3->clear();
 }
 
 void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
@@ -461,6 +488,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
     vector<int> wf_order = {2,1,0,3};
     ResizeVectors(sev.GetNWaveforms());
     for (auto iwf:wf_order){//unsigned int iwf = 0; iwf < nwfs;iwf++){
+        int pol = polarities.at(iwf);
 
         const eudaq::StandardWaveform & waveform = sev.GetWaveform(iwf);
         // get the sensor name. see eventually what this actually does!
@@ -479,10 +507,40 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         v_y.resize(1024);
         int n_start =ranges["pedestalFit"]->first;
         int n_end = ranges["pedestalFit"]->second;
+//        if ((save_waveforms & 1<<iwf) == 1<<iwf){
+//            if (histo) {delete histo;histo=0;}
+//            histo = new TH1F("histo","histo",1024,0,1024);
+//        }
+        std::vector<float> v1;
+        v1.resize(1024);
+        //        std::vector<float> v2;
+        //        v2.resize(1024);
         for (unsigned i = 0; i < 1024; i++){
-            v_y.at(i) =  data->at(i);
+            v_y.at(i) =  pol*data->at(i);
+            v1.at(i) =  pol*data->at(i);
+//            if ((save_waveforms & 1<<iwf) == 1<<iwf)
+//                histo->Fill(i,pol*data->at(i));
         }
-//        cout<<"\n"<<n_start<<"-"<<n_end<<"\n";
+        if ((save_waveforms & 1<<iwf) == 1<<iwf){
+            std::vector<float> v_yy;
+            v_yy.resize(v_y.size());
+            int peaks = spec->SearchHighRes(&v1[0],&(v_yy[0]),v_y.size(),10,100*0.01,true, 10,true, 5);
+            npeaks->at(iwf) = peaks;
+            switch(iwf){
+                case 0: peaks0->clear(); break;
+                case 3: peaks3->clear(); break;
+            }
+            for(UInt_t i=0; i< peaks; i++){
+                float xval = spec->GetPositionX()[i];
+                int bin = (int)(xval+.5);
+                float yval = v_y.at(bin);
+
+                switch(iwf){
+                    case 0: peaks0->push_back(xval);break;
+                    case 3: peaks3->push_back(spec->GetPositionX()[i]);break;
+                }
+            }
+        }
 
         fitter->ClearPoints();
         fitter->AssignData(n_end-n_start, 1, &v_x[n_start],&v_y[n_start]);
@@ -524,7 +582,6 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
 
         // calculate the signal and so on
         // float sig = CalculatePeak(data, 1075, 1150);
-        int pol = polarities.at(iwf);
         std::pair<int, float> maxAndValue =waveform.getAbsMaxAndValue(ranges["signal"]->first,  ranges["signal"]->second);
         float signal   			= waveform.getSpreadInRange( ranges["signal"]->first,  ranges["signal"]->second);
         float signal_integral   = pol*waveform.getIntegral(ranges["signal"]->first,  ranges["signal"]->second);
@@ -753,6 +810,7 @@ inline void FileWriterTreeDRS4::ResizeVectors(unsigned n_channels) {
     sigma->resize(n_channels);
     skewness->resize(n_channels);
     kurtosis->resize(n_channels);
+    npeaks->resize(n_channels,0);
 }
 
 }
