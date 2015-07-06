@@ -310,7 +310,7 @@ void FileWriterTreeDRS4::Configure(){
     spec->SetAverageWindow(spectrum_averageWindow);
     spectrum_markov = m_config->Get("spectrum_markov",true);
     spectrum_background_removal= m_config->Get("spectrum_background_removal",true);
-    spectrum_waveforms = (int)m_config->Get("save_waveforms",9);
+    spectrum_waveforms = (int)m_config->Get("spectrum_waveforms",9);
 
     ranges["pulser"] = new pair<float,float>(m_config->Get("pulser_range",make_pair((float)770,(float)860)));
     ranges["pedestal"] =  new pair<float,float>(m_config->Get("pedestal_range",make_pair((float)350,(float)450)));
@@ -364,6 +364,8 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("pulser_int"    ,&f_pulser_int   , "pulser_int/F");
     m_ttree->Branch("trig_time"     ,&f_trig_time    , "trig_time/I");
     m_ttree->Branch("nwfs"          ,&f_nwfs        , "n_waveforms/I");
+
+    // linearfitting
     m_ttree->Branch("chi2",&chi2);
     m_ttree->Branch("par0",&par0);
     m_ttree->Branch("par1",&par1);
@@ -371,7 +373,6 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("kurtosis",&kurtosis);
     m_ttree->Branch("skewness",&skewness);
     //    m_ttree->Branch("histo",&histo);
-
 
     //settings
     //    std::cout<<"Ranges: "<<std::endl;
@@ -412,6 +413,7 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("pul_spread", &v_pul_spread);
     m_ttree->Branch("pul_int", 		&v_pul_int);
 
+    /// for tspectrum
     m_ttree->Branch("npeaks",      &npeaks);
     for (int i=0; i < 4; i++){
         TString name = TString::Format("peaks%d_x",i);
@@ -864,7 +866,6 @@ void FileWriterTreeDRS4::DoLinearFitting(int iwf){
     this->sigma->at(iwf) = sigma;
     this->kurtosis->at(iwf) = kurtosis;
     this->skewness->at(iwf) = skewness;
-
 }
 
 int FileWriterTreeDRS4::IsPulserEvent(const StandardWaveform *wf){
