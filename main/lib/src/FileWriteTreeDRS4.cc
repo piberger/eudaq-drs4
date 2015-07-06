@@ -868,9 +868,9 @@ void FileWriterTreeDRS4::DoLinearFitting(int iwf){
 }
 
 int FileWriterTreeDRS4::IsPulserEvent(const StandardWaveform *wf){
-    f_pulser_int = wf->getIntegral(700, 950, true);
-    //    f_pulser     = (f_pulser_int > 80.);
+    f_pulser_int = wf->getIntegral(700, 900, true);
     return f_pulser_int > 80.;
 } //end IsPulserEvent
+
 } //end namespace eudaq
 #endif // ROOT_FOUND
