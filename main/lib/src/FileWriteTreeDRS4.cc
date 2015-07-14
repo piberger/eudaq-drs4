@@ -733,9 +733,21 @@ inline void FileWriterTreeDRS4::ResizeVectors(unsigned n_channels) {
     skewness->resize(n_channels);
     kurtosis->resize(n_channels);
     npeaks->resize(n_channels,0);
+    for (auto p: peaks_x)
+        p->clear();
+    for (auto p: peaks_y)
+            p->clear();
+    for (auto p: peaks_no)
+            p->clear();
+
+
 }
 
 void FileWriterTreeDRS4::DoSpectrumFitting(int iwf){
+    peaks_x.at(iwf)->clear();
+    peaks_y.at(iwf)->clear();
+    peaks_no.at(iwf)->clear();
+    npeaks->at(iwf) = 0;
     if ((spectrum_waveforms & 1<<iwf) == 1<<iwf){
         w_spectrum.Start(false);
         std::vector<float> v_yy;
@@ -743,16 +755,12 @@ void FileWriterTreeDRS4::DoSpectrumFitting(int iwf){
         int peaks = spec->SearchHighRes(&v1[0],&(v_yy[0]),v1.size(),spectrum_sigma,spectrum_threshold,
                 spectrum_background_removal, spectrum_deconIterations,spectrum_markov, spectrum_averageWindow);
         npeaks->at(iwf) = peaks;
-        peaks_x.at(iwf)->clear();
-        peaks_y.at(iwf)->clear();
-        peaks_no.at(iwf)->clear();
         for(UInt_t i=0; i< peaks; i++){
             float xval = spec->GetPositionX()[i];
             int bin = (int)(xval+.5);
             int min_bin = bin-5>=0?bin-5:0;
             int max_bin = bin+5>=v_y.size()?bin+5:0;
             float max = *std::max_element(&v1.at(min_bin),&v1.at(min_bin));
-            float yval = v_y.at(bin);
             peaks_x.at(iwf)->push_back(xval);
             peaks_y.at(iwf)->push_back(max);
             peaks_no.at(iwf)->push_back(i);
