@@ -104,6 +104,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         std::vector<float> * data;
 
         std::vector<float> v1;
+        std::vector<float> v_yy;
         // Book variables for the Event_to_TTree conversion
         unsigned m_noe;
         short chan;
@@ -739,32 +740,35 @@ inline void FileWriterTreeDRS4::ResizeVectors(unsigned n_channels) {
             p->clear();
     for (auto p: peaks_no)
             p->clear();
-
-
 }
 
 void FileWriterTreeDRS4::DoSpectrumFitting(int iwf){
+    bool b_spectrum = (spectrum_waveforms & 1<<iwf) == 1<<iwf;
     peaks_x.at(iwf)->clear();
     peaks_y.at(iwf)->clear();
     peaks_no.at(iwf)->clear();
     npeaks->at(iwf) = 0;
-    if ((spectrum_waveforms & 1<<iwf) == 1<<iwf){
+    if (b_spectrum){
         w_spectrum.Start(false);
-        std::vector<float> v_yy;
         v_yy.resize(v_y.size());
         int peaks = spec->SearchHighRes(&v1[0],&(v_yy[0]),v1.size(),spectrum_sigma,spectrum_threshold,
                 spectrum_background_removal, spectrum_deconIterations,spectrum_markov, spectrum_averageWindow);
         npeaks->at(iwf) = peaks;
+//        std::cout <<iwf<<": "<<peaks<<"   ";
         for(UInt_t i=0; i< peaks; i++){
+//            std::cout<<i<<": ";
             float xval = spec->GetPositionX()[i];
+//            std::cout<<xval<<"/";
             int bin = (int)(xval+.5);
             int min_bin = bin-5>=0?bin-5:0;
-            int max_bin = bin+5>=v_y.size()?bin+5:0;
+            int max_bin = bin+5<v_y.size()?bin+5:v_y.size()-1;
             float max = *std::max_element(&v1.at(min_bin),&v1.at(min_bin));
+//            std::cout<<max<<"   ";
             peaks_x.at(iwf)->push_back(xval);
             peaks_y.at(iwf)->push_back(max);
             peaks_no.at(iwf)->push_back(i);
         }
+//        std::cout<<peaks_x.at(iwf)->size()<<"/"<<peaks_y.at(iwf)->size()<<"/"<<peaks_no.at(iwf)->size()<<std::endl;
         w_spectrum.Stop();
     }
 }
@@ -775,10 +779,10 @@ void FileWriterTreeDRS4::DoLinearFitting(int iwf){
 //    cout<<"iwf: "<<iwf<<"lin "<<linear_fitting_waveforms<<" "<< 1<<iwf<<" "<<(linear_fitting_waveforms & 1<<iwf)<<" "<<b_linear_fit<<"\t";
 //    cout<<"iwf: "<<iwf<<"spec "<<spectrum_waveforms<<" "<< 1<<iwf<<" "<<(spectrum_waveforms & 1<<iwf)<<" "<<b_spectrum<<"\t"<<endl;;
     if(b_spectrum || b_linear_fit){
-        v_y.resize(1024);
-        v1.resize(1024);
+        v_y.resize(data->size());
+        v1.resize(data->size());
         int pol = polarities.at(iwf);
-        for (unsigned i = 0; i < 1024; i++){
+        for (unsigned i = 0; i < data->size(); i++){
             v_y.at(i) =  pol*data->at(i);
             v1.at(i) =  pol*data->at(i);
         }
