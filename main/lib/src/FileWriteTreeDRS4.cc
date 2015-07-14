@@ -10,6 +10,8 @@
 #include "include/SimpleStandardEvent.hh"
 #include <stdlib.h>
 #include <cmath>
+#include <time.h>
+#include "TStopwatch.h"
 
 //# include<inttypes.h>
 #include "TFile.h"
@@ -85,11 +87,19 @@ class FileWriterTreeDRS4 : public FileWriter {
         void ClearVectors();
         void ResizeVectors(unsigned n_channels);
         int IsPulserEvent(const StandardWaveform *wf);
+        void FillSignalRange(int iwf,const StandardWaveform *wf, int pol);
+        void FillPulserRange(int iwf,const StandardWaveform *wf, int pol);
+        void FillPedestalRange(int iwf,const StandardWaveform *wf, int pol);
+        void FillTotalRange(int iwf,const StandardWaveform *wf, int pol);
+        void UpdateWaveforms(int iwf, const StandardWaveform *wf);
         void DoLinearFitting(int iwf);
         void DoSpectrumFitting(int iwf);
+        // clocks for checking execution time
+        TStopwatch w_linear_fitting;
+        TStopwatch w_spectrum;
+        TStopwatch w_total;
         TFile * m_tfile; // book the pointer to a file (to store the otuput)
         TTree * m_ttree; // book the tree (to store the needed event info)
-
         int verbose;
         std::vector<float> * data;
 
@@ -121,6 +131,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         bool spectrum_markov;
         bool spectrum_background_removal;
         int spectrum_waveforms;
+        int linear_fitting_waveforms;
 
         // Vector Branches     
         // DUT
@@ -180,8 +191,6 @@ class FileWriterTreeDRS4 : public FileWriter {
         std::vector<std::vector<float>*> peaks_y;
         std::vector<std::vector<int>*> peaks_no;
         std::vector<float>* npeaks;
-        float max_par0;
-        float max_par1;
 
         TCanvas *c1;
 
@@ -194,8 +203,6 @@ static RegisterFileWriter<FileWriterTreeDRS4> reg("drs4tree");
 FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
 : m_tfile(0), m_ttree(0),m_noe(0),chan(4),n_pixels(90*90+60*60), histo(0)
 {
-    max_par0 = 0;
-    max_par1 = 0;
     gROOT->ProcessLine("#include <vector>");
     gROOT->ProcessLine(".L loader.C+");
     gROOT->ProcessLine( "gErrorIgnoreLevel = 5001;");
@@ -311,6 +318,7 @@ void FileWriterTreeDRS4::Configure(){
     spectrum_markov = m_config->Get("spectrum_markov",true);
     spectrum_background_removal= m_config->Get("spectrum_background_removal",true);
     spectrum_waveforms = (int)m_config->Get("spectrum_waveforms",9);
+    linear_fitting_waveforms = (int)m_config->Get("linear_fitting_waveforms",9);
 
     ranges["pulser"] = new pair<float,float>(m_config->Get("pulser_range",make_pair((float)770,(float)860)));
     ranges["pedestal"] =  new pair<float,float>(m_config->Get("pedestal_range",make_pair((float)350,(float)450)));
@@ -493,6 +501,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
     }
     if(max_event_number >0 &&f_event_number> max_event_number)
         return;
+    w_total.Start(false);
     StandardEvent sev = eudaq::PluginManager::ConvertToStandard(ev);
 
     f_event_number = sev.GetEventNumber();
@@ -559,71 +568,17 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
 
         // calculate the signal and so on
         // float sig = CalculatePeak(data, 1075, 1150);
-        std::pair<int, float> maxAndValue =waveform.getAbsMaxAndValue(ranges["signal"]->first,  ranges["signal"]->second);
-        float signal   			= waveform.getSpreadInRange( ranges["signal"]->first,  ranges["signal"]->second);
-        float signal_integral   = pol*waveform.getIntegral(ranges["signal"]->first,  ranges["signal"]->second);
-        int signal_time 		= waveform.getIndexAbsMax(ranges["signal"]->first,  ranges["signal"]->second);
+        FillSignalRange(iwf, &waveform,pol);
+        FillPedestalRange(iwf, &waveform,pol);
+        FillPulserRange(iwf, &waveform,pol);
+        FillTotalRange(iwf, &waveform,pol);
 
-        pair<float,float>* r = ranges["PeakIntegral1"];
-        float int_9             = pol*waveform.getIntegral( maxAndValue.first-r->first, maxAndValue.first+r->second);
-        r = ranges["PeakIntegral2"];
-        float int_27            = pol*waveform.getIntegral( maxAndValue.first-r->first, maxAndValue.first+r->second);
-        r = ranges["PeakIntegral3"];
-        float int_54            = pol*waveform.getIntegral( maxAndValue.first-r->first, maxAndValue.first+r->second);
-
-        if (verbose > 3)
-            cout<<"get Values2 "<<iwf<<endl;
-        float sig_static = pol*waveform.getIntegral( ranges["signal"]->first,  ranges["signal"]->second);
-        float signalSpread      = waveform.getSpreadInRange(ranges["signal"]->first,  ranges["signal"]->second);
-
-        float pedestal = waveform.getSpreadInRange(ranges["pedestal"]->first,  ranges["pedestal"]->second);
-        float pedestal_integral   = pol*waveform.getIntegral( ranges["pedestal"]->first,  ranges["pedestal"]->second);
-        float pedestal_median   = pol*waveform.getMedian( ranges["pedestal"]->first,  ranges["pedestal"]->second);
-
-        if (verbose > 3)
-            cout<<"get Values3 "<<iwf<<endl;
-        //        float median    = pol*waveform.getMedian(300, 800);
-        float median    = pol*waveform.getMedian(200, 700);
-        float median2            = pol*waveform.getMedian(0, 1023);
-        float average   = pol*waveform.getIntegral(0,1023);
-
-        if (verbose > 3)
-            cout<<"get Values4 "<<iwf<<endl;
-        float pulser   = waveform.getSpreadInRange( ranges["pulser"]->first,   ranges["pulser"]->second);
-        float pulser_integral   = pol*waveform.getIntegral( ranges["pulser"]->first,   ranges["pulser"]->second);
-
-        float abs_max           = waveform.getAbsMaxInRange(0,1023);
-
-        if (verbose > 3)
-            cout<<"Load Values "<<iwf<<endl;
         // ------------------------------------
         // ---------- LOAD VALUES  ------------
         // ------------------------------------
         // save the values in the event
         v_type_name		->at(iwf) = (type_name);				// Type Name
         v_sensor_name	->at(iwf) = (sensor_name);			// Sensor Name
-
-        v_sig_int 		->at(iwf) = (signal_integral);		// Signal: Integral over Signalrange
-        v_sig_spread    ->at(iwf) = (signalSpread);      	// Signal: Spread in Signalrange
-        v_sig_peak      ->at(iwf) = (pol*maxAndValue.second); 	// Signal: Value of peak (no pedestal correction)
-        v_sig_integral1 ->at(iwf) = (int_9);                 // Signal: Integral around peak with range set in config file
-        v_sig_integral2	->at(iwf) = (int_27);                // Signal: Integral around peak with range set in config file
-        v_sig_integral3	->at(iwf) = (int_54); 				// Signal: Integral around peak with range set in config file
-
-        v_sig_time		->at(iwf) = (signal_time); 			// Peakposition: Calc by waveform.getIndexAbsMax()
-        v_peaktime      ->at(iwf) = (maxAndValue.first);  	// Peakposition: Calc by waveform.getAbsMaxAndValue() ( the same?? )
-
-        v_ped_int		->at(iwf) = (pedestal_integral);		// Pedestal: Integral over Pedestalrange
-        v_ped_spread    ->at(iwf) = (pedestal);              // Pedestal: Spread in Pedestalrange
-        v_ped_median    ->at(iwf) = (pedestal_median);       // Pedestal: Median in Pedestalrange
-
-        v_pul_int		->at(iwf) = (pulser_integral);       // Pulser: Integral over Pulserrange
-        v_pul_spread    ->at(iwf) = (pulser);                // Pulser: Spread in Pulserrange
-
-        v_is_saturated 	->at(iwf) = (abs_max>498);			// indicator if saturation is reached in sampling region (1-1024)
-
-        v_median		->at(iwf) = (median);				// Median over whole sampling region
-        v_average       ->at(iwf) = average;
 
         if (verbose > 3)
             cout<<"get trigger wf "<<iwf<<endl;
@@ -644,36 +599,8 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         }
         if (verbose > 3)
             cout<<"fill wf "<<iwf<<endl;
-        for (int j=0; j<data->size(); j++){
-            if     (iwf == 0) {
-                if (f_pulser)
-                    avgWF_0_pul->SetBinContent(j+1, avgWF(avgWF_0_pul->GetBinContent(j+1),data->at(j),f_pulser_events));
-                else
-                    avgWF_0_sig->SetBinContent(j+1, avgWF(avgWF_0_sig->GetBinContent(j+1),data->at(j),f_signal_events));
-                avgWF_0->SetBinContent(j+1, avgWF(avgWF_0->GetBinContent(j+1),data->at(j),f_event_number+1));
-                if ((save_waveforms & 1<<0) == 1<<0)
-                    f_wf0->push_back(data->at(j));
-            }
-            else if(iwf == 1) {
-                avgWF_1->SetBinContent(j+1, avgWF(avgWF_1->GetBinContent(j+1),data->at(j),f_event_number+1));
-                if ((save_waveforms & 1<<1) == 1<<1)
-                    f_wf1->push_back(data->at(j));
-            }
-            else if(iwf == 2) {
-                avgWF_2->SetBinContent(j+1, avgWF(avgWF_2->GetBinContent(j+1),data->at(j),f_event_number+1));
-                if ((save_waveforms & 1<<2) == 1<<2)
-                    f_wf2->push_back(data->at(j));
-            }
-            else if(iwf == 3) {
-                if (f_pulser)
-                    avgWF_3_pul->SetBinContent(j+1, avgWF(avgWF_3_pul->GetBinContent(j+1),data->at(j),f_pulser_events));
-                else
-                    avgWF_3_sig->SetBinContent(j+1, avgWF(avgWF_3_sig->GetBinContent(j+1),data->at(j),f_signal_events));
-                avgWF_3->SetBinContent(j+1, avgWF(avgWF_3->GetBinContent(j+1),data->at(j),f_event_number+1));
-                if ((save_waveforms & 1<<3) == 1<<3)
-                    f_wf3->push_back(data->at(j));
-            }
-        }//data loop
+        UpdateWaveforms(iwf, &waveform);
+
         data->clear();
     }// end iwf waveform loop
 
@@ -694,12 +621,28 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         }
     }
     m_ttree->Fill();
+    if (f_event_number %1000 == 0)
+        cout<<f_event_number<<"\tSpectrum: "<<w_spectrum.RealTime()/w_spectrum.Counter()<<"\t"
+        <<"LinearFitting: "<<w_linear_fitting.RealTime()/w_linear_fitting.Counter()<<"\t"<<
+        w_spectrum.Counter()<<"/"<<w_linear_fitting.Counter()<<"\t"<<flush;
+    w_total.Stop();
 }
 
 
 FileWriterTreeDRS4::~FileWriterTreeDRS4() {
     std::cout<<"Tree has " << m_ttree->GetEntries() << " entries" << std::endl;
-    std::cout<<"Max parameter: :"<<max_par0<<"/"<<max_par1<<std::endl;
+    cout<<f_event_number<<"\tSpectrum: "<<w_spectrum.RealTime()/w_spectrum.Counter()<<"\t"
+    <<"LinearFitting: "<<w_linear_fitting.RealTime()/w_linear_fitting.Counter()<<"\t"<<
+    w_spectrum.Counter()<<"/"<<w_linear_fitting.Counter()<<endl;
+    cout<<f_event_number<<"\tSpectrum: "<<w_spectrum.RealTime()<<"\t"
+    <<"LinearFitting: "<<w_linear_fitting.RealTime()<<endl;
+    cout<<"Spectrum:"<<endl;
+    w_spectrum.Print();
+    cout<<"LinearFit:"<<endl;
+    w_linear_fitting.Print();
+
+    cout<<"\n Total time: "<<w_total.RealTime()<<endl;
+    w_total.Print();
     m_ttree->Write();
     avgWF_0->Write();
     avgWF_0_pul->Write();
@@ -794,9 +737,10 @@ inline void FileWriterTreeDRS4::ResizeVectors(unsigned n_channels) {
 
 void FileWriterTreeDRS4::DoSpectrumFitting(int iwf){
     if ((spectrum_waveforms & 1<<iwf) == 1<<iwf){
+        w_spectrum.Start(false);
         std::vector<float> v_yy;
         v_yy.resize(v_y.size());
-        int peaks = spec->SearchHighRes(&v1[0],&(v_yy[0]),v_y.size(),spectrum_sigma,spectrum_threshold,
+        int peaks = spec->SearchHighRes(&v1[0],&(v_yy[0]),v1.size(),spectrum_sigma,spectrum_threshold,
                 spectrum_background_removal, spectrum_deconIterations,spectrum_markov, spectrum_averageWindow);
         npeaks->at(iwf) = peaks;
         peaks_x.at(iwf)->clear();
@@ -813,59 +757,154 @@ void FileWriterTreeDRS4::DoSpectrumFitting(int iwf){
             peaks_y.at(iwf)->push_back(max);
             peaks_no.at(iwf)->push_back(i);
         }
+        w_spectrum.Stop();
     }
 }
 
 void FileWriterTreeDRS4::DoLinearFitting(int iwf){
-    v_y.resize(1024);
-    v1.resize(1024);
-    int pol = polarities.at(iwf);
-    for (unsigned i = 0; i < 1024; i++){
-        v_y.at(i) =  pol*data->at(i);
-        v1.at(i) =  pol*data->at(i);
-    }
-    int n_start = ranges["pedestalFit"]->first;
-    int n_end = ranges["pedestalFit"]->second;
-
-    fitter->ClearPoints();
-    fitter->AssignData(n_end-n_start, 1, &v_x[n_start],&v_y[n_start]);
-    fitter->Eval();
-    //        cout<<fitter->GetParameter(0)<<"/"<<fitter->GetParameter(1)<<" "<<v_y.size()<<" "<<fitter->GetNpoints()<<" "<<fitter->GetNumberFreeParameters() <<std::endl;//<<fitter->GetNDF()<<std::endl;
-    chi2->at(iwf) = f_pol1->GetChisquare()/f_pol1->GetNDF();
-    par0->at(iwf) = f_pol1->Eval(((float)n_end-(float)n_end)/2.);//f_pol1->GetParameter(0);
-    par1->at(iwf) = f_pol1->GetParameter(1);
-    int do_print = 0;
-    if (iwf==0 && (std::abs( par0->at(iwf) ) > max_par0)){
-        do_print = 1;
-        max_par0 = std::abs(par0->at(iwf));
-    }
-    if (iwf==0 && (std::abs(par1->at(iwf))>max_par1) ){
-        do_print = 2;
-        max_par1 = std::abs(par1->at(iwf));
-    }
-    if (verbose){
-        if (do_print >0 || f_event_number == 6137){
-            std::cout<<setw(7)<<f_event_number<<" "<<iwf<<" "<<do_print<<" "<<std::setw(8)<<max_par0<<" "<<std::setw(8)<<max_par1<<" ";
-            std::cout<<std::setw(8)<<par0->at(iwf)<<" + "<<std::setw(10)<<par1->at(iwf)<<" * x\t"<<setw(8)<<chi2->at(iwf)<<"\t";
-            std::cout<<setw(8)<<sigma->at(iwf)<<"/"<<setw(8)<<kurtosis->at(iwf)<<"/"<<setw(8)<<skewness->at(iwf)<<std::endl;
+    bool b_linear_fit = (linear_fitting_waveforms & 1<<iwf) == 1<<iwf;
+    bool b_spectrum = (spectrum_waveforms & 1<<iwf) == 1<<iwf;
+//    cout<<"iwf: "<<iwf<<"lin "<<linear_fitting_waveforms<<" "<< 1<<iwf<<" "<<(linear_fitting_waveforms & 1<<iwf)<<" "<<b_linear_fit<<"\t";
+//    cout<<"iwf: "<<iwf<<"spec "<<spectrum_waveforms<<" "<< 1<<iwf<<" "<<(spectrum_waveforms & 1<<iwf)<<" "<<b_spectrum<<"\t"<<endl;;
+    if(b_spectrum || b_linear_fit){
+        v_y.resize(1024);
+        v1.resize(1024);
+        int pol = polarities.at(iwf);
+        for (unsigned i = 0; i < 1024; i++){
+            v_y.at(i) =  pol*data->at(i);
+            v1.at(i) =  pol*data->at(i);
         }
     }
-    float sigma = 0;
-    float skewness = 0;
-    float kurtosis = 0;
-    //        float sigma = 0;
-    for (unsigned i = n_start; i< n_end && i<v_y.size();i++){
-        float delta = data->at(i)-f_pol1->Eval(i);
-        sigma += TMath::Power(delta,2);
-        kurtosis += TMath::Power(delta,3);
-        skewness += TMath::Power(delta,4);
+    if (b_linear_fit){
+        w_linear_fitting.Start(false);
+        int n_start = ranges["pedestalFit"]->first;
+        int n_end = ranges["pedestalFit"]->second;
+
+        fitter->ClearPoints();
+        fitter->AssignData(n_end-n_start, 1, &v_x[n_start],&v_y[n_start]);
+        fitter->Eval();
+        //        cout<<fitter->GetParameter(0)<<"/"<<fitter->GetParameter(1)<<" "<<v_y.size()<<" "<<fitter->GetNpoints()<<" "<<fitter->GetNumberFreeParameters() <<std::endl;//<<fitter->GetNDF()<<std::endl;
+        chi2->at(iwf) = f_pol1->GetChisquare()/f_pol1->GetNDF();
+        par0->at(iwf) = f_pol1->Eval(((float)n_end-(float)n_end)/2.);//f_pol1->GetParameter(0);
+        par1->at(iwf) = f_pol1->GetParameter(1);
+        float sigma = 0;
+        float skewness = 0;
+        float kurtosis = 0;
+        //        float sigma = 0;
+        for (unsigned i = n_start; i< n_end && i<v_y.size();i++){
+            float delta = data->at(i)-f_pol1->Eval(i);
+            sigma += TMath::Power(delta,2);
+            kurtosis += TMath::Power(delta,3);
+            skewness += TMath::Power(delta,4);
+        }
+        sigma = TMath::Sqrt(sigma);
+        kurtosis = cbrt(kurtosis);
+        skewness = TMath::Power(skewness,1./4.);
+        this->sigma->at(iwf) = sigma;
+        this->kurtosis->at(iwf) = kurtosis;
+        this->skewness->at(iwf) = skewness;
+        w_linear_fitting.Stop();
     }
-    sigma = TMath::Sqrt(sigma);
-    kurtosis = cbrt(kurtosis);
-    skewness = TMath::Power(skewness,1./4.);
-    this->sigma->at(iwf) = sigma;
-    this->kurtosis->at(iwf) = kurtosis;
-    this->skewness->at(iwf) = skewness;
+}
+
+
+void FileWriterTreeDRS4::FillSignalRange(int iwf, const StandardWaveform *wf, int pol){
+    std::pair<int, float> maxAndValue =wf->getAbsMaxAndValue(ranges["signal"]->first,  ranges["signal"]->second);
+    float signal            = wf->getSpreadInRange( ranges["signal"]->first,  ranges["signal"]->second);
+    float signal_integral   = pol*wf->getIntegral(ranges["signal"]->first,  ranges["signal"]->second);
+    int signal_time         = wf->getIndexAbsMax(ranges["signal"]->first,  ranges["signal"]->second);
+
+    pair<float,float>* r = ranges["PeakIntegral1"];
+    float int_9             = pol*wf->getIntegral( maxAndValue.first-r->first, maxAndValue.first+r->second);
+    r = ranges["PeakIntegral2"];
+    float int_27            = pol*wf->getIntegral( maxAndValue.first-r->first, maxAndValue.first+r->second);
+    r = ranges["PeakIntegral3"];
+    float int_54            = pol*wf->getIntegral( maxAndValue.first-r->first, maxAndValue.first+r->second);
+
+    if (verbose > 3)
+        cout<<"get Values2 "<<iwf<<endl;
+    float sig_static = pol*wf->getIntegral( ranges["signal"]->first,  ranges["signal"]->second);
+    float signalSpread      = wf->getSpreadInRange(ranges["signal"]->first,  ranges["signal"]->second);
+
+    v_sig_int       ->at(iwf) = (signal_integral);      // Signal: Integral over Signalrange
+    v_sig_spread    ->at(iwf) = (signalSpread);         // Signal: Spread in Signalrange
+    v_sig_peak      ->at(iwf) = (pol*maxAndValue.second);   // Signal: Value of peak (no pedestal correction)
+    v_sig_integral1 ->at(iwf) = (int_9);                 // Signal: Integral around peak with range set in config file
+    v_sig_integral2 ->at(iwf) = (int_27);                // Signal: Integral around peak with range set in config file
+    v_sig_integral3 ->at(iwf) = (int_54);               // Signal: Integral around peak with range set in config file
+
+    v_sig_time      ->at(iwf) = (signal_time);          // Peakposition: Calc by wf->getIndexAbsMax()
+    v_peaktime      ->at(iwf) = (maxAndValue.first);    // Peakposition: Calc by wf->getAbsMaxAndValue() ( the same?? )
+
+}
+
+void FileWriterTreeDRS4::FillPedestalRange(int iwf, const StandardWaveform *wf, int pol){
+
+    float pedestal = wf->getSpreadInRange(ranges["pedestal"]->first,  ranges["pedestal"]->second);
+    float pedestal_integral   = pol*wf->getIntegral( ranges["pedestal"]->first,  ranges["pedestal"]->second);
+    float pedestal_median   = pol*wf->getMedian( ranges["pedestal"]->first,  ranges["pedestal"]->second);
+
+
+    v_ped_int       ->at(iwf) = (pedestal_integral);        // Pedestal: Integral over Pedestalrange
+    v_ped_spread    ->at(iwf) = (pedestal);              // Pedestal: Spread in Pedestalrange
+    v_ped_median    ->at(iwf) = (pedestal_median);       // Pedestal: Median in Pedestalrange
+}
+
+void FileWriterTreeDRS4::FillPulserRange(int iwf, const StandardWaveform *wf, int pol){
+
+
+    float pulser   = wf->getSpreadInRange( ranges["pulser"]->first,   ranges["pulser"]->second);
+    float pulser_integral   = pol*wf->getIntegral( ranges["pulser"]->first,   ranges["pulser"]->second);
+
+    v_pul_int       ->at(iwf) = (pulser_integral);       // Pulser: Integral over Pulserrange
+    v_pul_spread    ->at(iwf) = (pulser);                // Pulser: Spread in Pulserrange
+}
+
+void FileWriterTreeDRS4::FillTotalRange(int iwf, const StandardWaveform *wf, int pol){
+
+    float median2            = pol*wf->getMedian(0, 1023);
+    float average   = pol*wf->getIntegral(0,1023);
+    float abs_max           = wf->getAbsMaxInRange(0,1023);
+
+    v_is_saturated  ->at(iwf) = (abs_max>498);          // indicator if saturation is reached in sampling region (1-1024)
+    v_median        ->at(iwf) = (median2);               // Median over whole sampling region
+    v_average       ->at(iwf) = average;
+}
+
+
+
+void FileWriterTreeDRS4::UpdateWaveforms(int iwf, const StandardWaveform *wf){
+    data = wf->GetData();
+    for (int j=0; j<data->size(); j++){
+        if     (iwf == 0) {
+            if (f_pulser)
+                avgWF_0_pul->SetBinContent(j+1, avgWF(avgWF_0_pul->GetBinContent(j+1),data->at(j),f_pulser_events));
+            else
+                avgWF_0_sig->SetBinContent(j+1, avgWF(avgWF_0_sig->GetBinContent(j+1),data->at(j),f_signal_events));
+            avgWF_0->SetBinContent(j+1, avgWF(avgWF_0->GetBinContent(j+1),data->at(j),f_event_number+1));
+            if ((save_waveforms & 1<<0) == 1<<0)
+                f_wf0->push_back(data->at(j));
+        }
+        else if(iwf == 1) {
+            avgWF_1->SetBinContent(j+1, avgWF(avgWF_1->GetBinContent(j+1),data->at(j),f_event_number+1));
+            if ((save_waveforms & 1<<1) == 1<<1)
+                f_wf1->push_back(data->at(j));
+        }
+        else if(iwf == 2) {
+            avgWF_2->SetBinContent(j+1, avgWF(avgWF_2->GetBinContent(j+1),data->at(j),f_event_number+1));
+            if ((save_waveforms & 1<<2) == 1<<2)
+                f_wf2->push_back(data->at(j));
+        }
+        else if(iwf == 3) {
+            if (f_pulser)
+                avgWF_3_pul->SetBinContent(j+1, avgWF(avgWF_3_pul->GetBinContent(j+1),data->at(j),f_pulser_events));
+            else
+                avgWF_3_sig->SetBinContent(j+1, avgWF(avgWF_3_sig->GetBinContent(j+1),data->at(j),f_signal_events));
+            avgWF_3->SetBinContent(j+1, avgWF(avgWF_3->GetBinContent(j+1),data->at(j),f_event_number+1));
+            if ((save_waveforms & 1<<3) == 1<<3)
+                f_wf3->push_back(data->at(j));
+        }
+    }//data loop
 }
 
 int FileWriterTreeDRS4::IsPulserEvent(const StandardWaveform *wf){
