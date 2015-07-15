@@ -208,7 +208,9 @@ class FileWriterTreeDRS4 : public FileWriter {
         std::vector<std::vector<float>*> peaks_y;
         std::vector<std::vector<int>*> peaks_no;
         std::vector<float>* npeaks;
-        std::vector<float>* fft;
+        std::vector<float>* fft_mean;
+        std::vector<float>* fft_max;
+        std::vector<float>* fft_min;
 
         TCanvas *c1;
 
@@ -280,7 +282,9 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     peaks_no.resize(4, new std::vector<int>);
 
     npeaks = new std::vector<float>;
-    fft = new std::vector<float>;
+    fft_mean = new std::vector<float>;
+    fft_max = new std::vector<float>;
+    fft_min = new std::vector<float>;
 
     skewness = new std::vector<float>;
     kurtosis= new std::vector<float>;
@@ -455,7 +459,9 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
 
     /// for tspectrum
     m_ttree->Branch("npeaks",      &npeaks);
-    m_ttree->Branch("fft", &fft);
+    m_ttree->Branch("fft_mean", &fft_mean);
+    m_ttree->Branch("fft_max", &fft_max);
+    m_ttree->Branch("fft_min", &fft_min);
     for (int i=0; i < 4; i++){
         TString name = TString::Format("peaks%d_x",i);
         m_ttree->Branch(name,&peaks_x.at(i));
@@ -775,7 +781,9 @@ inline void FileWriterTreeDRS4::ResizeVectors(unsigned n_channels) {
     skewness->resize(n_channels);
     kurtosis->resize(n_channels);
     npeaks->resize(n_channels,0);
-    fft->resize(n_channels,0);
+    fft_mean->resize(n_channels,0);
+    fft_min->resize(n_channels,0);
+    fft_max->resize(n_channels,0);
     for (auto p: peaks_x)
         p->clear();
     for (auto p: peaks_y)
@@ -787,7 +795,9 @@ inline void FileWriterTreeDRS4::ResizeVectors(unsigned n_channels) {
 
 void FileWriterTreeDRS4::DoFFTAnalysis(int iwf){
     bool b_fft = (fft_waveforms & 1<<iwf) == 1<<iwf;
-    fft->at(iwf) = 0;
+    fft_mean->at(iwf) = 0;
+    fft_max->at(iwf) = 0;
+    fft_min->at(iwf) = 1e9;
     if (!b_fft)
         return;
     w_fft.Start(false);
@@ -813,14 +823,21 @@ void FileWriterTreeDRS4::DoFFTAnalysis(int iwf){
     fft_own->Transform();
     fft_own->GetPointsComplex(re_full,im_full);
     float finalVal = 0;
+    float max = -1;
+    float min = 1e10;
     for (int j = 0; j < 513; ++j) {
-        finalVal+= TMath::Sqrt(re_full[j]*re_full[j] + im_full[j]*im_full[j]);
+        float value =  TMath::Sqrt(re_full[j]*re_full[j] + im_full[j]*im_full[j]);
+        if (value>max) max = value;
+        if (value<min) min = value;
+        finalVal+= value;
     }
     finalVal/= ((n/2) + 1);
-    fft->at(iwf) = finalVal;
+    fft_mean->at(iwf) = finalVal;
+    fft_max->at(iwf) = max;
+    fft_min->at(iwf) = min;
     w_fft.Stop();
     if (f_event_number < 1000)
-    cout<<f_event_number<<" "<<iwf<<" "<<finalVal<<endl;
+        cout<<f_event_number<<" "<<iwf<<" "<<finalVal<<" "<<max<<" "<<min<<endl;
 }
 
 void FileWriterTreeDRS4::DoSpectrumFitting(int iwf){
