@@ -214,7 +214,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         std::vector<float>* fft_max_freq;
         std::vector<float>* fft_min;
         std::vector<float>* fft_min_freq;
-
+        std::vector< std::vector<float>* > fft_modes;
         TCanvas *c1;
 
 };
@@ -283,6 +283,7 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     peaks_x.resize(4, new std::vector<float>);
     peaks_y.resize(4, new std::vector<float>);
     peaks_no.resize(4, new std::vector<int>);
+    fft_modes.resize(4, new std::vector<float>);
 
     npeaks = new std::vector<float>;
     fft_mean = new std::vector<float>;
@@ -479,6 +480,8 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
         m_ttree->Branch(name,&peaks_y.at(i));
         name = TString::Format("peaks%d_no",i);
         m_ttree->Branch(name,&peaks_no.at(i));
+        name = TString::Format("fft_modes%d",i);
+        m_ttree->Branch(name,&fft_modes.at(i));
     }
 
     // telescope
@@ -804,6 +807,8 @@ inline void FileWriterTreeDRS4::ResizeVectors(unsigned n_channels) {
             p->clear();
     for (auto p: peaks_no)
             p->clear();
+    for (auto p: fft_modes)
+            p->clear();
 }
 
 
@@ -860,7 +865,8 @@ void FileWriterTreeDRS4::DoFFTAnalysis(int iwf){
         }
         finalVal+= value;
         mean_freq += freq * value;
-
+        if (j < 10 || j == n/2)
+            fft_modes.at(iwf)->push_back(value);
     }
     mean_freq /= finalVal;
     finalVal/= ((n/2) + 1);
