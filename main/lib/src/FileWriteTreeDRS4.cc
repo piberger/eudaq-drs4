@@ -209,8 +209,11 @@ class FileWriterTreeDRS4 : public FileWriter {
         std::vector<std::vector<int>*> peaks_no;
         std::vector<float>* npeaks;
         std::vector<float>* fft_mean;
+        std::vector<float>* fft_mean_freq;
         std::vector<float>* fft_max;
+        std::vector<float>* fft_max_freq;
         std::vector<float>* fft_min;
+        std::vector<float>* fft_min_freq;
 
         TCanvas *c1;
 
@@ -283,8 +286,11 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
 
     npeaks = new std::vector<float>;
     fft_mean = new std::vector<float>;
+    fft_mean_freq = new std::vector<float>;
     fft_max = new std::vector<float>;
+    fft_max_freq = new std::vector<float>;
     fft_min = new std::vector<float>;
+    fft_min_freq = new std::vector<float>;
 
     skewness = new std::vector<float>;
     kurtosis= new std::vector<float>;
@@ -460,8 +466,12 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     /// for tspectrum
     m_ttree->Branch("npeaks",      &npeaks);
     m_ttree->Branch("fft_mean", &fft_mean);
+    m_ttree->Branch("fft_mean_freq", &fft_mean_freq);
     m_ttree->Branch("fft_max", &fft_max);
+    m_ttree->Branch("fft_max_freq", &fft_max_freq);
     m_ttree->Branch("fft_min", &fft_min);
+    m_ttree->Branch("fft_min_freq", &fft_min_freq);
+
     for (int i=0; i < 4; i++){
         TString name = TString::Format("peaks%d_x",i);
         m_ttree->Branch(name,&peaks_x.at(i));
@@ -784,6 +794,10 @@ inline void FileWriterTreeDRS4::ResizeVectors(unsigned n_channels) {
     fft_mean->resize(n_channels,0);
     fft_min->resize(n_channels,0);
     fft_max->resize(n_channels,0);
+
+    fft_mean_freq->resize(n_channels,0);
+    fft_min_freq->resize(n_channels,0);
+    fft_max_freq->resize(n_channels,0);
     for (auto p: peaks_x)
         p->clear();
     for (auto p: peaks_y)
@@ -798,10 +812,14 @@ void FileWriterTreeDRS4::DoFFTAnalysis(int iwf){
     fft_mean->at(iwf) = 0;
     fft_max->at(iwf) = 0;
     fft_min->at(iwf) = 1e9;
+    fft_mean_freq->at(iwf) = -1;
+    fft_max_freq->at(iwf) = -1;
+    fft_min_freq->at(iwf) = -1;
     if (!b_fft)
         return;
     w_fft.Start(false);
     int n = data->size();
+    float sample_rate = 2e6;
     if(fft_own->GetN()[0] != n+1){
         n_samples = n+1;
         cout<<"RECreating a new VirtualFFT with "<<n_samples<<" Samples, before "<<fft_own->GetN()<<endl;
@@ -815,8 +833,7 @@ void FileWriterTreeDRS4::DoFFTAnalysis(int iwf){
         im_full = new Double_t[n];
         fft_own = TVirtualFFT::FFT(1, &n_samples, "R2C");
     }
-
-    for (int j = 0; j < data->size(); ++j) {
+    for (int j = 0; j < n; ++j) {
         in[j] = data->at(j);
     }
     fft_own->SetPoints(in);
@@ -825,16 +842,34 @@ void FileWriterTreeDRS4::DoFFTAnalysis(int iwf){
     float finalVal = 0;
     float max = -1;
     float min = 1e10;
-    for (int j = 0; j < 513; ++j) {
-        float value =  TMath::Sqrt(re_full[j]*re_full[j] + im_full[j]*im_full[j]);
-        if (value>max) max = value;
-        if (value<min) min = value;
+    float freq;
+    float mean_freq;
+    float min_freq = -1;
+    float max_freq  = -1;
+    float value;
+    for (int j = 0; j < (n/2+1); ++j) {
+        freq = j * sample_rate/n;
+        value =  TMath::Sqrt(re_full[j]*re_full[j] + im_full[j]*im_full[j]);
+        if (value>max){
+            max = value;
+            max_freq = freq;
+        }
+        if (value<min) {
+            min = value;
+            min_freq = freq;
+        }
         finalVal+= value;
+        mean_freq += freq * value;
+
     }
+    mean_freq /= finalVal;
     finalVal/= ((n/2) + 1);
     fft_mean->at(iwf) = finalVal;
     fft_max->at(iwf) = max;
     fft_min->at(iwf) = min;
+    fft_mean_freq->at(iwf) = mean_freq;
+    fft_max_freq->at(iwf) = max_freq;
+    fft_min_freq->at(iwf) = min_freq;
     w_fft.Stop();
     if (f_event_number < 1000)
         cout<<f_event_number<<" "<<iwf<<" "<<finalVal<<" "<<max<<" "<<min<<endl;
