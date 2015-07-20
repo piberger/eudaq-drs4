@@ -86,6 +86,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         float avgWF(float, float, int);
         virtual ~FileWriterTreeDRS4();
     private:
+        unsigned runnumber;
         TH1F* histo;
         long max_event_number;
         int save_waveforms;
@@ -224,7 +225,7 @@ static RegisterFileWriter<FileWriterTreeDRS4> reg("drs4tree");
 }
 
 FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
-: m_tfile(0), m_ttree(0),m_noe(0),chan(4),n_pixels(90*90+60*60), histo(0),spec(0),fft_own(0)
+: m_tfile(0), m_ttree(0),m_noe(0),chan(4),n_pixels(90*90+60*60), histo(0),spec(0),fft_own(0),runnumber(0)
 {
     gROOT->ProcessLine("#include <vector>");
     gROOT->ProcessLine(".L loader.C+");
@@ -391,6 +392,7 @@ void FileWriterTreeDRS4::Configure(){
 }
 
 void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
+    this->runnumber = runnumber;
     EUDAQ_INFO("Converting the inputfile into a DRS4 TTree " );
     std::string foutput(FileNamer(m_filepattern).Set('X', ".root").Set('R', runnumber));
     EUDAQ_INFO("Preparing the outputfile: " + foutput);
@@ -680,7 +682,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
     }
     m_ttree->Fill();
     if (f_event_number %1000 == 0)
-        cout<<f_event_number<<"\tSpectrum: "<<w_spectrum.RealTime()/w_spectrum.Counter()<<"\t"
+        cout<<runnumber<<" "<<std::setw(7)<<f_event_number<<"\tSpectrum: "<<w_spectrum.RealTime()/w_spectrum.Counter()<<"\t"
         <<"LinearFitting: "<<w_linear_fitting.RealTime()/w_linear_fitting.Counter()<<"\t"<<
         w_spectrum.Counter()<<"/"<<w_linear_fitting.Counter()<<"\t"<<flush;
     w_total.Stop();
@@ -688,6 +690,8 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
 
 
 FileWriterTreeDRS4::~FileWriterTreeDRS4() {
+    std::cout<<"\n****************************************************"<<std::endl;
+    std::cout<<"Summary of RUN "<<runnumber<<std::endl;
     std::cout<<"Tree has " << m_ttree->GetEntries() << " entries" << std::endl;
     cout<<f_event_number<<"\tSpectrum: "<<w_spectrum.RealTime()/w_spectrum.Counter()<<"\t"
     <<"LinearFitting: "<<w_linear_fitting.RealTime()/w_linear_fitting.Counter()<<"\t"<<
@@ -702,6 +706,7 @@ FileWriterTreeDRS4::~FileWriterTreeDRS4() {
     w_fft.Print();
 
     cout<<"\n Total time: "<<w_total.RealTime()<<endl;
+    std::cout<<"****************************************************\n"<<std::endl;
     w_total.Print();
     m_ttree->Write();
     avgWF_0->Write();
@@ -877,8 +882,8 @@ void FileWriterTreeDRS4::DoFFTAnalysis(int iwf){
     fft_max_freq->at(iwf) = max_freq;
     fft_min_freq->at(iwf) = min_freq;
     w_fft.Stop();
-    if (f_event_number < 1000)
-        cout<<f_event_number<<" "<<iwf<<" "<<finalVal<<" "<<max<<" "<<min<<endl;
+    if (verbose>0 && f_event_number < 1000)
+        cout<<runnumber<<" "<<std::setw(3)<<f_event_number<<" "<<iwf<<" "<<finalVal<<" "<<max<<" "<<min<<endl;
 }
 
 void FileWriterTreeDRS4::DoSpectrumFitting(int iwf){
