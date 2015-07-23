@@ -9,8 +9,12 @@
 
 #include "include/SimpleStandardEvent.hh"
 #include <stdlib.h>
+#include <stdio.h>
 #include <cmath>
 #include <time.h>
+#include <numeric>
+#include <string>
+#include <functional>
 #include "TStopwatch.h"
 
 //# include<inttypes.h>
@@ -22,13 +26,14 @@
 #include "TH1F.h"
 #include "TSystem.h"
 #include "TInterpreter.h"
-#include <TROOT.h>
+#include "TROOT.h"
 #include "TF1.h"
 #include "TGraph.h"
 #include "TCanvas.h"
 #include "TLinearFitter.h"
 #include "TSpectrum.h"
 #include "TPolyMarker.h"
+#include "TVirtualFFT.h"
 
 using namespace std;
 
@@ -81,6 +86,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         float avgWF(float, float, int);
         virtual ~FileWriterTreeDRS4();
     private:
+        unsigned runnumber;
         TH1F* histo;
         long max_event_number;
         int save_waveforms;
@@ -94,9 +100,11 @@ class FileWriterTreeDRS4 : public FileWriter {
         void UpdateWaveforms(int iwf, const StandardWaveform *wf);
         void DoLinearFitting(int iwf);
         void DoSpectrumFitting(int iwf);
+        void DoFFTAnalysis(int iwf);
         // clocks for checking execution time
         TStopwatch w_linear_fitting;
         TStopwatch w_spectrum;
+        TStopwatch w_fft;
         TStopwatch w_total;
         TFile * m_tfile; // book the pointer to a file (to store the otuput)
         TTree * m_ttree; // book the tree (to store the needed event info)
@@ -131,7 +139,9 @@ class FileWriterTreeDRS4 : public FileWriter {
         int spectrum_averageWindow;
         bool spectrum_markov;
         bool spectrum_background_removal;
+
         int spectrum_waveforms;
+        int fft_waveforms;
         int linear_fitting_waveforms;
 
         // Vector Branches     
@@ -160,6 +170,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         std::vector<bool>  	*  v_is_saturated;
         std::vector<float>  *  v_median;
         std::vector<float>  *  v_average;
+        std::vector<bool>   *  v_has_spikes;
 
         std::vector<float> * f_wf0;
         std::vector<float> * f_wf1;
@@ -185,6 +196,12 @@ class FileWriterTreeDRS4 : public FileWriter {
         TF1* f_pol1;
         TLinearFitter* fitter;
         TSpectrum *spec;
+        TVirtualFFT *fft_own;
+        Int_t n_samples;
+        Double_t *re_full;
+        Double_t *im_full;
+        Double_t *in;
+
         std::vector<Double_t> v_x;
         std::vector<Double_t> v_y;
         std::vector<float>* chi2;
@@ -197,7 +214,13 @@ class FileWriterTreeDRS4 : public FileWriter {
         std::vector<std::vector<float>*> peaks_y;
         std::vector<std::vector<int>*> peaks_no;
         std::vector<float>* npeaks;
-
+        std::vector<float>* fft_mean;
+        std::vector<float>* fft_mean_freq;
+        std::vector<float>* fft_max;
+        std::vector<float>* fft_max_freq;
+        std::vector<float>* fft_min;
+        std::vector<float>* fft_min_freq;
+        std::vector< std::vector<float>* > fft_modes;
         TCanvas *c1;
 
 };
@@ -207,7 +230,7 @@ static RegisterFileWriter<FileWriterTreeDRS4> reg("drs4tree");
 }
 
 FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
-: m_tfile(0), m_ttree(0),m_noe(0),chan(4),n_pixels(90*90+60*60), histo(0)
+: m_tfile(0), m_ttree(0),m_noe(0),chan(4),n_pixels(90*90+60*60), histo(0),spec(0),fft_own(0),runnumber(0)
 {
     gROOT->ProcessLine("#include <vector>");
     gROOT->ProcessLine(".L loader.C+");
@@ -253,6 +276,7 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     v_pul_spread        = new std::vector<float>;
 
     v_is_saturated  	= new std::vector<bool>;
+    v_has_spikes        = new std::vector<bool>;
     v_median       		= new std::vector<float>;
     v_average           = new std::vector<float>;
 
@@ -270,8 +294,15 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     peaks_x.resize(4, new std::vector<float>);
     peaks_y.resize(4, new std::vector<float>);
     peaks_no.resize(4, new std::vector<int>);
+    fft_modes.resize(4, new std::vector<float>);
 
     npeaks = new std::vector<float>;
+    fft_mean = new std::vector<float>;
+    fft_mean_freq = new std::vector<float>;
+    fft_max = new std::vector<float>;
+    fft_max_freq = new std::vector<float>;
+    fft_min = new std::vector<float>;
+    fft_min_freq = new std::vector<float>;
 
     skewness = new std::vector<float>;
     kurtosis= new std::vector<float>;
@@ -301,6 +332,16 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
         v_x.push_back(i);
 
     spec = new TSpectrum(20,3);
+    fft_own = 0;
+    if(!fft_own){
+        int n = 1024;
+        n_samples = n+1;
+        cout<<"Creating a new VirtualFFT with "<<n_samples<<" Samples"<<endl;
+        re_full = new Double_t[n];
+        im_full = new Double_t[n];
+        in = new Double_t[n];
+        fft_own = TVirtualFFT::FFT(1, &n_samples, "R2C");
+    }
 }
 
 void FileWriterTreeDRS4::Configure(){
@@ -329,6 +370,7 @@ void FileWriterTreeDRS4::Configure(){
     spectrum_markov = m_config->Get("spectrum_markov",true);
     spectrum_background_removal= m_config->Get("spectrum_background_removal",true);
     spectrum_waveforms = (int)m_config->Get("spectrum_waveforms",9);
+    fft_waveforms = (int)m_config->Get("fft_waveforms",9);
     linear_fitting_waveforms = (int)m_config->Get("linear_fitting_waveforms",9);
 
     ranges["pulser"] = new pair<float,float>(m_config->Get("pulser_range",make_pair((float)770,(float)860)));
@@ -360,6 +402,7 @@ void FileWriterTreeDRS4::Configure(){
 }
 
 void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
+    this->runnumber = runnumber;
     EUDAQ_INFO("Converting the inputfile into a DRS4 TTree " );
     std::string foutput(FileNamer(m_filepattern).Set('X', ".root").Set('R', runnumber));
     EUDAQ_INFO("Preparing the outputfile: " + foutput);
@@ -411,6 +454,7 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     // DUT
     m_ttree->Branch("polarities",&v_polarities);
     m_ttree->Branch("is_saturated", &v_is_saturated);
+    m_ttree->Branch("has_spikes", &v_has_spikes);
     m_ttree->Branch("median", 		&v_median);
     m_ttree->Branch("average",       &v_average);
     // DUT-2
@@ -439,6 +483,13 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
 
     /// for tspectrum
     m_ttree->Branch("npeaks",      &npeaks);
+    m_ttree->Branch("fft_mean", &fft_mean);
+    m_ttree->Branch("fft_mean_freq", &fft_mean_freq);
+    m_ttree->Branch("fft_max", &fft_max);
+    m_ttree->Branch("fft_max_freq", &fft_max_freq);
+    m_ttree->Branch("fft_min", &fft_min);
+    m_ttree->Branch("fft_min_freq", &fft_min_freq);
+
     for (int i=0; i < 4; i++){
         TString name = TString::Format("peaks%d_x",i);
         m_ttree->Branch(name,&peaks_x.at(i));
@@ -446,6 +497,8 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
         m_ttree->Branch(name,&peaks_y.at(i));
         name = TString::Format("peaks%d_no",i);
         m_ttree->Branch(name,&peaks_no.at(i));
+        name = TString::Format("fft_modes%d",i);
+        m_ttree->Branch(name,&fft_modes.at(i));
     }
 
     // telescope
@@ -462,6 +515,7 @@ void FileWriterTreeDRS4::ClearVectors(){
     v_type_name		->clear();
 
     v_is_saturated	->clear();
+    v_has_spikes->clear();
     v_median		->clear();
     v_average       ->clear();
 
@@ -583,6 +637,11 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         if (verbose > 3)
             cout<<"DoLinearFitting "<<iwf<<endl;
         this->DoLinearFitting(iwf);
+
+        if (verbose > 3)
+            cout<<"DoFFT "<<iwf<<endl;
+        this->DoFFTAnalysis(iwf);
+
         if (verbose > 3)
             cout<<"get Values "<<iwf<<endl;
 
@@ -642,7 +701,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
     }
     m_ttree->Fill();
     if (f_event_number %1000 == 0)
-        cout<<f_event_number<<"\tSpectrum: "<<w_spectrum.RealTime()/w_spectrum.Counter()<<"\t"
+        cout<<runnumber<<" "<<std::setw(7)<<f_event_number<<"\tSpectrum: "<<w_spectrum.RealTime()/w_spectrum.Counter()<<"\t"
         <<"LinearFitting: "<<w_linear_fitting.RealTime()/w_linear_fitting.Counter()<<"\t"<<
         w_spectrum.Counter()<<"/"<<w_linear_fitting.Counter()<<"\t"<<flush;
     w_total.Stop();
@@ -650,18 +709,23 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
 
 
 FileWriterTreeDRS4::~FileWriterTreeDRS4() {
+    std::cout<<"\n****************************************************"<<std::endl;
+    std::cout<<"Summary of RUN "<<runnumber<<std::endl;
     std::cout<<"Tree has " << m_ttree->GetEntries() << " entries" << std::endl;
     cout<<f_event_number<<"\tSpectrum: "<<w_spectrum.RealTime()/w_spectrum.Counter()<<"\t"
     <<"LinearFitting: "<<w_linear_fitting.RealTime()/w_linear_fitting.Counter()<<"\t"<<
     w_spectrum.Counter()<<"/"<<w_linear_fitting.Counter()<<endl;
     cout<<f_event_number<<"\tSpectrum: "<<w_spectrum.RealTime()<<"\t"
     <<"LinearFitting: "<<w_linear_fitting.RealTime()<<endl;
-    cout<<"Spectrum:"<<endl;
+    cout<<"\nSpectrum:"<<endl;
     w_spectrum.Print();
-    cout<<"LinearFit:"<<endl;
+    cout<<"\nLinearFit:"<<endl;
     w_linear_fitting.Print();
+    cout<<"\nFFT:"<<endl;
+    w_fft.Print();
 
     cout<<"\n Total time: "<<w_total.RealTime()<<endl;
+    std::cout<<"****************************************************\n"<<std::endl;
     w_total.Print();
     m_ttree->Write();
     avgWF_0->Write();
@@ -748,6 +812,7 @@ inline void FileWriterTreeDRS4::ResizeVectors(unsigned n_channels) {
     v_pul_spread->resize(n_channels);
 
     v_is_saturated->resize(n_channels);
+    v_has_spikes->resize(n_channels,false);
     v_median->resize(n_channels);
     v_average->resize(n_channels);
 
@@ -758,12 +823,91 @@ inline void FileWriterTreeDRS4::ResizeVectors(unsigned n_channels) {
     skewness->resize(n_channels);
     kurtosis->resize(n_channels);
     npeaks->resize(n_channels,0);
+    fft_mean->resize(n_channels,0);
+    fft_min->resize(n_channels,0);
+    fft_max->resize(n_channels,0);
+
+    fft_mean_freq->resize(n_channels,0);
+    fft_min_freq->resize(n_channels,0);
+    fft_max_freq->resize(n_channels,0);
     for (auto p: peaks_x)
         p->clear();
     for (auto p: peaks_y)
             p->clear();
     for (auto p: peaks_no)
             p->clear();
+    for (auto p: fft_modes)
+            p->clear();
+}
+
+
+void FileWriterTreeDRS4::DoFFTAnalysis(int iwf){
+    bool b_fft = (fft_waveforms & 1<<iwf) == 1<<iwf;
+    fft_mean->at(iwf) = 0;
+    fft_max->at(iwf) = 0;
+    fft_min->at(iwf) = 1e9;
+    fft_mean_freq->at(iwf) = -1;
+    fft_max_freq->at(iwf) = -1;
+    fft_min_freq->at(iwf) = -1;
+    if (!b_fft)
+        return;
+    w_fft.Start(false);
+    int n = data->size();
+    float sample_rate = 2e6;
+    if(fft_own->GetN()[0] != n+1){
+        n_samples = n+1;
+        cout<<"RECreating a new VirtualFFT with "<<n_samples<<" Samples, before "<<fft_own->GetN()<<endl;
+        delete fft_own;
+        delete in;
+        delete re_full;
+        delete im_full;
+        fft_own = 0;
+        in = new Double_t[n];
+        re_full = new Double_t[n];
+        im_full = new Double_t[n];
+        fft_own = TVirtualFFT::FFT(1, &n_samples, "R2C");
+    }
+    for (int j = 0; j < n; ++j) {
+        in[j] = data->at(j);
+    }
+    fft_own->SetPoints(in);
+    fft_own->Transform();
+    fft_own->GetPointsComplex(re_full,im_full);
+    float finalVal = 0;
+    float max = -1;
+    float min = 1e10;
+    float freq;
+    float mean_freq;
+    float min_freq = -1;
+    float max_freq  = -1;
+    float value;
+    for (int j = 0; j < (n/2+1); ++j) {
+        freq = j * sample_rate/n;
+        value =  TMath::Sqrt(re_full[j]*re_full[j] + im_full[j]*im_full[j]);
+        if (value>max){
+            max = value;
+            max_freq = freq;
+        }
+        if (value<min) {
+            min = value;
+            min_freq = freq;
+        }
+        finalVal+= value;
+        mean_freq += freq * value;
+        if (j < 10 || j == n/2)
+            fft_modes.at(iwf)->push_back(value);
+    }
+    mean_freq /= finalVal;
+    finalVal/= ((n/2) + 1);
+    fft_mean->at(iwf) = finalVal;
+    fft_max->at(iwf) = max;
+    fft_min->at(iwf) = min;
+    fft_mean_freq->at(iwf) = mean_freq;
+    fft_max_freq->at(iwf) = max_freq;
+    fft_min_freq->at(iwf) = min_freq;
+    w_fft.Stop();
+    if (verbose>0 && f_event_number < 1000)
+        cout<<runnumber<<" "<<std::setw(3)<<f_event_number<<" "<<iwf<<" "<<finalVal<<" "<<max<<" "<<min<<endl;
 }
 
 void FileWriterTreeDRS4::DoSpectrumFitting(int iwf){
@@ -772,37 +916,39 @@ void FileWriterTreeDRS4::DoSpectrumFitting(int iwf){
     peaks_y.at(iwf)->clear();
     peaks_no.at(iwf)->clear();
     npeaks->at(iwf) = 0;
-    if (b_spectrum){
-        w_spectrum.Start(false);
-        v_yy.resize(v_y.size());
-        int peaks = spec->SearchHighRes(&v1[0],&(v_yy[0]),v1.size(),spectrum_sigma,spectrum_threshold,
-                spectrum_background_removal, spectrum_deconIterations,spectrum_markov, spectrum_averageWindow);
-        npeaks->at(iwf) = peaks;
+    if (!b_spectrum)
+        return;
+
+    w_spectrum.Start(false);
+    v_yy.resize(v_y.size());
+    int peaks = spec->SearchHighRes(&v1[0],&(v_yy[0]),v1.size(),spectrum_sigma,spectrum_threshold,
+            spectrum_background_removal, spectrum_deconIterations,spectrum_markov, spectrum_averageWindow);
+    npeaks->at(iwf) = peaks;
 //        std::cout <<iwf<<": "<<peaks<<"   ";
-        for(UInt_t i=0; i< peaks; i++){
+    for(UInt_t i=0; i< peaks; i++){
 //            std::cout<<i<<": ";
-            float xval = spec->GetPositionX()[i];
+        float xval = spec->GetPositionX()[i];
 //            std::cout<<xval<<"/";
-            int bin = (int)(xval+.5);
-            int min_bin = bin-5>=0?bin-5:0;
-            int max_bin = bin+5<v_y.size()?bin+5:v_y.size()-1;
-            float max = *std::max_element(&v1.at(min_bin),&v1.at(min_bin));
+        int bin = (int)(xval+.5);
+        int min_bin = bin-5>=0?bin-5:0;
+        int max_bin = bin+5<v_y.size()?bin+5:v_y.size()-1;
+        float max = *std::max_element(&v1.at(min_bin),&v1.at(min_bin));
 //            std::cout<<max<<"   ";
-            peaks_x.at(iwf)->push_back(xval);
-            peaks_y.at(iwf)->push_back(max);
-            peaks_no.at(iwf)->push_back(i);
-        }
-//        std::cout<<peaks_x.at(iwf)->size()<<"/"<<peaks_y.at(iwf)->size()<<"/"<<peaks_no.at(iwf)->size()<<std::endl;
-        w_spectrum.Stop();
+        peaks_x.at(iwf)->push_back(xval);
+        peaks_y.at(iwf)->push_back(max);
+        peaks_no.at(iwf)->push_back(i);
     }
+//        std::cout<<peaks_x.at(iwf)->size()<<"/"<<peaks_y.at(iwf)->size()<<"/"<<peaks_no.at(iwf)->size()<<std::endl;
+    w_spectrum.Stop();
 }
 
 void FileWriterTreeDRS4::DoLinearFitting(int iwf){
     bool b_linear_fit = (linear_fitting_waveforms & 1<<iwf) == 1<<iwf;
     bool b_spectrum = (spectrum_waveforms & 1<<iwf) == 1<<iwf;
+    bool b_fft = (fft_waveforms & 1<<iwf) == 1<<iwf;
 //    cout<<"iwf: "<<iwf<<"lin "<<linear_fitting_waveforms<<" "<< 1<<iwf<<" "<<(linear_fitting_waveforms & 1<<iwf)<<" "<<b_linear_fit<<"\t";
 //    cout<<"iwf: "<<iwf<<"spec "<<spectrum_waveforms<<" "<< 1<<iwf<<" "<<(spectrum_waveforms & 1<<iwf)<<" "<<b_spectrum<<"\t"<<endl;;
-    if(b_spectrum || b_linear_fit){
+    if(b_spectrum || b_linear_fit || b_fft){
         v_y.resize(data->size());
         v1.resize(data->size());
         int pol = polarities.at(iwf);
@@ -919,6 +1065,11 @@ void FileWriterTreeDRS4::FillTotalRange(int iwf, const StandardWaveform *wf, int
     v_is_saturated  ->at(iwf) = (abs_max>498);          // indicator if saturation is reached in sampling region (1-1024)
     v_median        ->at(iwf) = (median2);               // Median over whole sampling region
     v_average       ->at(iwf) = average;
+    float threshold = 20.0;
+    bool flag =    ( abs(wf->GetData()->at(0) - wf->GetData()->at(2)) > threshold);
+    flag = flag || ( abs(wf->GetData()->at(1) - wf->GetData()->at(2)) > threshold);
+    flag = flag || ( abs(wf->GetData()->at(1) - wf->GetData()->at(1)) > threshold);
+    v_has_spikes->at(iwf) = flag;
 }
 
 
