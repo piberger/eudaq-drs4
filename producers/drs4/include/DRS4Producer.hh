@@ -46,6 +46,7 @@ private:
 	DRS *m_drs;
 	int m_serialno;
 	DRSBoard *m_b;
+	bool is_initalized;
 	float time_array[8][1024];
 	unsigned short raw_wave_array[8][1024];
 	float wave_array[8][1024];
