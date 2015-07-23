@@ -26,11 +26,13 @@ DRS4Producer::DRS4Producer(const std::string & name, const std::string & runcont
 		m_run(0),
 		m_ev(0),
 		m_producerName(name),
+	    m_tlu_waiting_time(4000),
 		m_event_type(EVENT_TYPE),
 		m_self_triggering(false),
 		m_inputRange(0.),
 		m_running(false), 
-        m_terminated(false){
+        m_terminated(false),
+        is_initalized(false){
 	n_channels = 4;
 	cout<<"Started DRS4Producer with Name: \""<<name<<"\""<<endl;
 
@@ -125,19 +127,33 @@ void DRS4Producer::OnStartRun(unsigned runnumber) {
 	}
 
 };
+
 void DRS4Producer::OnStopRun() {
 	// Break the readout loop
+
+    // Wait before we stop the DAQ because TLU takes some time to pick up the OnRunStop signal
+    // otherwise the last triggers get lost.
+    eudaq::mSleep(m_tlu_waiting_time);
 	m_running = false;
-	std::cout << "Stopping Run" << std::endl;
-
-
+	std::cout << "Run stopped." << std::endl;
 	try {
-
+	    // Stop DRS Board
 		if (m_b && m_b->IsBusy()) {
 			m_b->SoftTrigger();
 			for (int i=0 ; i<10 && m_b->IsBusy() ; i++)
 				usleep(10);//todo not mt save
 		}
+
+	    // Sending the final end-of-run event:
+	    SendEvent(eudaq::RawDataEvent::EORE(m_event_type, m_run, m_ev));
+	    std::cout << "Stopped" << std::endl;
+
+	    // Output information for the logbook:
+	    std::cout << "RUN " << m_run << " DRS4 " << std::endl
+	          << "\t Total triggers:   \t" << m_ev << std::endl;
+	    EUDAQ_USER(string("Run " + std::to_string(m_run) + ", ended with " + std::to_string(m_ev)
+	              + " Events"));
+
 		SetStatus(eudaq::Status::LVL_OK, "Stopped");
 	} catch ( ... ){
 		EUDAQ_ERROR(string("Unknown exception."));
@@ -159,7 +175,7 @@ void DRS4Producer::OnTerminate() {
 };
 
 void DRS4Producer::ReadoutLoop() {
-    std::cout<<"Start ReadoutLoop"<<m_terminated<<std::endl;
+    std::cout<<"Start ReadoutLoop "<<m_terminated<<std::endl;
 	int k = 0;
 	while (!m_terminated) {
 		// No run is m_running, cycle and wait:
@@ -224,10 +240,10 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf) {
 		/* show any found board(s) */
 		int board_no = 0;
 		for (size_t i=0 ; i<m_drs->GetNumberOfBoards() ; i++) {
-			m_b = m_drs->GetBoard(i);
+			DRSBoard* board = m_drs->GetBoard(i);
 			printf("    #%2d: serial #%d, firmware revision %d\n",
-					(int)i, m_b->GetBoardSerialNumber(), m_b->GetFirmwareVersion());
-			if (m_b->GetBoardSerialNumber() == m_serialno)
+					(int)i, board->GetBoardSerialNumber(), board->GetFirmwareVersion());
+			if (board->GetBoardSerialNumber() == m_serialno)
 				board_no = i;
 		}
 
@@ -240,11 +256,19 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf) {
 
 		cout <<"Get board no: "<<board_no<<endl;
 		/* continue working with first board only */
-		m_b = m_drs->GetBoard(board_no);
-
-		cout<<"Init"<<endl;
-		/* initialize board */
-		m_b->Init();
+		if (m_b != m_drs->GetBoard(board_no)){
+		    m_b = m_drs->GetBoard(board_no);
+		    cout<<"Init"<<endl;
+		    /* initialize board */
+		    m_b->Init();
+		}
+		else if (m_b == 0){
+		    throw eudaq::Exception("Cannot find board");
+		}
+		else{
+		    cout<<"ReInit"<<endl;
+		    m_b->Reinit();
+		}
 
 		double sampling_frequency = m_config.Get("sampling_frequency",5);
 		bool wait_for_PLL_lock = m_config.Get("wait_for_PLL_lock",true);

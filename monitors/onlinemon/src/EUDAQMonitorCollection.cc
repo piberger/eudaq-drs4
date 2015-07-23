@@ -81,10 +81,27 @@ void EUDAQMonitorCollection::bookHistograms(const SimpleStandardEvent & /*simpev
       stringstream namestring_tlu;
       namestring_hits<<name_root<<"/Hits Sensor Plane "<<i;
       namestring_tlu<<name_root<<"/TLU Delta Sensor Plane "<<i;
+      cout<<"Register: "<<namestring_hits.str()<<endl;
       _mon->getOnlineMon()->registerTreeItem(namestring_hits.str());
+      cout<<"Register: "<<namestring_hits.str()<<endl;
       _mon->getOnlineMon()->registerHisto(namestring_hits.str(),mymonhistos->getHits_vs_Events(i));
+      cout<<"Register: "<<namestring_tlu.str()<<endl;
       _mon->getOnlineMon()->registerTreeItem(namestring_tlu.str());
+      cout<<"Register: "<<namestring_tlu.str()<<endl;
       _mon->getOnlineMon()->registerHisto(namestring_tlu.str(),mymonhistos->getTLUdelta_perEventHisto(i));
+      stringstream namestring_triggerphase;
+      namestring_triggerphase<<name_root<<"/Trigger Phase Vs EventNo"<<i;
+      _mon->getOnlineMon()->registerTreeItem(namestring_triggerphase.str());
+      cout<<"Register: "<<namestring_triggerphase.str()<<endl;
+      _mon->getOnlineMon()->registerHisto(namestring_triggerphase.str(),mymonhistos->getTriggerPhase_vs_Events(i),"COLZ");
+      namestring_triggerphase.str("");
+      namestring_triggerphase.clear();
+
+      namestring_triggerphase<<name_root<<"/Trigger Phase "<<i;
+      _mon->getOnlineMon()->registerTreeItem(namestring_triggerphase.str());
+      cout<<"Register: "<<namestring_triggerphase.str()<<endl;
+      _mon->getOnlineMon()->registerHisto(namestring_triggerphase.str(),mymonhistos->getTriggerPhaseHisto(i),"");
+
     } //end plane loop
     _mon->getOnlineMon()->makeTreeItemSummary(name_root.c_str()); //make summary page
 
@@ -129,6 +146,7 @@ void EUDAQMonitorCollection::Fill(const SimpleStandardEvent & simpev)
       exit(-1);
     }
     bookHistograms(simpev);
+    cout<<"histos_init:"<<histos_init<<endl;
     histos_init=true;
   }
   mymonhistos->Fill(simpev);

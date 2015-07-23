@@ -38,16 +38,16 @@ class WaveformHistos {
     int _n_wfs;
     unsigned int _n_samples;
     std::map<std::string, TH1*> profiles;
+    std::map<std::string, TH1*> time_profiles;
     std::map<std::string, TH1*> histos;
     std::map<std::string, std::pair<float,float> > rangesX;
     std::map<std::string, std::pair<float,float> > rangesY;
+    ULong64_t time_start;
   public:
     WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon);
     std::string getName() const {return (std::string)TString::Format("%s_%d",_sensor.c_str(),_id);};
     virtual ~WaveformHistos(){}
     void Fill(const SimpleStandardWaveform & wf);
-    void FillPulserEvent(const SimpleStandardWaveform & wf);
-    void FillSignalEvent(const SimpleStandardWaveform & wf);
     void FillEvent(const SimpleStandardWaveform & wf, bool isPulserEvent);
     unsigned int getNSamples() const {return _n_samples;}
     void Reset();
@@ -84,7 +84,8 @@ class WaveformHistos {
     TProfile* getPulserProfileSignalMinusPedestal() const { return (TProfile*)profiles.at("Pulser_SignalMinusPedestal");};
     TProfile* getPulserProfile(std::string key) const;
 
-    TH1F* getHisto(std::string key) const;
+    TH1* getHisto(std::string key) const;
+    TProfile* getTimeProfile(std::string key) const;
     void SetMaxRangeX(std::string,float minx, float maxx);
     void SetMaxRangeY(std::string,float min, float max);
     void SetPedestalIntegralRange(float min, float max);
@@ -97,7 +98,13 @@ class WaveformHistos {
     unsigned int n_fills;
     void InitHistos();
     void InitIntegralHistos();
+    void InitSpreadHistos();
     void InitProfiles();
+    void InitTimeProfiles();
+    void InitPulserProfiles();
+    void InitSignalProfiles();
+    void InitPedestalProfiles();
+    void InitWaveformStacks();
     void Reinitialize_Waveforms();
     void UpdateRanges();
     void UpdateRange(TH1* histo);
@@ -105,6 +112,7 @@ class WaveformHistos {
     int SetHistoAxisLabely(TH1* histo,std::string ylabel);
     int SetHistoAxisLabels(TH1* histo,std::string xlabel, std::string ylabel);
     RootMonitor * _mon;
+    bool do_fitting;
     float min_wf;
     float max_wf;
 };

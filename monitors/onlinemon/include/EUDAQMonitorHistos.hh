@@ -17,6 +17,7 @@
 
 
 #include <map>
+#include <vector>
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -38,6 +39,8 @@ class EUDAQMonitorHistos
     TH1F * Planes_perEventHisto;
     TH1F * Waveforms_perEventHisto;
     TProfile ** TLUdelta_perEventHisto;
+    std::vector<TH2D*>TriggerPhasePerEvent;
+    std::vector<TH1D*>TriggerPhaseHisto;
     //    TH2I * TracksPerEvent;
     TProfile * TracksPerEvent;
 
@@ -48,6 +51,8 @@ class EUDAQMonitorHistos
     void Fill(const unsigned int evt_nr, const unsigned int tracks); //only for tracks per event histogram
     void Write();
     void Reset();
+    TH2D* getTriggerPhase_vs_Events(unsigned int i) const;
+    TH1D* getTriggerPhaseHisto(unsigned int i) const{return TriggerPhaseHisto.at(i);};
     TProfile *getHits_vs_Events(unsigned int i) const;
     TProfile *getHits_vs_EventsTotal() const;
     TProfile *getHits_vs_PlaneHisto()const;

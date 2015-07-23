@@ -145,14 +145,20 @@ public:
 	int  Polarity() const;
 
 	void Print(std::ostream &) const;
+	//Trigger Time Tag  - useful for CMS Pixel Detectors using TriggerCount() from header there
+	void SetTrigCount(unsigned trigger_count) {m_trigger_count = trigger_count;};
+	unsigned GetTrigCount() const {return m_trigger_count;}
+	void SetTrigPhase(unsigned trigger_phase) {m_trigger_phase = trigger_phase;};
+	unsigned GetTrigPhase() const {return m_trigger_phase;}
 private:
 	const std::vector<pixel_t> & GetFrame(const std::vector<std::vector<pixel_t> > & v, unsigned f) const;
 	void SetupResult() const;
-
 	std::string m_type, m_sensor;
 	unsigned m_id, m_tluevent;
 	unsigned m_xsize, m_ysize;
 	unsigned m_flags, m_pivotpixel;
+	unsigned m_trigger_count;
+	unsigned m_trigger_phase;
 	std::vector<std::vector<pixel_t> > m_pix;
 	std::vector<std::vector<coord_t> > m_x, m_y;
 	std::vector<std::vector<bool> > m_pivot;
