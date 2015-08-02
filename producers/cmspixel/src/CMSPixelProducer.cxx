@@ -240,6 +240,7 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     if(!m_api->daqSingleSignal("resetroc")) { throw InvalidConfig("Unable to send ROC reset signal!"); }
 
     // Switching to external clock if requested and check if DTB returns TRUE status:
+    std::cout << "external clock: " << config.Get("external_clock", 1) << std::endl;
     if(!m_api->setExternalClock(config.Get("external_clock",1) != 0 ? true : false)) {
       throw InvalidConfig("Couldn't switch to " + string(config.Get("external_clock",1) != 0 ? "external" : "internal") + " clock.");
     }
