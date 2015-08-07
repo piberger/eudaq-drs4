@@ -61,6 +61,7 @@ namespace eudaq {
       std::shared_ptr<FileWriter> m_writer;
       Configuration m_config;
       Time m_runstart;
+      unsigned  m_n_missmatched_events;
   };
 
 }

@@ -27,6 +27,7 @@ namespace eudaq {
       m_thread=std::unique_ptr<std::thread>(new std::thread(DataCollector_thread,this));
       EUDAQ_DEBUG("Listen address=" + to_string(m_dataserver->ConnectionString()));
       CommandReceiver::StartThread();
+      m_n_missmatched_events = 0;
     }
 
   DataCollector::~DataCollector() {
@@ -84,6 +85,7 @@ namespace eudaq {
       WriteToFile(m_runnumberfile, runnumber);
       m_runnumber = runnumber;
       m_eventnumber = 0;
+      m_n_missmatched_events = 0;
 
       for (size_t i = 0; i < m_buffer.size(); ++i) {
         if (m_buffer[i].events.size() > 0) {
@@ -122,10 +124,11 @@ namespace eudaq {
       }
     }
     if (m_eventnumber < 30 || m_eventnumber%100==0){
-    	std::cout<<"\rWaiting Buffers: "<< m_numwaiting << " out of " << m_buffer.size()<<":";
+    	std::cout<<"\r"<<std::setw(8)<<m_eventnumber<<" Waiting Buffers: "<< m_numwaiting << " out of " << m_buffer.size();
+    	std::cout<<", TLU: "<<m_itlu<<"":";
     	for (unsigned i = 0; i< m_buffer.size(); i++)
-    		std::cout<<" "<<m_buffer.at(i).events.size();
-        std::cout<<std::flush;;
+    		std::cout<<" "<<std::setw(3)<<m_buffer.at(i).events.size();
+        std::cout<<"      "<<std::flush;;
     }
     //std::cout << "Waiting buffers: " << m_numwaiting << " out of " << m_buffer.size() << std::endl;
     if (tmp)
@@ -164,12 +167,16 @@ namespace eudaq {
         if (m_buffer[i].events.front()->GetRunNumber() != m_runnumber) {
           EUDAQ_ERROR("Run number mismatch in event " + to_string(ev.GetEventNumber()));
         }
-        if ((m_buffer[i].events.front()->GetEventNumber() != m_eventnumber) && (m_buffer[i].events.front()->GetEventNumber() != m_eventnumber - 1)) {
+        if ((m_buffer[i].events.front()->GetEventNumber() != m_eventnumber)  ) {//&&
+//            (m_buffer[i].events.front()->GetEventNumber() != m_eventnumber - 1)) {
+          if (m_buffer[i].events.front()->GetEventNumber() != 0)
+                m_n_missmatched_events += 1;
           if (ev.GetEventNumber() % 1000 == 0) {
             // dhaas: added if-statement to filter out TLU event number 0, in case of bad clocking out
             if (m_buffer[i].events.front()->GetEventNumber() != 0)
-              EUDAQ_WARN("Event number mismatch > 2 in event " + to_string(ev.GetEventNumber()) + " " + to_string(m_buffer[i].events.front()->GetEventNumber()) + " " + to_string(m_eventnumber));
-            if (m_buffer[i].events.front()->GetEventNumber() == 0)
+              EUDAQ_WARN("Event number mismatch > 2 in event " + to_string(ev.GetEventNumber()) + " " +
+                      to_string(m_buffer[i].events.front()->GetEventNumber()) + " " + to_string(m_eventnumber));
+            else
               EUDAQ_WARN("Event number mismatch > 2 in event " + to_string(ev.GetEventNumber()));
           }
         }
