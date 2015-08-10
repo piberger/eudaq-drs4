@@ -38,6 +38,7 @@ V1742Producer::V1742Producer(const std::string & name, const std::string & runco
     delete V1742_handle;
   
   try{
+  std::cout << "###Initialize V1742 board:" << std::endl;  
   //initialize a pointer to the caen_v1742 class:
   vp717_interface = new VP717();
   interface = vp717_interface;
@@ -46,7 +47,7 @@ V1742Producer::V1742Producer(const std::string & name, const std::string & runco
   std::cout << "Handle to digitizer: " << V1742_handle << std::endl;
   
   //get serial number 
-  m_serialno = V1742_handle->getSerialNumber(); //FIXME
+  m_serialno = V1742_handle->getSerialNumber();
   std::cout << "Serial number: " << m_serialno << std::endl;
 
   //get firmware revision
@@ -57,15 +58,12 @@ V1742Producer::V1742Producer(const std::string & name, const std::string & runco
   std::string board_model = V1742_handle->getBoardModel(); 
   std::cout << "VME connection to CAEN " << V1742_handle->getBoardModel() << " established." << std::endl;
 
-
   m_terminated = false;
   }
   catch (...){
     EUDAQ_ERROR(std::string("Error in the V1742Producer class constructor."));
     SetStatus(eudaq::Status::LVL_ERROR, "Error in the V1742Producer class constructor.");}
 }
-
-
 
 
 
@@ -229,9 +227,12 @@ void V1742Producer::OnConfigure(const eudaq::Configuration& conf) {
   m_config = conf;
 
   m_trigger_source = m_config.Get("trigger_source", 1); //default 1 for external trigger
-  m_active_channels = m_config.Get("active_channels", 1); //default 1 only for ch1
+  m_active_channels = m_config.Get("active_channels", 1); 
+  m_post_trigger_samples = m_config.Get("post_trigger_samples", 0); //default0 - 1 sample = 8.5ns
+
   m_trigger_threshold = m_config.Get("trigger_threshold", 1); //default 1
-  m_post_trigger_samples = m_config.Get("post_trigger_samples", 0); //default0
+  
+
 
   try{
     if(V1742_handle->isRunning()){
@@ -243,15 +244,47 @@ void V1742Producer::OnConfigure(const eudaq::Configuration& conf) {
 
     //set trigger source
     caen_v1742::trigger_source_mask t_mask = V1742_handle->getTriggerSourceMask();
-    t_mask.raw = m_trigger_source;
+    if(m_trigger_source == 1){
+      t_mask.ext_trigger = 1;
+      t_mask.sw_trigger = 0;
+    }
+    else if(m_trigger_source == 0){
+      t_mask.ext_trigger = 0;
+      t_mask.sw_trigger = 1;
+    }
     V1742_handle->setTriggerSourceMask(t_mask);
     V1742_handle->printTriggerMask(V1742_handle->getTriggerSourceMask());
 
-    //enable channels
-    caen_v1742::group_enable_mask c_enable_mask = caen_v1742::group_enable_mask();
-    c_enable_mask.raw = m_active_channels; //FIXME
+
+    //enable channels/groups
+    caen_v1742::group_enable_mask c_enable_mask = V1742_handle->getGroupEnableMask()
+    if(m_active_channels == 1){
+      c_enable_mask.group0 = 1;
+    }
+    if(m_active_channels == 2){
+      c_enable_mask.group0 = 1
+      c_enable_mask.group1 = 1
+    }
     V1742_handle->setGroupEnableMask(c_enable_mask);
-    //V1742_handle->printChannelEnableMask(V1742_handle->getGroupEnableMask());
+    V1742_handle->printGroupEnableMask(V1742_handle->getGroupEnableMask());
+
+     //set custom size to 1024 samples (max):
+    //FIXME
+
+
+    //set post trigger samples:
+    V1742_handle->setPostTrigger(m_post_trigger_samples);
+    std::cout << "Post trigger samples set to: " << m_post_trigger_samples << std::endl;
+
+    //continue here...
+   
+
+
+
+
+
+
+
 
     //send busy signal via the TRG OUT Limo connnector
     caen_v1742::front_panel_io_control_reg io_control = V1742_handle->getFrontPanelIOControl();
@@ -266,19 +299,11 @@ void V1742Producer::OnConfigure(const eudaq::Configuration& conf) {
     uint32_t io_mask1 = io_control.raw;
     std::cout << "IO mask after: " << io_mask1 << std::endl << std::endl;
 
+    //there is no:
+    //# buffer organization
+    //# custom event length
 
-    //set buffer organization (1024 memory blocks for 1024 events)
-    V1742_handle->setBufferOrganisation(0x0A);
-    std::cout << "Buffer Organisation: 0x" << std::hex << uint32_t(V1742_handle->getBufferOrganisation()) << std::dec << std::endl;
 
-    //set custom event lenght
-    int length = 990;
-	  V1742_handle->setBufferCustomSize((length+10)/10);
-    std::cout << "Buffer setBufferCustomSize: " << V1742_handle->getBufferCustomSize() << std::endl;
-
-    //set post trigger samples:
-    V1742_handle->setPostTrigger(m_post_trigger_samples); //FIXME?
-	  std::cout << "Post trigger samples set to: " << m_post_trigger_samples << std::endl;
 
     //set almost full level to 800 events (out of 1024)
     //V1742_handle->setAlmostFullLevel(800);
