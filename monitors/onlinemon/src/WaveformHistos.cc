@@ -47,6 +47,7 @@ void WaveformHistos::InitHistos() {
     histos["nFlatLineEvents"]= new TH1F(hName,hTitle,2,-.5,1.5);
 
     InitIntegralHistos();
+    InitFFTHistos();
     InitSpreadHistos();
     InitProfiles();
     InitWaveformStacks();
@@ -95,6 +96,36 @@ void WaveformHistos::InitIntegralHistos(){
             _sensor.c_str(),_id,pulser_integral_range.first,pulser_integral_range.second);
     histos["Pulser_PulserIntegral"] = new TH1F(hName,hTitle,nbins,minVolt,maxVolt);
     SetMaxRangeX((string)hName,-50,500);
+
+}
+void WaveformHistos::InitFFTHistos(){
+    //=====================================================================
+    //======== SIGNAL HISTOGRAMS ==========================================
+    //=====================================================================
+    TString hName, hTitle;
+    hName = TString::Format("h_MeanFFT_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Mean FFT Value ; number of entries",
+            _sensor.c_str(),_id);
+    histos["MeanFFT"] = new TH1F(hName,hTitle,2000,0.,2000.);
+    //SetMaxRangeX((string)hName,-50,500);
+
+    hName = TString::Format("h_InvMaxFFT_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Inv Max FFT Value ; number of entries",
+            _sensor.c_str(),_id);
+    histos["InvMaxFFT"] = new TH1F(hName,hTitle,10000,0.000001,0.005);
+    //SetMaxRangeX((string)hName,-50,500);
+
+    hName = TString::Format("h_Pulser_MeanFFT_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Pulser Mean FFT Value ; number of entries",
+            _sensor.c_str(),_id);
+    histos["Pulser_MeanFFT"] = new TH1F(hName,hTitle,2000,0.,2000.);
+    //SetMaxRangeX((string)hName,-50,500);
+
+    hName = TString::Format("h_Pulser_InvMaxFFT_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Pulser Inv Max FFT Value ; number of entries",
+            _sensor.c_str(),_id);
+    histos["Pulser_InvMaxFFT"] = new TH1F(hName,hTitle,10000,0.000001,0.005);
+    //SetMaxRangeX((string)hName,-50,500);
 
 }
 void WaveformHistos::InitSpreadHistos(){
@@ -424,6 +455,9 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     histos[prefix+"SignalIntegral"]     ->Fill(sign*signal_integral);
     histos[prefix+"PedestalIntegral"]   ->Fill(sign*pedestal_integral);
     histos[prefix+"PulserIntegral"]     ->Fill(sign*pulser_integral);
+
+    histos[prefix+"MeanFFT"]     ->Fill(wf.getMeanFFT()   );
+    histos[prefix+"InvMaxFFT"]   ->Fill(1./wf.getMaxFFT() );
 
     for (it = time_profiles.begin();it!=time_profiles.end();it++){
         float delta_t = (time_stamp-time_start)/1e7;
