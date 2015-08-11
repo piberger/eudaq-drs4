@@ -18,7 +18,7 @@ bool HitmapCollection::isPlaneRegistered(SimpleStandardPlane p)
   return (it != _map.end());
 }
 
-void HitmapCollection::fillHistograms(const SimpleStandardPlane &simpPlane)
+void HitmapCollection::fillHistograms(const SimpleStandardPlane &simpPlane, unsigned event_no)
 {
   /*
      section_counter[0] = 0;
@@ -36,7 +36,7 @@ void HitmapCollection::fillHistograms(const SimpleStandardPlane &simpPlane)
   }
 
   HitmapHistos *hitmap = _map[simpPlane];
-  hitmap->Fill(simpPlane);
+  hitmap->Fill(simpPlane,event_no);
 
   ++counting;
   events += simpPlane.getNHits();
@@ -157,7 +157,7 @@ void HitmapCollection::Fill(const SimpleStandardEvent &simpev)
 
   for (int plane = 0; plane < simpev.getNPlanes(); plane++) {
     const SimpleStandardPlane&  simpPlane = simpev.getPlane(plane);
-    fillHistograms(simpPlane);
+    fillHistograms(simpPlane,simpev.getEvent_number());
   }
 }
 HitmapHistos * HitmapCollection::getHitmapHistos(std::string sensor, int id)
@@ -267,6 +267,10 @@ void HitmapCollection::registerPlane(const SimpleStandardPlane &p) {
     sprintf(tree,"%s/Sensor %i/NumClusters",p.getName().c_str(),p.getID());
     _mon->getOnlineMon()->registerTreeItem(tree);
     _mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getNClustersHisto());
+
+    sprintf(tree,"%s/Sensor %i/Efficency",p.getName().c_str(),p.getID());
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getEfficencyPerEvent());
 
     sprintf(tree,"%s/Sensor %i/HitOcc",p.getName().c_str(),p.getID());
     _mon->getOnlineMon()->registerTreeItem(tree);

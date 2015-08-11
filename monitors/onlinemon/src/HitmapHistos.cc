@@ -11,7 +11,7 @@
 
 HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.getName()), _id(p.getID()), _maxX(p.getMaxX()), _maxY(p.getMaxY()), _wait(false),
 								     _hitmap(NULL),_hitXmap(NULL),_hitYmap(NULL),_clusterMap(NULL),_lvl1Distr(NULL), _lvl1Width(NULL),_lvl1Cluster(NULL),_totSingle(NULL),_totCluster(NULL),
-  _hitOcc(NULL), _nClusters(NULL), _nHits(NULL), _clusterXWidth(NULL), _clusterYWidth(NULL),_nbadHits(NULL),_nHotPixels(NULL),_hitmapSections(NULL),
+  _hitOcc(NULL), _nClusters(NULL), _nHits(NULL), _clusterXWidth(NULL), _clusterYWidth(NULL),_nbadHits(NULL),_nHotPixels(NULL),_hitmapSections(NULL),_efficencyPerEvent(NULL),
   is_MIMOSA26(false), is_APIX(false), is_USBPIX(false),is_USBPIXI4(false),is_CMSPIXEL(false)
 {
   char out[1024], out2[1024];
@@ -130,6 +130,16 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
     sprintf(out2,"h_nbadHits_%s_%i",_sensor.c_str(), _id);
     _nbadHits = new TH1I(out2, out,50,0,50);
     SetHistoAxisLabelx(_nbadHits,"n_{BadHits}");
+
+    sprintf(out,"%s %i Efficency per Event",_sensor.c_str(), _id);
+    sprintf(out2,"h_efficencyPerEvent_%s_%i",_sensor.c_str(), _id);
+    _efficencyPerEvent = new TProfile(out2, out,50,0,50);
+    SetHistoAxisLabely(_efficencyPerEvent,"#varepsilon_{Plane}");
+    SetHistoAxisLabelx(_efficencyPerEvent,"Event No.");
+    _efficencyPerEvent->SetBit(TH1::kCanRebin);
+    _efficencyPerEvent->SetStats(false);
+    _efficencyPerEvent->SetMaximum(1.1);
+    _efficencyPerEvent->SetMinimum(0);
 
     sprintf(out,"%s %i Number of Hot Pixels",_sensor.c_str(), _id);
     sprintf(out2,"h_nhotpixels_%s_%i",_sensor.c_str(), _id);
@@ -310,9 +320,11 @@ void HitmapHistos::Fill(const SimpleStandardHit & hit)
   }
 }
 
-void HitmapHistos::Fill(const SimpleStandardPlane & plane)
+void HitmapHistos::Fill(const SimpleStandardPlane & plane, unsigned event_no)
 {
   if (_nHits != NULL) _nHits->Fill(plane.getNHits());
+  if (_efficencyPerEvent != NULL)
+      _efficencyPerEvent->Fill(event_no,plane.getNHits()>0);
   if ((_nbadHits != NULL) &&(plane.getNBadHits()>0))
   {
     _nbadHits->Fill(plane.getNBadHits());
@@ -396,6 +408,7 @@ void HitmapHistos::Reset() {
   _clusterXWidth->Reset();
   _hitmapSections->Reset();
   _nPivotPixel->Reset();
+  _efficencyPerEvent->Reset();
   for (unsigned int  section=0; section<mimosa26_max_section; section++)
   {
     _nClusters_section[section]->Reset();
@@ -500,6 +513,7 @@ void HitmapHistos::Write()
   _clusterYWidth->Write();
   _hitmapSections->Write();
   _nPivotPixel->Write();
+  _efficencyPerEvent->Write();
   for (unsigned int  section=0; section<mimosa26_max_section; section++)
   {
     _nClusters_section[section]->Write();

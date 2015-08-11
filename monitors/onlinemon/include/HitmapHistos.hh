@@ -53,6 +53,7 @@ class HitmapHistos {
     TH1I ** _nClusters_section;
     TH1I ** _nClustersize_section;
     TH1I ** _nHotPixels_section;
+    TProfile * _efficencyPerEvent;
 //    TH2D* _nTriggerPhase;
 
 
@@ -60,7 +61,7 @@ class HitmapHistos {
     HitmapHistos(SimpleStandardPlane p, RootMonitor * mon);
 
     void Fill(const SimpleStandardHit & hit);
-    void Fill(const SimpleStandardPlane & plane);
+    void Fill(const SimpleStandardPlane & plane, unsigned event_no);
     void Fill(const SimpleStandardCluster & cluster);
     void Reset();
 
@@ -91,6 +92,7 @@ class HitmapHistos {
     TH1I * getSectionsNHotPixelsHisto(unsigned int section) { return _nHotPixels_section[section]; }
     TH1I * getNHotPixelsHisto() { return _nHotPixels; }
     TH1I * getNPivotPixelHisto(){ return _nPivotPixel;}
+    TProfile* getEfficencyPerEvent(){return _efficencyPerEvent;}
 //    TH2D * getTriggerPhaseHisto(){ return _nTriggerPhase;}
     void setRootMonitor(RootMonitor *mon)  {_mon = mon; }
 
