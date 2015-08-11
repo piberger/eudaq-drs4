@@ -207,6 +207,16 @@ void WaveformCollection::registerDataWaveforms(const SimpleStandardWaveform &p,s
     _mon->getOnlineMon()->registerTreeItem(tree);
     _mon->getOnlineMon()->registerHisto(tree,wf_histo->getHisto(prefix+"PedestalIntegral"), "",0);
 
+    sprintf(tree,"%s/MeanFFT",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getHisto(prefix+"MeanFFT"), "",0);
+
+    sprintf(tree,"%s/InvMaxFFT",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getHisto(prefix+"InvMaxFFT"), "",0);
+
     sprintf(tree,"%s/Integral/Pulser",main_path.c_str());
     std::cout<<tree<<endl;
     _mon->getOnlineMon()->registerTreeItem(tree);

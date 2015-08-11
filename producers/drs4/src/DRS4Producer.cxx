@@ -31,7 +31,8 @@ DRS4Producer::DRS4Producer(const std::string & name, const std::string & runcont
 		m_self_triggering(false),
 		m_inputRange(0.),
 		m_running(false), 
-        m_terminated(false){
+        m_terminated(false),
+        is_initalized(false){
 	n_channels = 4;
 	cout<<"Started DRS4Producer with Name: \""<<name<<"\""<<endl;
 
@@ -174,7 +175,7 @@ void DRS4Producer::OnTerminate() {
 };
 
 void DRS4Producer::ReadoutLoop() {
-    std::cout<<"Start ReadoutLoop"<<m_terminated<<std::endl;
+    std::cout<<"Start ReadoutLoop "<<m_terminated<<std::endl;
 	int k = 0;
 	while (!m_terminated) {
 		// No run is m_running, cycle and wait:
@@ -239,10 +240,10 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf) {
 		/* show any found board(s) */
 		int board_no = 0;
 		for (size_t i=0 ; i<m_drs->GetNumberOfBoards() ; i++) {
-			m_b = m_drs->GetBoard(i);
+			DRSBoard* board = m_drs->GetBoard(i);
 			printf("    #%2d: serial #%d, firmware revision %d\n",
-					(int)i, m_b->GetBoardSerialNumber(), m_b->GetFirmwareVersion());
-			if (m_b->GetBoardSerialNumber() == m_serialno)
+					(int)i, board->GetBoardSerialNumber(), board->GetFirmwareVersion());
+			if (board->GetBoardSerialNumber() == m_serialno)
 				board_no = i;
 		}
 
@@ -255,11 +256,19 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf) {
 
 		cout <<"Get board no: "<<board_no<<endl;
 		/* continue working with first board only */
-		m_b = m_drs->GetBoard(board_no);
-
-		cout<<"Init"<<endl;
-		/* initialize board */
-		m_b->Init();
+		if (m_b != m_drs->GetBoard(board_no)){
+		    m_b = m_drs->GetBoard(board_no);
+		    cout<<"Init"<<endl;
+		    /* initialize board */
+		    m_b->Init();
+		}
+		else if (m_b == 0){
+		    throw eudaq::Exception("Cannot find board");
+		}
+		else{
+		    cout<<"ReInit"<<endl;
+		    m_b->Reinit();
+		}
 
 		double sampling_frequency = m_config.Get("sampling_frequency",5);
 		bool wait_for_PLL_lock = m_config.Get("wait_for_PLL_lock",true);

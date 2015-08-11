@@ -98,6 +98,7 @@ class WaveformHistos {
     unsigned int n_fills;
     void InitHistos();
     void InitIntegralHistos();
+    void InitFFTHistos();
     void InitSpreadHistos();
     void InitProfiles();
     void InitTimeProfiles();

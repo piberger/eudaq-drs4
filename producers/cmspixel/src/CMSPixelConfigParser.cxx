@@ -129,7 +129,6 @@ std::vector<pxar::pixelConfig> CMSPixelProducer::GetConfTrimming(std::vector<pxa
 
   std::vector<pxar::pixelConfig> pixels;
   std::ifstream file(filename);
-
   if(!file.fail()) {
     std::string line;
     while(std::getline(file, line)) {

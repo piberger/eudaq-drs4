@@ -11,6 +11,8 @@
 #include <TPRegexp.h>
 #include <TObjString.h>
 #include <TStopwatch.h>
+#include <TVirtualFFT.h>
+#include <TMath.h>
 
 //EUDAQ includes
 #ifndef __CINT__
@@ -92,6 +94,9 @@ class RootMonitor : private eudaq::Holder<int>,
       EUDAQMonitorCollection * eudaqCollection;
       WaveformCollection *wfCollection;
 
+      TVirtualFFT *fft_own;
+      std::vector< float > * fft_vals;
+      float abs_fft, mean_fft, max_fft, min_fft;
 
       virtual void StartIdleing() { }
       OnlineMonWindow * getOnlineMon() { return onlinemon; }
