@@ -83,16 +83,16 @@ void V1742Producer::OnStartRun(unsigned runnumber){
     
     for (unsigned ch = 0; ch <  V1742_handle->GROUPS; ch++){
         std::string key = "V1742_CHANNEL_DAC_"+std::to_string(ch);
-	std::cout << key << " - " << m_channel_dac.at(ch);
-	bore.SetTag(key, m_channel_dac.at(ch));
+	      std::cout << key << " - " << m_channel_dac.at(ch);
+	      bore.SetTag(key, m_channel_dac.at(ch));
 	
         key = "V1742_CHANNEL_RANGE_"+std::to_string(ch);
-	std::cout << key << " - " << m_dynamic_range.at(ch);
-	bore.SetTag(key, m_dynamic_range.at(ch));
+	      std::cout << key << " - " << m_dynamic_range.at(ch);
+	      bore.SetTag(key, m_dynamic_range.at(ch));
 
         key = "V1742_CHANNEL_GAIN_"+std::to_string(ch);
-	std::cout << key << " - " << m_channel_gain.at(ch);
-	bore.SetTag(key, m_channel_gain.at(ch));
+	      std::cout << key << " - " << m_channel_gain.at(ch);
+	      bore.SetTag(key, m_channel_gain.at(ch));
     }
     //set number of channels to be implemented
     //set tags for the channel numbers
@@ -113,6 +113,7 @@ void V1742Producer::OnStartRun(unsigned runnumber){
   EUDAQ_ERROR(std::string("Error in the V1742 OnStartRun procedure."));
   SetStatus(eudaq::Status::LVL_ERROR, "Error in the V1742 OnStartRun procedure.");}
 }
+
 
 
 void V1742Producer::OnStopRun(){
@@ -155,6 +156,7 @@ void V1742Producer::ReadoutLoop() {
         if(!event.isValid()){
           event_valid = false;
         }
+
 
         uint32_t event_counter = event.EventCounter();
         //std::cout << "#######" << std::endl;
