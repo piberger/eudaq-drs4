@@ -249,6 +249,12 @@ void WaveformCollection::registerGlobalWaveforms(const SimpleStandardWaveform &p
     _mon->getOnlineMon()->registerHisto(tree,
             getWaveformHistos(p.getName(),p.getID())->getHisto("nFlatLineEvents"), "",0);
 
+    sprintf(tree,"%s/Ch %i - %s/nBadFFTEvents",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,
+            getWaveformHistos(p.getName(),p.getID())->getHisto("nBadFFTEvents"), "",0);
+
 }
 
 void WaveformCollection::registerPulserWaveforms(const SimpleStandardWaveform &p){

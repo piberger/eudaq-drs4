@@ -160,12 +160,6 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
       cout << "something went wrong with the fft creation" << endl;
       return; 
   }
-  fft_vals = new std::vector< float >;
-  abs_fft = 0.; mean_fft = 0.; max_fft = 0.; min_fft = 0.;
-
-  //*re_full = new Double_t[n_samples];
-  //*im_full = new Double_t[n_samples];
-  //*in = new Double_t[n_samples];
 
 
   //set a few defaults
@@ -315,10 +309,6 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
     	}
     }
 
-    Double_t *re_full = new Double_t[1024];
-    Double_t *im_full = new Double_t[1024];
-    Double_t *in = new Double_t[1024];
-
 	for (unsigned int i = 0; i < nwf;i++){
 			const eudaq::StandardWaveform & waveform = ev.GetWaveform(i);
 #ifdef DEBUG
@@ -340,36 +330,8 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 			simpWaveform.setSign(mon_configdata.getSignalSign(waveform.GetChannelNumber()));
 			simpWaveform.setNSamples(waveform.GetNSamples());
 			simpWaveform.addData(&(*waveform.GetData())[0]);
-
-            // ====================================================================
-            // FFT things
-            // ====================================================================
-            for (int j = 0; j < 1024; ++j) {
-                //cout << "filling something, namely" << (*waveform.GetData()).at(j) << endl;
-                in[j] = (*waveform.GetData()).at(j);
-            }
-
-            fft_own->SetPoints(in);
-            fft_own->Transform();
-            fft_own->GetPointsComplex(re_full,im_full);
-
-            fft_vals->clear();
-            for (int j = 0; j < 513; ++j) {
-                abs_fft = TMath::Sqrt(re_full[j]*re_full[j] + im_full[j]*im_full[j]);
-                fft_vals->push_back( abs_fft );
-            }
-            mean_fft = std::accumulate(fft_vals->begin(), fft_vals->end(), 0.0)  / fft_vals->size();
-            max_fft = *std::max_element(fft_vals->begin(), fft_vals->end());
-            min_fft = *std::min_element(fft_vals->begin(), fft_vals->end());
-            
-            // cout << "this is the mean fft : " << mean_fft << " this is the max: " << max_fft << endl;
-            simpWaveform.setMeanFFT(mean_fft);
-            simpWaveform.setMaxFFT(max_fft);
-            simpWaveform.setMinFFT(min_fft);
-            
-            // ====================================================================
-            // ====================================================================
-
+            // perform the fft and put it into the simpleWF directly
+            simpWaveform.performFFT(fft_own);
 
 			simpWaveform.Calculate();
 			//simpWaveform.setTimestamp(ev.GetTimestamp());
@@ -385,9 +347,6 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 //					<<" ch name \""<<simpWaveform.getChannelName()<<"\""<<endl;//<<"\" mon:"<<_mon<<endl;
 			simpEv.addWaveform(simpWaveform);
 		}
-    delete re_full;
-    delete im_full;
-    delete in     ;
 
 		
     if (skip_dodgy_event)

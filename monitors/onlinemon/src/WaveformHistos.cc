@@ -46,6 +46,10 @@ void WaveformHistos::InitHistos() {
     hTitle = TString::Format("%s %d: no of flat line events ; number of entries",_sensor.c_str(),_id);
     histos["nFlatLineEvents"]= new TH1F(hName,hTitle,2,-.5,1.5);
 
+    hName = TString::Format("h_nBadFFTEvents_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: no of bad events acc to FFT cuts ; number of entries",_sensor.c_str(),_id);
+    histos["nBadFFTEvents"]= new TH1F(hName,hTitle,2,-.5,1.5);
+
     InitIntegralHistos();
     InitFFTHistos();
     InitSpreadHistos();
@@ -414,6 +418,9 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     if(maxSpread < 10) goodEvent = false;
     histos["nFlatLineEvents"]->Fill(!goodEvent);
     if(!goodEvent) return;
+    // check if the event passes/fails the FFT cuts
+    bool failsFFTCuts = ( (wf.getMeanFFT() > 500 )|| ( (1./wf.getMaxFFT()) < 1E-4 ) );
+    histos["nBadFFTEvents"]->Fill(failsFFTCuts);
 
     float min      = wf.getMin();
     float max      = wf.getMax();
@@ -444,6 +451,7 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     }
     string prefix = "";
     if (isPulserEvent) prefix = "Pulser_";
+    //if (!isPulserEvent && failsFFTCuts) prefix = "BadFFT_"
     histos["PulserEvents"]->Fill(isPulserEvent);
     histos[prefix+"FullAverage"]->Fill(sign*integral);
     histos[prefix+"Signal"]     ->Fill(signalSpread);

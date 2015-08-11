@@ -19,6 +19,8 @@
 
 #include <TROOT.h>
 #include "include/OnlineMonConfiguration.hh"
+#include <TVirtualFFT.h>
+#include <TMath.h>
 
 //!Simple Standard Waveform Class
 /*!
@@ -74,6 +76,7 @@ public:
     float getMeanFFT() const{return _mean_fft;}
     float getMaxFFT () const{return _max_fft;}
     float getMinFFT () const{return _min_fft;}
+    void performFFT(TVirtualFFT *);
 private:
 	int _sign;
 	bool calculated;
