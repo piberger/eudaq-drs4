@@ -75,7 +75,7 @@ void V1742Producer::OnStartRun(unsigned runnumber){
     this->SetTimeStamp();
 
     //create event:
-    std::cout<<"V1742: Create " << m_event_type << " EVENT for run " << m_run <<  " @time: " << m_timestamp << "." << std::endl;
+    std::cout<<"V1742: Create " << m_event_type << " EVENT for run " << m_run <<  " @time: " << m_timestamp << "." << std::endl << std::endl;
     eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
     bore.SetTag("V1742_timestamp", m_timestamp);
     bore.SetTag("V1742_serial_no", m_serialno);
@@ -83,15 +83,15 @@ void V1742Producer::OnStartRun(unsigned runnumber){
     
     for (unsigned ch = 0; ch <  V1742_handle->GROUPS; ch++){
         std::string key = "V1742_CHANNEL_DAC_"+std::to_string(ch);
-	      std::cout << key << " - " << m_channel_dac.at(ch);
+	      //std::cout << key << " - " << m_channel_dac.at(ch);
 	      bore.SetTag(key, m_channel_dac.at(ch));
 	
         key = "V1742_CHANNEL_RANGE_"+std::to_string(ch);
-	      std::cout << key << " - " << m_dynamic_range.at(ch);
+	      //std::cout << key << " - " << m_dynamic_range.at(ch);
 	      bore.SetTag(key, m_dynamic_range.at(ch));
 
         key = "V1742_CHANNEL_GAIN_"+std::to_string(ch);
-	      std::cout << key << " - " << m_channel_gain.at(ch);
+	      //std::cout << key << " - " << m_channel_gain.at(ch);
 	      bore.SetTag(key, m_channel_gain.at(ch));
     }
     //set number of channels to be implemented
@@ -100,6 +100,7 @@ void V1742Producer::OnStartRun(unsigned runnumber){
     //buffer in event??
 
     //set digitizer online (allow it to accept triggers)
+    V1742_handle->SoftwareClear();
     V1742_handle->Start();
 
     V1742_handle->printAcquisitionStatus(V1742_handle->getAcquisitionStatus());
@@ -147,6 +148,7 @@ void V1742Producer::ReadoutLoop() {
       if(V1742_handle->isEventReady()){ //check acquisition status register
         //set time stamp:
         this->SetTimeStamp();
+        sleep(1);
         
         bool event_valid = true;
         v1742_event event; //CAEN event:
@@ -159,15 +161,16 @@ void V1742Producer::ReadoutLoop() {
 
 
         uint32_t event_counter = event.EventCounter();
-        //std::cout << "#######" << std::endl;
-        //std::cout << "Event valid:           " << event.isValid()           << std::endl;
-        //std::cout << "Event size(32b words): " << event.EventSize()          << std::endl;
-        //std::cout << "Channel mask:          " << event.ChannelMask()        << std::endl;
+        std::cout << "#######" << std::endl;
+        std::cout << "Event valid:           " << event.isValid()           << std::endl;
+        std::cout << "Event size(32b words): " << event.EventSize()          << std::endl;
+        std::cout << "Group mask:          " << event.GroupMask()        << std::endl;
         std::cout << "\rEvent Counter:         " << event_counter << "/" << m_ev  << std::flush;
+        std::cout << std::endl;
         //std::cout << "Samples per channel:   " << event.SamplesPerChannel()  << std::endl;
-        //std::cout << "Channels:              " << event.Channels()           << std::endl;
-        //std::cout << "TimeStamp:             " << event.TriggerTimeTag()     << std:: endl;
-        //std::cout << std::endl << std::endl; 
+        std::cout << "Channels:              " << event.Channels()           << std::endl;
+        std::cout << "TimeStamp:             " << event.TriggerTimeTag()     << std:: endl;
+        std::cout << std::endl << std::endl; 
 
         eudaq::RawDataEvent ev(m_event_type, m_run, event_counter); //generate a raw event
         ev.SetTimeStampToNow(); // Let's think weather this information can help us...
@@ -256,10 +259,15 @@ void V1742Producer::OnConfigure(const eudaq::Configuration& conf) {
     caen_v1742::group_enable_mask c_enable_mask = V1742_handle->getGroupEnableMask();
     if(m_active_channels == 1){
       c_enable_mask.group0 = 1;
+      c_enable_mask.group1 = 0;
+      c_enable_mask.group2 = 0;
+      c_enable_mask.group3 = 0;
     }
     if(m_active_channels == 2){
       c_enable_mask.group0 = 1;
       c_enable_mask.group1 = 1;
+      c_enable_mask.group2 = 0;
+      c_enable_mask.group3 = 0;
     }
     V1742_handle->setGroupEnableMask(c_enable_mask);
     V1742_handle->printGroupEnableMask(V1742_handle->getGroupEnableMask());
@@ -267,7 +275,7 @@ void V1742Producer::OnConfigure(const eudaq::Configuration& conf) {
 
     //set post trigger samples:
     V1742_handle->setPostTrigger(m_post_trigger_samples);
-    std::cout << "Post trigger samples set to: " << m_post_trigger_samples << std::endl;
+    std::cout << std::endl << "Post trigger samples set to: " << m_post_trigger_samples << std::endl;
 
     
     //send busy signal via the TRG OUT Limo connnector; print it?
@@ -293,7 +301,7 @@ void V1742Producer::OnConfigure(const eudaq::Configuration& conf) {
       V1742_handle->setGroup_Thres(gr, m_trigger_threshold);
       //DC offset?
       //calibration?
-      V1742_handle->printGroupStatus(V1742_handle->getGroup_Status(0));
+      //V1742_handle->printGroupStatus(V1742_handle->getGroup_Status(0));
       float dac = V1742_handle->getGroup_DAC(0); //FIXME: hard-coded
       float range = 2; //FIXME: hard coded +/-1V
       float gain = 1; //FIXME: does not exis
@@ -302,10 +310,10 @@ void V1742Producer::OnConfigure(const eudaq::Configuration& conf) {
       m_dynamic_range[gr] = range;
       m_channel_gain[gr] = gain;
 
-      std::cout << "Range group " << gr << ": " << range << " dac: " << dac << ", gain: " << gain << std::endl;   
+      //std::cout << "Range group " << gr << ": " << range << " dac: " << dac << ", gain: " << gain << std::endl;   
     }
 
-  std::cout << "V1742: Configured! Ready to take data." << std::endl;
+  std::cout << "V1742: Configured! Ready to take data." << std::endl << std::endl;
   
   SetStatus(eudaq::Status::LVL_OK, "Configured V1742");
 
