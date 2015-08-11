@@ -91,7 +91,8 @@ public:
 
 private:
   V1742ConverterPlugin() : DataConverterPlugin(EVENT_TYPE), m_serialno(-1), m_firmware(-1), m_range(0){
-	//std::cout<<"V1742ConverterPlugin Constructor"<<std::endl;}
+	//std::cout<<"V1742ConverterPlugin Constructor"<<std::endl;
+  }
 
   uint64_t m_timestamp;
   uint32_t m_serialno;

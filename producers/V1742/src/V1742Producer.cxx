@@ -123,7 +123,6 @@ void V1742Producer::OnStopRun(){
 }
 
 
-
 void V1742Producer::OnTerminate(){
   m_running = false;
   m_terminated = true;
@@ -144,11 +143,7 @@ void V1742Producer::ReadoutLoop() {
 
   while(m_running){
     try{
-      //std::cout << "Readout loop running.." << std::endl;
-      //V1742_handle->SoftwareTrigger();
-      //sleep(1);
-
-      if(V1742_handle->isEventReady()){
+      if(V1742_handle->isEventReady()){ //check acquisition status register
         //set time stamp:
         this->SetTimeStamp();
         
@@ -256,13 +251,13 @@ void V1742Producer::OnConfigure(const eudaq::Configuration& conf) {
 
 
     //enable channels/groups
-    caen_v1742::group_enable_mask c_enable_mask = V1742_handle->getGroupEnableMask()
+    caen_v1742::group_enable_mask c_enable_mask = V1742_handle->getGroupEnableMask();
     if(m_active_channels == 1){
       c_enable_mask.group0 = 1;
     }
     if(m_active_channels == 2){
-      c_enable_mask.group0 = 1
-      c_enable_mask.group1 = 1
+      c_enable_mask.group0 = 1;
+      c_enable_mask.group1 = 1;
     }
     V1742_handle->setGroupEnableMask(c_enable_mask);
     V1742_handle->printGroupEnableMask(V1742_handle->getGroupEnableMask());
@@ -296,16 +291,16 @@ void V1742Producer::OnConfigure(const eudaq::Configuration& conf) {
       V1742_handle->setGroup_Thres(gr, m_trigger_threshold);
       //DC offset?
       //calibration?
-      V1742_handle->printGroupStatus(V1742_handle->getGroup_Status(0))
+      V1742_handle->printGroupStatus(V1742_handle->getGroup_Status(0));
       float dac = V1742_handle->getGroup_DAC(0); //FIXME: hard-coded
       float range = 2; //FIXME: hard coded +/-1V
       float gain = 1; //FIXME: does not exis
     
-      m_channel_dac[ch] = dac;
-      m_dynamic_range[ch] = range;
-      m_channel_gain[ch] = gain;
+      m_channel_dac[gr] = dac;
+      m_dynamic_range[gr] = range;
+      m_channel_gain[gr] = gain;
 
-      std::cout << "Range group " << gr << ": " range << " dac: " << dac << ", gain: " << gain << std::endl;   
+      std::cout << "Range group " << gr << ": " << range << " dac: " << dac << ", gain: " << gain << std::endl;   
     }
 
   std::cout << "V1742: Configured! Ready to take data." << std::endl;
