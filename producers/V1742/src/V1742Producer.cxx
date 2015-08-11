@@ -229,7 +229,6 @@ void V1742Producer::OnConfigure(const eudaq::Configuration& conf) {
   m_trigger_source = m_config.Get("trigger_source", 1); //default 1 for external trigger
   m_active_channels = m_config.Get("active_channels", 1); 
   m_post_trigger_samples = m_config.Get("post_trigger_samples", 0); //default0 - 1 sample = 8.5ns
-
   m_trigger_threshold = m_config.Get("trigger_threshold", 1); //default 1
   
 
@@ -268,92 +267,46 @@ void V1742Producer::OnConfigure(const eudaq::Configuration& conf) {
     V1742_handle->setGroupEnableMask(c_enable_mask);
     V1742_handle->printGroupEnableMask(V1742_handle->getGroupEnableMask());
 
-     //set custom size to 1024 samples (max):
-    //FIXME
-
 
     //set post trigger samples:
     V1742_handle->setPostTrigger(m_post_trigger_samples);
     std::cout << "Post trigger samples set to: " << m_post_trigger_samples << std::endl;
 
-    //continue here...
-   
+    
+    //send busy signal via the TRG OUT Limo connnector; print it?
+    caen_v1742::front_panel_io_control_reg ctr_reg = V1742_handle->getFrontPanelIOControl();
+    ctr_reg.force_trg_out_mode = 0; //force it or not, does not matter
+    ctr_reg.trg_out_mode = 0; //trg_out is internal signal
+    ctr_reg.trg_out_mode_select = 1; //select trg_out
+    ctr_reg.motherboad_probe = 3; //allows roc to issue busy signal
+    ctr_reg.busy_unlock = 0; //propagates it to trg_out
+    V1742_handle->setFrontPanelIOControl(ctr_reg);
 
 
-
-
-
-
-
-
-    //send busy signal via the TRG OUT Limo connnector
-    caen_v1742::front_panel_io_control_reg io_control = V1742_handle->getFrontPanelIOControl();
-    uint32_t io_mask0 = io_control.raw;
-    std::cout << "IO mask before: " << io_mask0 << std::endl;
-    //io_control.probe_select = 3;
-    //io_control.trg_out_mode_sel = 1; FIXME
-    V1742_handle->setFrontPanelIOControl(io_control);
-
-    //short check
-    io_control = V1742_handle->getFrontPanelIOControl();
-    uint32_t io_mask1 = io_control.raw;
-    std::cout << "IO mask after: " << io_mask1 << std::endl << std::endl;
-
-    //there is no:
-    //# buffer organization
-    //# custom event length
-
-
-
-    //set almost full level to 800 events (out of 1024)
-    //V1742_handle->setAlmostFullLevel(800);
-    //FIXME: Implement BUSY
-
-    //count all triggers (not just accepted ones)
     caen_v1742::acq_control acq_ctrl = V1742_handle->getACQControl();
-    //FIXME: acq_ctrl.count_mode = 1;  //count all triggers
-    //FIXME: acq_ctrl.board_full_mode = 1; //full when (N-1) events are reached
+    acq_ctrl.trigger_count = 1; //cout ALL triggers
+    acq_ctrl.buffer_mode = 1; //always keep one buffer free
     V1742_handle->setACQControl(acq_ctrl);
 
-    //allow event overlap
-    caen_v1742::group_configuration ch_config = V1742_handle->getGroupConfig();
-    //FIXME: ch_config.trigger_overlapping = 1;
-    V1742_handle->setGroupConfig(ch_config);
+    //FIXME: set sampling frequency
+    //FIXME: read out DRS4 temperature
 
+    //set channel settings: threshold
+    for(int gr = 0; gr < V1742_handle->GROUPS; gr++){
+      V1742_handle->setGroup_Thres(gr, m_trigger_threshold);
+      //DC offset?
+      //calibration?
+      V1742_handle->printGroupStatus(V1742_handle->getGroup_Status(0))
+      float dac = V1742_handle->getGroup_DAC(0); //FIXME: hard-coded
+      float range = 2; //FIXME: hard coded +/-1V
+      float gain = 1; //FIXME: does not exis
+    
+      m_channel_dac[ch] = dac;
+      m_dynamic_range[ch] = range;
+      m_channel_gain[ch] = gain;
 
-    //set channel voltage range
-    for(int ch = 0; ch < V1742_handle->GROUPS; ch++){
-      //FIXME: V1742_handle->setChannel_Gain(ch, caen_v1742::GAIN_4); //set input range to +/-0.5V
-      //FIXME: V1742_handle->setChannel_Thres(ch, m_trigger_threshold); //set trigger threshold
-      std::cout << "Calibrating channel " << ch << "..";
-      //FIXME: V1742_handle->doChannel_Calibration(ch);
-      //FIXME: caen_v1742::channel_status status = V1742_handle->getChannel_Status(ch);
-      //FIXME: if(status.calibration_status){} 
-        std::cout << " [OK] - "; 
-        //std::cout << " [OK] - Temp: " << V1742_handle->getChannel_Temperature(ch) << std::endl;
-        //FIXME: float dac = V1742_handle->getChannel_DAC(ch);
-        //FIXME: float range =  V1742_handle->getChannel_DynamicRange(ch);
-        //FIXME: float gain =  V1742_handle->getChannel_Gain(ch);
-        /*
-        m_dynamic_range[ch] = range;
-        m_channel_dac[ch] = dac;
-        m_channel_gain[ch] = gain;
-        */
-
-        m_dynamic_range[ch] = 0;
-        m_channel_dac[ch] = 0;
-        m_channel_gain[ch] = 0;
-
-        //FIXME: std::cout << "Range: " << range << ", dac: " << dac << ", gain: " << gain << std::endl;
-      //FIXME:}
-      //else{
-      //  std::cout << "[FAILED]"<<std::endl;
-      //}
-      
+      std::cout << "Range group " << gr << ": " range << " dac: " << dac << ", gain: " << gain << std::endl;   
     }
-
-
-
 
   std::cout << "V1742: Configured! Ready to take data." << std::endl;
   
@@ -363,6 +316,7 @@ void V1742Producer::OnConfigure(const eudaq::Configuration& conf) {
   EUDAQ_ERROR(std::string("Error in the V1742 configuration procedure."));
    SetStatus(eudaq::Status::LVL_ERROR, "Error in the V1742 configuration procedure.");}
 }
+
 
 
 
