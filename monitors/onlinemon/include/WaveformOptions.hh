@@ -15,6 +15,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include "eudaq/Utils.hh"
 
 namespace eudaq {
 
@@ -52,5 +53,6 @@ public:
     int GetFloatVariable(std::string key){return from_string(GetWithDef(KeyValueMap,key,(std::string){"0"}),0.0);}
 
 };
+}
 
 #endif /* WAVEFORMOPTIONS_HH_ */
