@@ -21,8 +21,8 @@ WaveformHistos::WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon): _n_
     do_fitting = false;
 
     // signal_integral_range = make_pair(500.,800.);
-    signal_integral_range   = make_pair(   25, 125.);
-    pedestal_integral_range = make_pair(  350, 450.);// should be the same length as signal
+    signal_integral_range   = make_pair(  200, 350.);
+    pedestal_integral_range = make_pair(   10, 160.);// should be the same length as signal
     pulser_integral_range = make_pair(760,860);
     //	std::cout << "WaveformHistos::Sensorname: " << _sensor << " "<< _id<< std::endl;
     this->InitHistos();
@@ -52,6 +52,7 @@ void WaveformHistos::InitHistos() {
 
     InitIntegralHistos();
     InitFFTHistos();
+    InitBadFFTHistos();
     InitSpreadHistos();
     InitProfiles();
     InitWaveformStacks();
@@ -104,7 +105,7 @@ void WaveformHistos::InitIntegralHistos(){
 }
 void WaveformHistos::InitFFTHistos(){
     //=====================================================================
-    //======== SIGNAL HISTOGRAMS ==========================================
+    //======== FFT HISTOGRAMS =============================================
     //=====================================================================
     TString hName, hTitle;
     hName = TString::Format("h_MeanFFT_%s_%d",_sensor.c_str(),_id);
@@ -129,6 +130,30 @@ void WaveformHistos::InitFFTHistos(){
     hTitle = TString::Format("%s %d: Pulser Inv Max FFT Value ; number of entries",
             _sensor.c_str(),_id);
     histos["Pulser_InvMaxFFT"] = new TH1F(hName,hTitle,10000,0.000001,0.005);
+    //SetMaxRangeX((string)hName,-50,500);
+
+}
+void WaveformHistos::InitBadFFTHistos(){
+    //=====================================================================
+    //======== BAD HISTOGRAMS =============================================
+    //=====================================================================
+    TString hName, hTitle;
+    hName = TString::Format("h_BadFFT_MeanFFT_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Mean FFT Value (bad events); number of entries",
+            _sensor.c_str(),_id);
+    histos["BadFFT_MeanFFT"] = new TH1F(hName,hTitle,2000,0.,2000.);
+    //SetMaxRangeX((string)hName,-50,500);
+
+    hName = TString::Format("h_BadFFT_InvMaxFFT_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Inv Max FFT Value (bad events); number of entries",
+            _sensor.c_str(),_id);
+    histos["BadFFT_InvMaxFFT"] = new TH1F(hName,hTitle,10000,0.000001,0.005);
+    //SetMaxRangeX((string)hName,-50,500);
+
+    hName = TString::Format("h_BadFFT_Signal_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Signal (bad events); number of entries",
+            _sensor.c_str(),_id);
+    histos["BadFFT_Signal"] = new TH1F(hName,hTitle,1000,0.,500);
     //SetMaxRangeX((string)hName,-50,500);
 
 }
@@ -419,7 +444,7 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     histos["nFlatLineEvents"]->Fill(!goodEvent);
     if(!goodEvent) return;
     // check if the event passes/fails the FFT cuts
-    bool failsFFTCuts = ( (wf.getMeanFFT() > 500 )|| ( (1./wf.getMaxFFT()) < 1E-4 ) );
+    bool failsFFTCuts = !( (wf.getMeanFFT() < 500 ) || ( (1./wf.getMaxFFT()) > 1E-4 ) );
     histos["nBadFFTEvents"]->Fill(failsFFTCuts);
 
     float min      = wf.getMin();
@@ -451,57 +476,60 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     }
     string prefix = "";
     if (isPulserEvent) prefix = "Pulser_";
-    //if (!isPulserEvent && failsFFTCuts) prefix = "BadFFT_"
+    if (failsFFTCuts)  prefix = "BadFFT_";
+
     histos["PulserEvents"]->Fill(isPulserEvent);
-    histos[prefix+"FullAverage"]->Fill(sign*integral);
-    histos[prefix+"Signal"]     ->Fill(signalSpread);
-    histos[prefix+"Pedestal"]   ->Fill(pedestalSpread);
-    histos[prefix+"Pulser"]   ->Fill(pulserSpread);
-    histos[prefix+"SignalMinusPedestal"] -> Fill(signalSpread-pedestalSpread);
-    histos[prefix+"PulserMinusPedestal"] -> Fill(signalSpread-pedestalSpread);
-
-    histos[prefix+"SignalIntegral"]     ->Fill(sign*signal_integral);
-    histos[prefix+"PedestalIntegral"]   ->Fill(sign*pedestal_integral);
-    histos[prefix+"PulserIntegral"]     ->Fill(sign*pulser_integral);
-
     histos[prefix+"MeanFFT"]     ->Fill(wf.getMeanFFT()   );
     histos[prefix+"InvMaxFFT"]   ->Fill(1./wf.getMaxFFT() );
+    histos[prefix+"Signal"]     ->Fill(signalSpread);
 
-    for (it = time_profiles.begin();it!=time_profiles.end();it++){
-        float delta_t = (time_stamp-time_start)/1e7;
-//        std::cout<<event_no<<"delta_t: "<<delta_t<<std::endl;
-        if (it->second->GetXaxis()->GetXmax() < delta_t){
-            int t_bin = 10;
-            int bins = (delta_t+t_bin)/t_bin;
-            int max = (bins)*t_bin;
-            it->second->SetBins(bins,0,max);
+    if (!failsFFTCuts){
+        histos[prefix+"FullAverage"]->Fill(sign*integral);
+        histos[prefix+"Pedestal"]   ->Fill(pedestalSpread);
+        histos[prefix+"Pulser"]   ->Fill(pulserSpread);
+        histos[prefix+"SignalMinusPedestal"] -> Fill(signalSpread-pedestalSpread);
+        histos[prefix+"PulserMinusPedestal"] -> Fill(signalSpread-pedestalSpread);
+
+        histos[prefix+"SignalIntegral"]     ->Fill(sign*signal_integral);
+        histos[prefix+"PedestalIntegral"]   ->Fill(sign*pedestal_integral);
+        histos[prefix+"PulserIntegral"]     ->Fill(sign*pulser_integral);
+
+        for (it = time_profiles.begin();it!=time_profiles.end();it++){
+            float delta_t = (time_stamp-time_start)/1e7;
+//            std::cout<<event_no<<"delta_t: "<<delta_t<<std::endl;
+            if (it->second->GetXaxis()->GetXmax() < delta_t){
+                int t_bin = 10;
+                int bins = (delta_t+t_bin)/t_bin;
+                int max = (bins)*t_bin;
+                it->second->SetBins(bins,0,max);
+            }
+                time_profiles[prefix+"SignalMinusPedestal"]->Fill(delta_t,signalSpread-pedestalSpread);
         }
-            time_profiles[prefix+"SignalMinusPedestal"]->Fill(delta_t,signalSpread-pedestalSpread);
-    }
-    for (it = profiles.begin();it!=profiles.end();it++){
-        if (it->second->GetXaxis()->GetXmax() < event_no){
-            int bins = (event_no+5000)/5000;
-            int max = (bins)*5000;
-            it->second->SetBins(bins,0,max);
-            //			cout<<it->first<<": Extend Profile "<<bins<<" "<<max<<endl;
-        }
-        if(it->first == "PulserEvents")
-            it->second->Fill(event_no,isPulserEvent);
-        else if (it->first == prefix+"FullIntegral")
-            it->second->Fill(event_no,sign*integral);
-        else if (it->first == prefix+"Signal")
-            it->second->Fill(event_no,signalSpread);
-        else if (it->first == prefix+"Pedestal")
-            it->second->Fill(event_no,pedestalSpread);
-        else if (it->first == prefix+"Pulser")
-            it->second->Fill(event_no,pulserSpread);
-        else if (it->first == prefix+"SignalMinusPedestal")
-            it->second->Fill(event_no,signalSpread-pedestalSpread);
-        if (do_fitting){
-            if (event_no % 5000 == 0 && event_no >20000){
-                TF1* fit = new TF1("expoFit", "pol0(0)+expo(1)",0,event_no+5000);
-                it->second->Fit(fit,"Q");
-                delete fit;
+        for (it = profiles.begin();it!=profiles.end();it++){
+            if (it->second->GetXaxis()->GetXmax() < event_no){
+                int bins = (event_no+5000)/5000;
+                int max = (bins)*5000;
+                it->second->SetBins(bins,0,max);
+                //			cout<<it->first<<": Extend Profile "<<bins<<" "<<max<<endl;
+            }
+            if(it->first == "PulserEvents")
+                it->second->Fill(event_no,isPulserEvent);
+            else if (it->first == prefix+"FullIntegral")
+                it->second->Fill(event_no,sign*integral);
+            else if (it->first == prefix+"Signal")
+                it->second->Fill(event_no,signalSpread);
+            else if (it->first == prefix+"Pedestal")
+                it->second->Fill(event_no,pedestalSpread);
+            else if (it->first == prefix+"Pulser")
+                it->second->Fill(event_no,pulserSpread);
+            else if (it->first == prefix+"SignalMinusPedestal")
+                it->second->Fill(event_no,signalSpread-pedestalSpread);
+            if (do_fitting){
+                if (event_no % 5000 == 0 && event_no >20000){
+                    TF1* fit = new TF1("expoFit", "pol0(0)+expo(1)",0,event_no+5000);
+                    it->second->Fit(fit,"Q");
+                    delete fit;
+                }
             }
         }
     }
