@@ -378,12 +378,16 @@ void WaveformHistos::InitPulserProfiles(){
 void WaveformHistos::InitWaveformStacks(){
     TString hName = TString::Format("h_wf_stack_%s_%d",_sensor.c_str(),_id);
     TString hTitle = TString::Format("%s %d: Waveform Stack;time; signal/mV",_sensor.c_str(),_id);
+    TString hNameBadFFT = TString::Format("h_badfftwf_stack_%s_%d",_sensor.c_str(),_id);
+    TString hTitleBadFFT = TString::Format("%s %d: BadFFT Waveform Stack;time; signal/mV",_sensor.c_str(),_id);
     h_wf_stack = new THStack(hName,hTitle);
+    h_badfftwf_stack = new THStack(hNameBadFFT,hTitleBadFFT);
 
     for (int i = 0; i < _n_wfs; i++){
         hName = TString::Format("Waveform_%d_%d",_id,i);
         hTitle = TString::Format("Waveform ID %d - %d",_id,i);
-        _Waveforms.push_back(new TH1F(hName,hTitle,_n_samples,0,_n_samples));
+        _BadFFTWaveforms.push_back(new TH1F(hName      ,hTitle      ,_n_samples,0,_n_samples));
+        _Waveforms      .push_back(new TH1F(hNameBadFFT,hTitleBadFFT,_n_samples,0,_n_samples));
         //		FixRangeY(string)
         ////		_Waveforms.back()->SetPoint(0,0,0);
         //		_Waveforms.back()->SetPoint(1,1,1);
@@ -393,6 +397,11 @@ void WaveformHistos::InitWaveformStacks(){
         if (_Waveforms.back()->GetYaxis())
             _Waveforms.back()->GetYaxis()->SetTitle("Signal / mV");
         h_wf_stack->Add(_Waveforms.back());
+        if (_BadFFTWaveforms.back()->GetXaxis())
+            _BadFFTWaveforms.back()->GetXaxis()->SetTitle("n");
+        if (_BadFFTWaveforms.back()->GetYaxis())
+            _BadFFTWaveforms.back()->GetYaxis()->SetTitle("Signal / mV");
+        h_badfftwf_stack->Add(_BadFFTWaveforms.back());
     }
 
     for (std::map<std::string, TH1*>::iterator it = profiles.begin();it!=profiles.end();it++){
@@ -417,12 +426,21 @@ void WaveformHistos::Reinitialize_Waveforms() {
 
 }
 
+void WaveformHistos::Reinitialize_BadFFTWaveforms() {
+    cout<<"WaveformHistos::Reinitialize_Waveforms of "<<_sensor.c_str()<<"_"<<_id<<" with "<<getNSamples()<<" Samples."<<endl;
+    for (int i = 0; i < _n_wfs; i++){
+        TH1F* histo = _BadFFTWaveforms.at(i);
+        histo->SetBins(_n_samples,0,_n_samples);
+    }
+}
+
 void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 {
 //    std::cout<<"WaveformHistos::Fill"<<std::endl;
     if (wf.getNSamples() > this->getNSamples()){
         _n_samples = wf.getNSamples();
         Reinitialize_Waveforms();
+        Reinitialize_BadFFTWaveforms();
     }
     bool isPulserEvent = wf.isPulserEvent();
     this->FillEvent(wf, isPulserEvent);
@@ -535,26 +553,47 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     }
 
     UpdateRanges();
-    TH1F* gr = _Waveforms[n_fills%_n_wfs];
-    for (int n = 0; n < wf.getNSamples();n++)
-        gr->SetBinContent(n+1,wf.getData()[n]);
-    for (int i = 0; i < _n_wfs; i++)
-        _Waveforms[(n_fills-i)%_n_wfs]->SetLineColor(kAzure+i);
-    gr->SetEntries(event_no);
-    n_fills++;
+    if(!failsFFTCuts) {
+        TH1F* gr = _Waveforms[n_fills%_n_wfs];
+        for (int n = 0; n < wf.getNSamples();n++)
+            gr->SetBinContent(n+1,wf.getData()[n]);
+        for (int i = 0; i < _n_wfs; i++)
+            _Waveforms[(n_fills-i)%_n_wfs]->SetLineColor(kAzure+i);
+        gr->SetEntries(event_no);
+        n_fills++;
 
-    if (n_fills<=1){
-        //		gr->Draw("APL");
-        if (gr->GetXaxis())
-            gr->GetXaxis()->SetTitle("n");
-        if (gr->GetYaxis())
-            gr->GetYaxis()->SetTitle("Signal / mV");
+        if (n_fills<=1){
+            //		gr->Draw("APL");
+            if (gr->GetXaxis())
+                gr->GetXaxis()->SetTitle("n");
+            if (gr->GetYaxis())
+                gr->GetYaxis()->SetTitle("Signal / mV");
+        }
+    }
+    else {
+        TH1F* badfftgr = _BadFFTWaveforms[n_fills%_n_wfs];
+        for (int n = 0; n < wf.getNSamples();n++)
+            badfftgr->SetBinContent(n+1,wf.getData()[n]);
+        for (int i = 0; i < _n_wfs; i++)
+            _BadFFTWaveforms[(n_fills-i)%_n_wfs]->SetLineColor(kAzure+i);
+        badfftgr->SetEntries(event_no);
+        n_fills++;
+
+        if (n_fills<=1){
+            //		gr->Draw("APL");
+            if (badfftgr->GetXaxis())
+                badfftgr->GetXaxis()->SetTitle("n");
+            if (badfftgr->GetYaxis())
+                badfftgr->GetYaxis()->SetTitle("Signal / mV");
+        }
     }
 }
 
 void WaveformHistos::Reset() {
     for (int i = 0; i < _Waveforms.size(); i++)
         _Waveforms[i]->Reset();
+    for (int i = 0; i < _BadFFTWaveforms.size(); i++)
+        _BadFFTWaveforms[i]->Reset();
     // we have to reset the aux array as well
     std::map<std::string, TH1*>::iterator it;
     for (it = histos.begin(); it != histos.end();it++)
@@ -579,6 +618,7 @@ void WaveformHistos::Write()
     for (UInt_t i = 0; i< _Waveforms.size();i++)
         _Waveforms.at(i)->Write();
     h_wf_stack->Write();
+    h_badfftwf_stack->Write();
     std::map<std::string, TH1*>::iterator it;
     for (it = profiles.begin();it!=profiles.end();it++)
         it->second->Write();
