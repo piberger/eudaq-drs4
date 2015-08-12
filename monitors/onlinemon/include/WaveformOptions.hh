@@ -16,6 +16,7 @@
 #include <iostream>
 #include <sstream>
 
+namespace eudaq {
 
 
 
@@ -46,7 +47,9 @@ public:
     WaveformOptions();
     virtual ~WaveformOptions();
     void SetVariable(std::string key, std::string value);
-    std::string GetVariable(std::string key) { return GetWithDef(KeyValueMap,key,(std::string)"");}
+    std::string GetStringVariable(std::string key) { return GetWithDef(KeyValueMap,key,(std::string)"");}
+    int GetIntVariable(std::string key){return from_string(GetWithDef(KeyValueMap,key,(std::string){"0"}),0);}
+    int GetFloatVariable(std::string key){return from_string(GetWithDef(KeyValueMap,key,(std::string){"0"}),0.0);}
 
 };
 
