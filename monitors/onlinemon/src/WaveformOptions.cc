@@ -17,5 +17,7 @@ WaveformOptions::~WaveformOptions() {
 }
 
 void WaveformOptions::SetDefaults(){
+    KeyValueMap["signal_range_min"] = "200";
+    KeyValueMap["signal_range_max"] = "350";
 
 }
