@@ -128,6 +128,11 @@ void WaveformCollection::registerSignalWaveforms(const SimpleStandardWaveform &p
     registerDataWaveforms(p,"","SignalEvents");
 }
 
+void WaveformCollection::registerBadFFTWaveforms(const SimpleStandardWaveform &p){
+    registerBadFFTWaveforms(p,"BadFFTEvents");
+}
+
+
 void WaveformCollection::registerDataWaveforms(const SimpleStandardWaveform &p,string prefix, string desc){
     char tree[1024], folder[1024];
 
@@ -228,6 +233,28 @@ void WaveformCollection::registerDataWaveforms(const SimpleStandardWaveform &p,s
     _mon->getOnlineMon()->makeTreeItemSummary(tree); //make summary page
 }
 
+void WaveformCollection::registerBadFFTWaveforms(const SimpleStandardWaveform &p, string desc){
+    char tree[1024], folder[1024];
+
+    WaveformHistos* wf_histo =getWaveformHistos(p.getName(),p.getID());
+    string main_path = (string)TString::Format("%s/Ch %i - %s/%s",p.getName().c_str(),p.getID(),p.getChannelName().c_str(),desc.c_str());
+
+    sprintf(tree,"%s/Signal",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getHisto("BadFFT_Signal"), "",0);
+
+    sprintf(tree,"%s/MeanFFT",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getHisto("BadFFT_MeanFFT"), "",0);
+
+    sprintf(tree,"%s/InvMaxFFT",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getHisto("BadFFT_InvMaxFFT"), "",0);
+}
+
 void WaveformCollection::registerGlobalWaveforms(const SimpleStandardWaveform &p){
     char tree[1024], folder[1024];
     sprintf(tree,"%s/Ch %i - %s/IsPulserEvent",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
@@ -280,6 +307,7 @@ void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
         registerGlobalWaveforms(p);
 
         registerSignalWaveforms(p);
+        registerBadFFTWaveforms(p);
         //
         //=====================================================================
         //=============== WAVEFORM STACKS =====================================
