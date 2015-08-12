@@ -570,7 +570,7 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
                 gr->GetYaxis()->SetTitle("Signal / mV");
         }
     }
-    else {
+    else if(failsFFTCuts && !isPulserEvent) {
         TH1F* badfftgr = _BadFFTWaveforms[n_fills%_n_wfs];
         for (int n = 0; n < wf.getNSamples();n++)
             badfftgr->SetBinContent(n+1,wf.getData()[n]);
