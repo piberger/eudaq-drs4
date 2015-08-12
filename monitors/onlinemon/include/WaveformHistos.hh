@@ -34,7 +34,9 @@ class WaveformHistos {
     int _id;
     bool _wait;
     std::vector<TH1F*> _Waveforms;
+    std::vector<TH1F*> _BadFFTWaveforms;
     THStack* h_wf_stack;
+    THStack* h_badfftwf_stack;
     int _n_wfs;
     unsigned int _n_samples;
     std::map<std::string, TH1*> profiles;
@@ -57,7 +59,9 @@ class WaveformHistos {
     void Write();
     unsigned GetNWaveforms() const {return _n_wfs;};
     TH1F * getWaveformGraph(int i) { return _Waveforms[i%_n_wfs]; }
+    TH1F * getBadFFTWaveformGraph(int i) { return _BadFFTWaveforms[i%_n_wfs]; }
     THStack* getWaveformStack(){return h_wf_stack;}
+    THStack* getBadFFTWaveformStack(){return h_badfftwf_stack;}
     void setRootMonitor(RootMonitor *mon)  {_mon = mon; };
     // signal histos   
     TH1F* getFullAverageVoltageHisto() const { return (TH1F*)histos.at("FullAverage");};
@@ -108,6 +112,7 @@ class WaveformHistos {
     void InitPedestalProfiles();
     void InitWaveformStacks();
     void Reinitialize_Waveforms();
+    void Reinitialize_BadFFTWaveforms();
     void UpdateRanges();
     void UpdateRange(TH1* histo);
     int SetHistoAxisLabelx(TH1* histo,std::string xlabel);
