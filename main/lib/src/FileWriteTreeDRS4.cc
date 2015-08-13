@@ -1109,7 +1109,7 @@ void FileWriterTreeDRS4::UpdateWaveforms(int iwf, const StandardWaveform *wf){
 }
 
 int FileWriterTreeDRS4::IsPulserEvent(const StandardWaveform *wf){
-    f_pulser_int = wf->getIntegral(700, 900, true);
+    f_pulser_int = wf->getIntegral(740, 860, true);
     return f_pulser_int > 80.;
 } //end IsPulserEvent
 
