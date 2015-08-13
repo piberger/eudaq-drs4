@@ -308,7 +308,9 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
             //     cout << "PulserEvent, minimum is " << pulserMin << std::endl;
     	}
     }
-
+    if (_last_fft_min.size() <nwf)_last_fft_min.resize(-1);
+    if (_last_fft_max.size() <nwf)_last_fft_min.resize(-1);
+    if (_last_fft_mean.size() <nwf)_last_fft_min.resize(-1);
 	for (unsigned int i = 0; i < nwf;i++){
 			const eudaq::StandardWaveform & waveform = ev.GetWaveform(i);
 #ifdef DEBUG
@@ -324,14 +326,31 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
             // cout << " 
 			std::string sensorname;
 			sensorname = waveform.GetType();
-//             cout << "sensorname " << sensorname << endl; // this gives V1730 or drs4
-//			SimpleStandardWaveform simpWaveform(sensorname,waveform.ID(),&mon_configdata);//,plane.XSize(),plane.YSize(), plane.TLUEvent(),plane.PivotPixel(),&mon_configdata);
 			SimpleStandardWaveform simpWaveform(sensorname,waveform.ID(),waveform.GetNSamples(),&mon_configdata);//,plane.XSize(),plane.YSize(), plane.TLUEvent(),plane.PivotPixel(),&mon_configdata);
 			simpWaveform.setSign(mon_configdata.getSignalSign(waveform.GetChannelNumber()));
 			simpWaveform.setNSamples(waveform.GetNSamples());
 			simpWaveform.addData(&(*waveform.GetData())[0]);
             // perform the fft and put it into the simpleWF directly
             simpWaveform.performFFT(fft_own);
+            int count = 0;
+            if (simpWaveform.getMeanFFT() == _last_fft_mean[i]){
+                cout<<i<<"FFT Means disagree\t";
+                count+=1;
+            }
+            if (simpWaveform.getMaxFFT() == _last_fft_max[i]){
+                cout<<i<<"FFT Max disagree\t";
+                count+=1;
+            }
+            if (simpWaveform.getMinFFT() == _last_fft_min[i]){
+                cout<<i<<"FFT Min disagree\t";
+                count+=1;
+            }
+            if (count!=0){
+                cout <<endl;
+            }
+            _last_fft_min[i] = simpWaveform.getMinFFT();
+            _last_fft_max[i] = simpWaveform.getMaxFFT();
+            _last_fft_mean[i] = simpWaveform.getMeanFFT();
 
 			simpWaveform.Calculate();
 			//simpWaveform.setTimestamp(ev.GetTimestamp());
