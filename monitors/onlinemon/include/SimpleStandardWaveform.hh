@@ -13,6 +13,7 @@
 #include <iostream>
 #include <set>
 #include <algorithm>
+#include <numeric>      // std::accumulate
 
 #include <stdio.h>
 #include <string.h>

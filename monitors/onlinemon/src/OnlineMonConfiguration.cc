@@ -243,7 +243,7 @@ int OnlineMonConfiguration::ReadConfigurationFile()
 
 OnlineMonConfiguration::OnlineMonConfiguration(string confname)
 {
-	_waveformoptions = new WaveformOptions();
+	_waveformoptions = new eudaq::WaveformOptions();
 	this->ConfigurationFileName=confname;
 	SetDefaults();
 }
