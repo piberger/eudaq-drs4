@@ -661,7 +661,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
 
         if (verbose > 3)
             cout<<"get trigger wf "<<iwf<<endl;
-        if(iwf == 1){ // trigger WF
+        if(iwf == 2){ // trigger WF
             for (int j=0; j<data->size(); j++){
                 if( abs(data->at(j)) > 90. ) {f_trig_time = j; break;}
             }
@@ -669,7 +669,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
 
         if (verbose > 3)
             cout<<"get pulser wf "<<iwf<<endl;
-        if(iwf == 2){ // pulser WF
+        if(iwf == 1){ // pulser WF
             f_pulser = this->IsPulserEvent(&waveform);
             if (f_pulser)
                 f_pulser_events++;
