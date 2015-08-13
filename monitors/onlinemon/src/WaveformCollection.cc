@@ -312,11 +312,6 @@ void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
         //=====================================================================
         //=============== WAVEFORM STACKS =====================================
         //=====================================================================
-        sprintf(tree,"%s/Ch %i - %s/BadFFTEvents/RawWaveformStackBadFFT",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-        std::cout<<tree<<endl;
-        _mon->getOnlineMon()->registerTreeItem(tree);
-        _mon->getOnlineMon()->registerHistoStack(tree,getWaveformHistos(p.getName(),p.getID())->getBadFFTWaveformStack(), "nostack",0);
-
         sprintf(tree,"%s/Ch %i - %s/RawWaveform",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
         std::cout<<tree<<endl;
         _mon->getOnlineMon()->registerTreeItem(tree);
@@ -326,6 +321,11 @@ void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
         std::cout<<tree<<endl;
         _mon->getOnlineMon()->registerTreeItem(tree);
         _mon->getOnlineMon()->registerHistoStack(tree,getWaveformHistos(p.getName(),p.getID())->getWaveformStack(), "nostack",0);
+
+        sprintf(tree,"%s/Ch %i - %s/BadFFTEvents/RawWaveformStackBadFFT",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+        std::cout<<tree<<endl;
+        _mon->getOnlineMon()->registerTreeItem(tree);
+        _mon->getOnlineMon()->registerHistoStack(tree,getWaveformHistos(p.getName(),p.getID())->getBadFFTWaveformStack(), "nostack",0);
 
         sprintf(folder,"%s",p.getName().c_str());
 #ifdef DEBUG

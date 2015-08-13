@@ -439,8 +439,8 @@ void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 //    std::cout<<"WaveformHistos::Fill"<<std::endl;
     if (wf.getNSamples() > this->getNSamples()){
         _n_samples = wf.getNSamples();
-        Reinitialize_BadFFTWaveforms();
         Reinitialize_Waveforms();
+        Reinitialize_BadFFTWaveforms();
     }
     bool isPulserEvent = wf.isPulserEvent();
     this->FillEvent(wf, isPulserEvent);
@@ -464,6 +464,10 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     // check if the event passes/fails the FFT cuts
     bool failsFFTCuts = !( (wf.getMeanFFT() < 500 ) || ( (1./wf.getMaxFFT()) > 1E-4 ) );
     histos["nBadFFTEvents"]->Fill(failsFFTCuts);
+
+    // if (!(event_no%1000)) 
+    //     cout << "ev " << event_no << " in wf " << wf.getChannelName() << " this is the mean FFT: " << wf.getMeanFFT() << 
+    //     "   this is the inv. max: " << 1./wf.getMaxFFT() << "   at time " << timestamp << endl;
 
     float min      = wf.getMin();
     float max      = wf.getMax();
@@ -553,26 +557,39 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     }
 
     UpdateRanges();
-    TH1F* gr;
-    if (!failsFFTCuts) gr = _Waveforms[n_fills%_n_wfs];
-    else if (failsFFTCuts && !isPulserEvent) gr = _BadFFTWaveforms[n_fills%_n_wfs];
-    
-    if (gr == NULL) cout << " we might be screwed now... " << endl;
-    for (int n = 0; n < wf.getNSamples();n++)
-        gr->SetBinContent(n+1,wf.getData()[n]);
-    for (int i = 0; i < _n_wfs; i++) {
-        _Waveforms[(n_fills-i)%_n_wfs]->SetLineColor(kAzure+i);
-        _BadFFTWaveforms[(n_fills-i)%_n_wfs]->SetLineColor(kOrange+i);
-    }
-    gr->SetEntries(event_no);
-    n_fills++;
+    if(!failsFFTCuts) {
+        TH1F* gr = _Waveforms[n_fills%_n_wfs];
+        for (int n = 0; n < wf.getNSamples();n++)
+            gr->SetBinContent(n+1,wf.getData()[n]);
+        for (int i = 0; i < _n_wfs; i++)
+            _Waveforms[(n_fills-i)%_n_wfs]->SetLineColor(kAzure+i);
+        gr->SetEntries(event_no);
+        n_fills++;
 
-    if (n_fills<=1){
-        //		gr->Draw("APL");
-        if (gr->GetXaxis())
-            gr->GetXaxis()->SetTitle("n");
-        if (gr->GetYaxis())
-            gr->GetYaxis()->SetTitle("Signal / mV");
+        if (n_fills<=1){
+            //		gr->Draw("APL");
+            if (gr->GetXaxis())
+                gr->GetXaxis()->SetTitle("n");
+            if (gr->GetYaxis())
+                gr->GetYaxis()->SetTitle("Signal / mV");
+        }
+    }
+    else if(failsFFTCuts && !isPulserEvent) {
+        TH1F* badfftgr = _BadFFTWaveforms[n_fills%_n_wfs];
+        for (int n = 0; n < wf.getNSamples();n++)
+            badfftgr->SetBinContent(n+1,wf.getData()[n]);
+        for (int i = 0; i < _n_wfs; i++)
+            _BadFFTWaveforms[(n_fills-i)%_n_wfs]->SetLineColor(kAzure+i);
+        badfftgr->SetEntries(event_no);
+        n_fills++;
+
+        if (n_fills<=1){
+            //		gr->Draw("APL");
+            if (badfftgr->GetXaxis())
+                badfftgr->GetXaxis()->SetTitle("n");
+            if (badfftgr->GetYaxis())
+                badfftgr->GetYaxis()->SetTitle("Signal / mV");
+        }
     }
 }
 
