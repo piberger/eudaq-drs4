@@ -58,6 +58,11 @@ void WaveformHistos::InitHistos() {
     hTitle = TString::Format("%s %d: no of bad events acc to FFT cuts ; number of entries",_sensor.c_str(),_id);
     histos["nBadFFTEvents"]= new TH1F(hName,hTitle,2,-.5,1.5);
 
+    hName = TString::Format("hCategoryVsEventNo_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Event No.; Category",_sensor.c_str(),_id);
+    histos["CategroyVsEvent"] = new TH2F(hName,hTitle,6,-1,5,100,0,1000);
+
+
     InitIntegralHistos();
     InitFFTHistos();
     InitBadFFTHistos();
@@ -462,16 +467,30 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     int event_no = wf.getEvent();
     ULong64_t timestamp = wf.getTimestamp();
     int sign = wf.getSign(); //why is this here? it's never properly assigned
-
+    EventCategroy cat = GOOD_EVENT;
     float maxSpread   = wf.maxSpreadInRegion(200,400);
-    bool goodEvent = true;
     // do not record events with a flat line due to leakage current
-    if(maxSpread < 10) goodEvent = false;
-    histos["nFlatLineEvents"]->Fill(!goodEvent);
-    if(!goodEvent) return;
-    // check if the event passes/fails the FFT cuts
+    bool bFlatlineEvent = false;
+    if(maxSpread < 10) bFlatlineEvent = true;
+    if (bFlatlineEvent)
+        cat = FLAT_EVENT;
     bool failsFFTCuts = ( (wf.getMeanFFT() > 500 ) || ( (1./wf.getMaxFFT()) < 1E-4 ) );
+    if (failsFFTCuts)
+        cat = BAD_FFT_MAX_EVENT;//todo
+    if (isPulserEvent)
+        cat = PULSER_EVENT;
+    histos["nFlatLineEvents"]->Fill(bFlatlineEvent);
+    if (bFlatlineEvent)
+        return;
     histos["nBadFFTEvents"]->Fill(failsFFTCuts);
+    // categories:
+    // 0: good Event
+    // 1: flat line Event
+    // 2: badFFt Event
+    // 3: pulser Event
+    histos["CategroyVsEvent"]->Fill(event_no,(int)cat);
+    if(bFlatlineEvent) return;
+    // check if the event passes/fails the FFT cuts
 
     // if (!(event_no%1000)) 
     //     cout << "ev " << event_no << " in wf " << wf.getChannelName() << " this is the mean FFT: " << wf.getMeanFFT() << 
