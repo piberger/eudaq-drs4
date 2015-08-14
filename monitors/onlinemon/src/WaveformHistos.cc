@@ -61,6 +61,7 @@ void WaveformHistos::InitHistos() {
     hName = TString::Format("hCategoryVsEventNo_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: Event No.; Category",_sensor.c_str(),_id);
     histos["CategroyVsEvent"] = new TH2F(hName,hTitle,6,-1,5,100,0,1000);
+    histos["CategroyVsEvent"]->GetXaxis()->SetBit(TH1::kCanRebin);
 
 
     InitIntegralHistos();
@@ -283,10 +284,23 @@ void WaveformHistos::InitProfiles(){
     TString hName;
     TString hTitle;
 
+    hName = TString::Format("h_ProfileSignalEvents_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Profile no of SIgnalEvents; event number / 5000events; rel. no of SignalEvents",_sensor.c_str(),_id);
+    profiles["SignalEvents"] = new TProfile(hName,hTitle,1,0,1000);
+    profiles["SignalEvents"]->SetStats(false);
+    profiles["SignalEvents"]->GetYaxis()->SetRangeUser(0., 1.);
+
+    hName = TString::Format("h_ProfileBadFFTEvents_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Profile no of BadFFTEvents; event number / 5000events; rel. no of BadFFTEvents",_sensor.c_str(),_id);
+    profiles["BadFFTEvents"] = new TProfile(hName,hTitle,1,0,1000);
+    profiles["BadFFTEvents"]->SetStats(false);
+    profiles["BadFFTEvents"]->GetYaxis()->SetRangeUser(0., 1.);
+
     hName = TString::Format("h_ProfilePulserEvents_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: Profile no of PulserEvents; event number / 5000events; rel. no of PulserEvents",_sensor.c_str(),_id);
     profiles["PulserEvents"] = new TProfile(hName,hTitle,1,0,1000);
     profiles["PulserEvents"]->SetStats(false);
+    profiles["PulserEvents"]->GetYaxis()->SetRangeUser(0., 1.);
 
     hName = TString::Format("h_ProfileFullAverage_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: Profile FullAverage; event number / 5000events; signal/mV",_sensor.c_str(),_id);
@@ -533,6 +547,20 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     histos[prefix+"MeanFFT"]     ->Fill(wf.getMeanFFT()   );
     histos[prefix+"InvMaxFFT"]   ->Fill(1./wf.getMaxFFT() );
     histos[prefix+"Signal"]     ->Fill(signalSpread);
+    for (it = profiles.begin();it!=profiles.end();it++){
+        if (it->second->GetXaxis()->GetXmax() < event_no){
+            int bins = (event_no+5000)/5000;
+            int max = (bins)*5000;
+            it->second->SetBins(bins,0,max);
+            //			cout<<it->first<<": Extend Profile "<<bins<<" "<<max<<endl;
+        }
+        if     (it->first == "SignalEvents")
+            it->second->Fill(event_no,!(isPulserEvent || failsFFTCuts));
+        else if(it->first == "BadFFTEvents")
+            it->second->Fill(event_no,failsFFTCuts);
+        else if(it->first == "PulserEvents")
+            it->second->Fill(event_no,isPulserEvent);
+    }
 
     if (!failsFFTCuts){
         histos[prefix+"FullAverage"]->Fill(sign*integral);
@@ -563,9 +591,7 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
                 it->second->SetBins(bins,0,max);
                 //			cout<<it->first<<": Extend Profile "<<bins<<" "<<max<<endl;
             }
-            if(it->first == "PulserEvents")
-                it->second->Fill(event_no,isPulserEvent);
-            else if (it->first == prefix+"FullIntegral")
+            if (it->first == prefix+"FullIntegral")
                 it->second->Fill(event_no,sign*integral);
             else if (it->first == prefix+"Signal")
                 it->second->Fill(event_no,signalSpread);
