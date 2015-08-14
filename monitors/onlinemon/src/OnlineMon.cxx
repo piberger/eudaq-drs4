@@ -52,7 +52,7 @@ using namespace std;
 RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & datafile, int /*x*/, int /*y*/, int /*w*/,
 			 int /*h*/, int argc, int offline, const unsigned lim, const unsigned skip_, const unsigned int skip_with_counter,
 			 const std::string & conffile)
-  : eudaq::Holder<int>(argc), eudaq::Monitor("OnlineMon", runcontrol, lim, skip_, skip_with_counter, datafile), _offline(offline), _planesInitialized(false) {
+  : eudaq::Holder<int>(argc), eudaq::Monitor("OnlineMon", runcontrol, lim, skip_, skip_with_counter, datafile), _offline(offline), _planesInitialized(false), _fft_resets(0){
 
   if (_offline <= 0)
   {
@@ -308,9 +308,9 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
             //     cout << "PulserEvent, minimum is " << pulserMin << std::endl;
     	}
     }
-    if (_last_fft_min.size() <nwf)_last_fft_min.resize(-1);
-    if (_last_fft_max.size() <nwf)_last_fft_min.resize(-1);
-    if (_last_fft_mean.size() <nwf)_last_fft_min.resize(-1);
+    if (_last_fft_min.size() <nwf)_last_fft_min.resize(nwf,-1);
+    if (_last_fft_max.size() <nwf)_last_fft_max.resize(nwf,-1);
+    if (_last_fft_mean.size() <nwf)_last_fft_mean.resize(nwf,-1);
 	for (unsigned int i = 0; i < nwf;i++){
 			const eudaq::StandardWaveform & waveform = ev.GetWaveform(i);
 #ifdef DEBUG
@@ -333,20 +333,29 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
             // perform the fft and put it into the simpleWF directly
             simpWaveform.performFFT(fft_own);
             int count = 0;
-            if (simpWaveform.getMeanFFT() == _last_fft_mean[i]){
-                cout<<i<<"FFT Means disagree\t";
+            //cout<<"Bla"<<endl;
+            if (simpWaveform.getMeanFFT() == _last_fft_mean.at(i)){
+                //cout<<i<<"FFT Means disagree\t";
                 count+=1;
             }
-            if (simpWaveform.getMaxFFT() == _last_fft_max[i]){
-                cout<<i<<"FFT Max disagree\t";
+            if (simpWaveform.getMaxFFT() == _last_fft_max.at(i)){
+                //cout<<i<<"FFT Max disagree\t";
                 count+=1;
             }
-            if (simpWaveform.getMinFFT() == _last_fft_min[i]){
-                cout<<i<<"FFT Min disagree\t";
+            if (simpWaveform.getMinFFT() == _last_fft_min.at(i)){
+                //cout<<i<<"FFT Min disagree\t";
                 count+=1;
             }
             if (count!=0){
-                cout <<endl;
+                if (fft_own){
+                    delete fft_own;
+                    _fft_resets+=1;
+                    cout<<ev.GetEventNumber()<<" Reinitialized FFT "<<_fft_resets<<endl;
+                    int n_samples = 1024;
+                    Int_t n_size = n_samples+1;
+                    fft_own = TVirtualFFT::FFT(1, &n_size, "R2C P K");
+                }
+                simpWaveform.performFFT(fft_own);
             }
             _last_fft_min[i] = simpWaveform.getMinFFT();
             _last_fft_max[i] = simpWaveform.getMaxFFT();

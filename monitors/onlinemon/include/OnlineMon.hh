@@ -138,6 +138,7 @@ class RootMonitor : private eudaq::Holder<int>,
       string GetSnapShotDir();
       OnlineMonConfiguration mon_configdata; //FIXME
 
+      unsigned int _fft_resets;
       std::vector<float> _last_fft_min;
       std::vector<float> _last_fft_max;
       std::vector<float> _last_fft_mean;
