@@ -38,6 +38,14 @@ void WaveformHistos::InitHistos() {
     //		_Waveforms.push_back(new TGraph());
 //    std::cout<<"maxSignalVoltage"<<std::endl;
     TString hName, hTitle;
+    hName = TString::Format("h_SignalEvents_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: no of signal events ; is signal event; number of entries",_sensor.c_str(),_id);
+    histos["SignalEvents"]= new TH1F(hName,hTitle,2,-.5,1.5);
+
+    hName = TString::Format("h_BadFFTEvents_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: no of badFFT events ; is badFFT event; number of entries",_sensor.c_str(),_id);
+    histos["BadFFTEvents"]= new TH1F(hName,hTitle,2,-.5,1.5);
+
     hName = TString::Format("h_PulserEvents_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: no of pulser events ; is pulser event; number of entries",_sensor.c_str(),_id);
     histos["PulserEvents"]= new TH1F(hName,hTitle,2,-.5,1.5);
@@ -462,7 +470,7 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     histos["nFlatLineEvents"]->Fill(!goodEvent);
     if(!goodEvent) return;
     // check if the event passes/fails the FFT cuts
-    bool failsFFTCuts = !( (wf.getMeanFFT() < 500 ) || ( (1./wf.getMaxFFT()) > 1E-4 ) );
+    bool failsFFTCuts = ( (wf.getMeanFFT() > 500 ) || ( (1./wf.getMaxFFT()) < 1E-4 ) );
     histos["nBadFFTEvents"]->Fill(failsFFTCuts);
 
     // if (!(event_no%1000)) 
@@ -501,6 +509,8 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     if (failsFFTCuts)  prefix = "BadFFT_";
 
     histos["PulserEvents"]->Fill(isPulserEvent);
+    histos["BadFFTEvents"]->Fill(failsFFTCuts);
+    histos["SignalEvents"]->Fill((!failsFFTCuts) && !(isPulserEvent));
     histos[prefix+"MeanFFT"]     ->Fill(wf.getMeanFFT()   );
     histos[prefix+"InvMaxFFT"]   ->Fill(1./wf.getMaxFFT() );
     histos[prefix+"Signal"]     ->Fill(signalSpread);
