@@ -38,6 +38,14 @@ void WaveformHistos::InitHistos() {
     //		_Waveforms.push_back(new TGraph());
 //    std::cout<<"maxSignalVoltage"<<std::endl;
     TString hName, hTitle;
+    hName = TString::Format("h_SignalEvents_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: no of signal events ; is signal event; number of entries",_sensor.c_str(),_id);
+    histos["SignalEvents"]= new TH1F(hName,hTitle,2,-.5,1.5);
+
+    hName = TString::Format("h_BadFFTEvents_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: no of badFFT events ; is badFFT event; number of entries",_sensor.c_str(),_id);
+    histos["BadFFTEvents"]= new TH1F(hName,hTitle,2,-.5,1.5);
+
     hName = TString::Format("h_PulserEvents_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: no of pulser events ; is pulser event; number of entries",_sensor.c_str(),_id);
     histos["PulserEvents"]= new TH1F(hName,hTitle,2,-.5,1.5);
@@ -49,6 +57,12 @@ void WaveformHistos::InitHistos() {
     hName = TString::Format("h_nBadFFTEvents_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: no of bad events acc to FFT cuts ; number of entries",_sensor.c_str(),_id);
     histos["nBadFFTEvents"]= new TH1F(hName,hTitle,2,-.5,1.5);
+
+    hName = TString::Format("hCategoryVsEventNo_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Event No.; Category",_sensor.c_str(),_id);
+    histos["CategroyVsEvent"] = new TH2F(hName,hTitle,6,-1,5,100,0,1000);
+    histos["CategroyVsEvent"]->GetXaxis()->SetBit(TH1::kCanRebin);
+
 
     InitIntegralHistos();
     InitFFTHistos();
@@ -270,10 +284,23 @@ void WaveformHistos::InitProfiles(){
     TString hName;
     TString hTitle;
 
+    hName = TString::Format("h_ProfileSignalEvents_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Profile no of SIgnalEvents; event number / 5000events; rel. no of SignalEvents",_sensor.c_str(),_id);
+    profiles["SignalEvents"] = new TProfile(hName,hTitle,1,0,1000);
+    profiles["SignalEvents"]->SetStats(false);
+    profiles["SignalEvents"]->GetYaxis()->SetRangeUser(0., 1.);
+
+    hName = TString::Format("h_ProfileBadFFTEvents_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Profile no of BadFFTEvents; event number / 5000events; rel. no of BadFFTEvents",_sensor.c_str(),_id);
+    profiles["BadFFTEvents"] = new TProfile(hName,hTitle,1,0,1000);
+    profiles["BadFFTEvents"]->SetStats(false);
+    profiles["BadFFTEvents"]->GetYaxis()->SetRangeUser(0., 1.);
+
     hName = TString::Format("h_ProfilePulserEvents_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: Profile no of PulserEvents; event number / 5000events; rel. no of PulserEvents",_sensor.c_str(),_id);
     profiles["PulserEvents"] = new TProfile(hName,hTitle,1,0,1000);
     profiles["PulserEvents"]->SetStats(false);
+    profiles["PulserEvents"]->GetYaxis()->SetRangeUser(0., 1.);
 
     hName = TString::Format("h_ProfileFullAverage_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: Profile FullAverage; event number / 5000events; signal/mV",_sensor.c_str(),_id);
@@ -454,16 +481,30 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     int event_no = wf.getEvent();
     ULong64_t timestamp = wf.getTimestamp();
     int sign = wf.getSign(); //why is this here? it's never properly assigned
-
+    EventCategroy cat = GOOD_EVENT;
     float maxSpread   = wf.maxSpreadInRegion(200,400);
-    bool goodEvent = true;
     // do not record events with a flat line due to leakage current
-    if(maxSpread < 10) goodEvent = false;
-    histos["nFlatLineEvents"]->Fill(!goodEvent);
-    if(!goodEvent) return;
-    // check if the event passes/fails the FFT cuts
-    bool failsFFTCuts = !( (wf.getMeanFFT() < 500 ) || ( (1./wf.getMaxFFT()) > 1E-4 ) );
+    bool bFlatlineEvent = false;
+    if(maxSpread < 10) bFlatlineEvent = true;
+    if (bFlatlineEvent)
+        cat = FLAT_EVENT;
+    bool failsFFTCuts = ( (wf.getMeanFFT() > 500 ) || ( (1./wf.getMaxFFT()) < 1E-4 ) );
+    if (failsFFTCuts)
+        cat = BAD_FFT_MAX_EVENT;//todo
+    if (isPulserEvent)
+        cat = PULSER_EVENT;
+    histos["nFlatLineEvents"]->Fill(bFlatlineEvent);
+    if (bFlatlineEvent)
+        return;
     histos["nBadFFTEvents"]->Fill(failsFFTCuts);
+    // categories:
+    // 0: good Event
+    // 1: flat line Event
+    // 2: badFFt Event
+    // 3: pulser Event
+    histos["CategroyVsEvent"]->Fill(event_no,(int)cat);
+    if(bFlatlineEvent) return;
+    // check if the event passes/fails the FFT cuts
 
     // if (!(event_no%1000)) 
     //     cout << "ev " << event_no << " in wf " << wf.getChannelName() << " this is the mean FFT: " << wf.getMeanFFT() << 
@@ -501,9 +542,25 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     if (failsFFTCuts)  prefix = "BadFFT_";
 
     histos["PulserEvents"]->Fill(isPulserEvent);
+    histos["BadFFTEvents"]->Fill(failsFFTCuts);
+    histos["SignalEvents"]->Fill((!failsFFTCuts) && !(isPulserEvent));
     histos[prefix+"MeanFFT"]     ->Fill(wf.getMeanFFT()   );
     histos[prefix+"InvMaxFFT"]   ->Fill(1./wf.getMaxFFT() );
     histos[prefix+"Signal"]     ->Fill(signalSpread);
+    for (it = profiles.begin();it!=profiles.end();it++){
+        if (it->second->GetXaxis()->GetXmax() < event_no){
+            int bins = (event_no+5000)/5000;
+            int max = (bins)*5000;
+            it->second->SetBins(bins,0,max);
+            //			cout<<it->first<<": Extend Profile "<<bins<<" "<<max<<endl;
+        }
+        if     (it->first == "SignalEvents")
+            it->second->Fill(event_no,!(isPulserEvent || failsFFTCuts));
+        else if(it->first == "BadFFTEvents")
+            it->second->Fill(event_no,failsFFTCuts);
+        else if(it->first == "PulserEvents")
+            it->second->Fill(event_no,isPulserEvent);
+    }
 
     if (!failsFFTCuts){
         histos[prefix+"FullAverage"]->Fill(sign*integral);
@@ -534,9 +591,7 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
                 it->second->SetBins(bins,0,max);
                 //			cout<<it->first<<": Extend Profile "<<bins<<" "<<max<<endl;
             }
-            if(it->first == "PulserEvents")
-                it->second->Fill(event_no,isPulserEvent);
-            else if (it->first == prefix+"FullIntegral")
+            if (it->first == prefix+"FullIntegral")
                 it->second->Fill(event_no,sign*integral);
             else if (it->first == prefix+"Signal")
                 it->second->Fill(event_no,signalSpread);

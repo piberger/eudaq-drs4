@@ -45,6 +45,19 @@ class WaveformHistos {
     std::map<std::string, std::pair<float,float> > rangesX;
     std::map<std::string, std::pair<float,float> > rangesY;
     ULong64_t time_start;
+    // categories:
+    // 0: good Event
+    // 1: flat line Event
+    // 2: badFFt Event
+    // 3: pulser Event
+    enum EventCategroy{
+        UNKNOWN_EVENT = -1,
+        GOOD_EVENT=0,
+        FLAT_EVENT=1,
+        BAD_FFT_MAX_EVENT=2,
+        BAD_FFT_MEAN_EVENT=3,
+        PULSER_EVENT=4,
+    };
   public:
     WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon);
     std::string getName() const {return (std::string)TString::Format("%s_%d",_sensor.c_str(),_id);};
@@ -87,6 +100,7 @@ class WaveformHistos {
     TProfile* getPulserProfilePedestal() const { return (TProfile*)profiles.at("Pulser_Pedestal");};
     TProfile* getPulserProfileSignalMinusPedestal() const { return (TProfile*)profiles.at("Pulser_SignalMinusPedestal");};
     TProfile* getPulserProfile(std::string key) const;
+    TH2F* getCategoryVsEventHisto() const { return (TH2F*)histos.at("CategoryVsEvent");}
 
     TH1* getHisto(std::string key) const;
     TProfile* getTimeProfile(std::string key) const;
