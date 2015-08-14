@@ -468,7 +468,7 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
         cat = FLAT_EVENT;
     bool failsFFTCuts = !( (wf.getMeanFFT() < 500 ) || ( (1./wf.getMaxFFT()) > 1E-4 ) );
     if (failsFFTCuts)
-        cat = BAD_FFT_EVENT_MAX;//todo
+        cat = BAD_FFT_MAX_EVENT;//todo
     if (isPulserEvent)
         cat = PULSER_EVENT;
     histos["nFlatLineEvents"]->Fill(bFlatlineEvent);
