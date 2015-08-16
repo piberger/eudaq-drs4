@@ -193,11 +193,13 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
   if (ev.IsBORE())
   {
     std::cout << "This is a BORE" << std::endl;
-//ev.GetRunNumber();
   }
   if (ev.GetEventNumber()<10)
       if (ev.GetRunNumber()!=0)
           this->onlinemon->setRunNumber(ev.GetRunNumber());
+  if (ev.GetEventNumber() < this->start_event){
+      return;
+  }
 
   //    cout << "Called onEvent " << ev.GetEventNumber()<< endl;
 
@@ -641,10 +643,12 @@ int main(int argc, const char ** argv) {
   eudaq::Option<unsigned>        corr_planes(op, "cp", "corr_planes",  5, "Minimum amount of planes for track reconstruction in the correlation");
   eudaq::Option<bool>            track_corr(op, "tc", "track_correlation", false, "Using (EXPERIMENTAL) track correlation(true) or cluster correlation(false)");
   eudaq::Option<int>             update(op, "u", "update",  1000, "update every ms");
+  eudaq::Option<unsigned int>             start_event(op, "st", "start",  0, "starting at event <num>");
   eudaq::Option<int>             offline(op, "o", "offline",  0, "running is offlinemode - analyse until event <num>");
   eudaq::Option<std::string>     configfile(op, "c", "config_file"," ", "filename","Config file to use for onlinemon");
   eudaq::OptionFlag do_rootatend (op, "rf","root","Write out root-file after each run");
   eudaq::OptionFlag do_resetatend (op, "rs","reset","Reset Histograms when run stops");
+
 
   try {
     op.Parse(argv);
@@ -686,6 +690,7 @@ int main(int argc, const char ** argv) {
     mon.setCorr_width(corr_width.Value());
     mon.setCorr_planes(corr_planes.Value());
     mon.setUseTrack_corr(track_corr.Value());
+    mon.setStartEvent(start_event.Value());
 
     cout <<"Monitor Settings:" <<endl;
     cout <<"Update Interval :" <<update.Value() <<" ms" <<endl;
