@@ -39,7 +39,7 @@ echo '\033[1;36;48m PLEASE WAIT...\033[0m'
 sleep 2
 
 echo '        DataCollector @ rapidshare'
-xterm -geom 78x20+10-30 -hold -e 'ssh -tY rapidshare scripts/#StartDataCollector.sh' &
+xterm -geom 78x20+10-30 -hold -e 'ssh -tY rapidshare scripts/StartDataCollector.sh' &
 echo '\033[1;36;48m PLEASE WAIT...\033[0m'
 sleep 2
 
