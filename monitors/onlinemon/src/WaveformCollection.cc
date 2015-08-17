@@ -262,7 +262,7 @@ void WaveformCollection::registerGlobalWaveforms(const SimpleStandardWaveform &p
         std::cout<<tree<<endl;
         _mon->getOnlineMon()->registerTreeItem(tree);
         _mon->getOnlineMon()->registerHisto(tree,
-                (TH2F*)getWaveformHistos(p.getName(),p.getID())->getHisto("CategoryVsEvent"), "colz",0);
+                (TH2F*)getWaveformHistos(p.getName(),p.getID())->getProfile("CategoryVsEvent"), "colz",0);
         sprintf(tree,"%s/Ch %i - %s/Category",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
         std::cout<<tree<<endl;
         _mon->getOnlineMon()->registerTreeItem(tree);

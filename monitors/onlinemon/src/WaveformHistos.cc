@@ -9,7 +9,7 @@
 #include "OnlineMon.hh"
 #include <TStyle.h>
 #include <TROOT.h>
-
+#include <TClass.h>
 #include <math.h>
 
 WaveformHistos::WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon):
@@ -57,9 +57,9 @@ void WaveformHistos::InitHistos() {
     histos["nBadFFTEvents"]= new TH1F(hName,hTitle,2,-.5,1.5);
 
     hName = TString::Format("hCategoryVsEventNo_%s_%d",_sensor.c_str(),_id);
-    hTitle = TString::Format("%s %d:Categroy Vs Event No.; Event No.; Category",_sensor.c_str(),_id);
-    histos["CategoryVsEvent"] = new TH2F(hName,hTitle,1000,0,1000,7,-1,6);
-    histos["CategoryVsEvent"]->SetBit(TH1::kCanRebin);
+    hTitle = TString::Format("%s %d:Categroy Vs Event No.; event number / 5000events; Category",_sensor.c_str(),_id);
+    profiles["CategoryVsEvent"] = new TH2F(hName,hTitle,1,0,1000,7,-1,6);
+//    histos["CategoryVsEvent"]->SetBit(TH1::kCanRebin);
     /*
         UNKNOWN_EVENT = -1,
         GOOD_EVENT=0,
@@ -68,14 +68,14 @@ void WaveformHistos::InitHistos() {
         BAD_FFT_MEAN_EVENT=3,
         PULSER_EVENT=4,
      */
-    histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(1,"UNKNOWN");
-    histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(2,"Good");
-    histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(3,"Flat");
-    histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(4,"FFT_{max}");
-    histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(5,"FFT_{mean}");
-    histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(6,"FFT_{both}");
-    histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(7,"Pulser");
-    histos["CategoryVsEvent"]->SetStats(false);
+    profiles["CategoryVsEvent"]->GetYaxis()->SetBinLabel(1,"UNKNOWN");
+    profiles["CategoryVsEvent"]->GetYaxis()->SetBinLabel(2,"Good");
+    profiles["CategoryVsEvent"]->GetYaxis()->SetBinLabel(3,"Flat");
+    profiles["CategoryVsEvent"]->GetYaxis()->SetBinLabel(4,"FFT_{max}");
+    profiles["CategoryVsEvent"]->GetYaxis()->SetBinLabel(5,"FFT_{mean}");
+    profiles["CategoryVsEvent"]->GetYaxis()->SetBinLabel(6,"FFT_{both}");
+    profiles["CategoryVsEvent"]->GetYaxis()->SetBinLabel(7,"Pulser");
+    profiles["CategoryVsEvent"]->SetStats(false);
 
     hName = TString::Format("hCategories_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: Category;Category; number of entries",_sensor.c_str(),_id);
@@ -545,7 +545,7 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
         cat = PULSER_EVENT;
     histos["nFlatLineEvents"]->Fill((bool)(cat == FLAT_EVENT));
     histos["nBadFFTEvents"]->Fill(failsFFTCuts);
-    histos["CategoryVsEvent"]->Fill(event_no,(int)cat);
+    profiles["CategoryVsEvent"]->Fill(event_no,(int)cat);
     histos["Category"]->Fill((int)cat);
     if (cat == FLAT_EVENT)
             return;
@@ -596,7 +596,15 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
         if (it->second->GetXaxis()->GetXmax() < event_no){
             int bins = (event_no+5000)/5000;
             int max = (bins)*5000;
-            it->second->SetBins(bins,0,max);
+            if (((it->second)->IsA())->InheritsFrom(TH2::Class())){
+                int binsy = it->second->GetNbinsY();
+                int ymin = it->second->GetYaxis()->GetXmin();
+                int ymax = it->second->GetYaxis()->GetXmax();
+                it->second->SetBins(bins,0,max,binsy,ymin,ymax);
+            }
+            else
+                it->second->SetBins(bins,0,max);
+
             //			cout<<it->first<<": Extend Profile "<<bins<<" "<<max<<endl;
         }
         if     (it->first == "SignalEvents")
