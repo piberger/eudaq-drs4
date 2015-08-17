@@ -6,7 +6,6 @@
  */
 
 #include <WaveformOptions.hh>
-namespace eudaq{
 WaveformOptions::WaveformOptions() {
 	// TODO Auto-generated constructor stub
     SetDefaults();
@@ -20,5 +19,4 @@ void WaveformOptions::SetDefaults(){
     KeyValueMap["signal_range_min"] = "200";
     KeyValueMap["signal_range_max"] = "350";
 
-}
 }
