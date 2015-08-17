@@ -58,7 +58,7 @@ void WaveformHistos::InitHistos() {
 
     hName = TString::Format("hCategoryVsEventNo_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d:Categroy Vs Event No.; Event No.; Category",_sensor.c_str(),_id);
-    histos["CategoryVsEvent"] = new TH2F(hName,hTitle,1000,0,1000,6,-1,5);
+    histos["CategoryVsEvent"] = new TH2F(hName,hTitle,1000,0,1000,7,-1,6);
     histos["CategoryVsEvent"]->SetBit(TH1::kCanRebin);
     /*
         UNKNOWN_EVENT = -1,
@@ -78,7 +78,7 @@ void WaveformHistos::InitHistos() {
 
     hName = TString::Format("hCategories_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: Category;Category; number of entries",_sensor.c_str(),_id);
-    histos["Category"] = new TH1F(hName,hTitle,6,-1,5);
+    histos["Category"] = new TH1F(hName,hTitle,7,-1,6);
     histos["Category"]->GetXaxis()->SetBinLabel(1,"UNKNOWN");
     histos["Category"]->GetXaxis()->SetBinLabel(2,"Good");
     histos["Category"]->GetXaxis()->SetBinLabel(3,"Flat");
