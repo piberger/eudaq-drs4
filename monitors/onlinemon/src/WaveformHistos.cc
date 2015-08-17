@@ -75,6 +75,7 @@ void WaveformHistos::InitHistos() {
     histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(5,"FFT_{mean}");
     histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(6,"FFT_{both}");
     histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(7,"Pulser");
+    histos["CategoryVsEvent"]->SetStats(false);
 
     hName = TString::Format("hCategories_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: Category;Category; number of entries",_sensor.c_str(),_id);
