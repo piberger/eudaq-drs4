@@ -57,8 +57,8 @@ void WaveformHistos::InitHistos() {
     histos["nBadFFTEvents"]= new TH1F(hName,hTitle,2,-.5,1.5);
 
     hName = TString::Format("hCategoryVsEventNo_%s_%d",_sensor.c_str(),_id);
-    hTitle = TString::Format("%s %d: Event No.; Category",_sensor.c_str(),_id);
-    histos["CategoryVsEvent"] = new TH2F(hName,hTitle,100,0,1000,6,-1,5);
+    hTitle = TString::Format("%s %d:Categroy Vs Event No.; Event No.; Category",_sensor.c_str(),_id);
+    histos["CategoryVsEvent"] = new TH2F(hName,hTitle,1000,0,1000,6,-1,5);
     histos["CategoryVsEvent"]->SetBit(TH1::kCanRebin);
     /*
         UNKNOWN_EVENT = -1,
@@ -73,7 +73,19 @@ void WaveformHistos::InitHistos() {
     histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(3,"Flat");
     histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(4,"FFT_{max}");
     histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(5,"FFT_{mean}");
-    histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(6,"Pulser");
+    histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(6,"FFT_{both}");
+    histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(7,"Pulser");
+
+    hName = TString::Format("hCategories_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Category;Category; number of entries",_sensor.c_str(),_id);
+    histos["Category"] = new TH1F(hName,hTitle,6,-1,5);
+    histos["Category"]->GetXaxis()->SetBinLabel(1,"UNKNOWN");
+    histos["Category"]->GetXaxis()->SetBinLabel(2,"Good");
+    histos["Category"]->GetXaxis()->SetBinLabel(3,"Flat");
+    histos["Category"]->GetXaxis()->SetBinLabel(4,"FFT_{max}");
+    histos["Category"]->GetXaxis()->SetBinLabel(5,"FFT_{mean}");
+    histos["Category"]->GetXaxis()->SetBinLabel(6,"FFT_{both}");
+    histos["Category"]->GetXaxis()->SetBinLabel(7,"Pulser");
 
     InitIntegralHistos();
     InitFFTHistos();
@@ -516,26 +528,26 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     EventCategroy cat = GOOD_EVENT;
     float maxSpread   = wf.maxSpreadInRegion(200,400);
     // do not record events with a flat line due to leakage current
-    bool bFlatlineEvent = false;
-    if(maxSpread < 10) bFlatlineEvent = true;
-    if (bFlatlineEvent)
+//    bool bFlatlineEvent = false;
+    if(maxSpread < 10)
         cat = FLAT_EVENT;
-    bool failsFFTCuts = ( (wf.getMeanFFT() > 500 ) || ( (1./wf.getMaxFFT()) < 1E-4 ) );
-    if (failsFFTCuts)
-        cat = BAD_FFT_MAX_EVENT;//todo
+    if ((wf.getMeanFFT() > 500 ) )
+        cat = BAD_FFT_MEAN_EVENT;
+    if   ( (1./wf.getMaxFFT()) < 1E-4 ){
+        if (cat == BAD_FFT_MEAN_EVENT)
+            cat = BAD_FFT_BOTH_EVENT;
+        else
+            cat = BAD_FFT_MAX_EVENT;
+    }
+    bool failsFFTCuts = ( (cat == BAD_FFT_MAX_EVENT)|| (cat == BAD_FFT_MEAN_EVENT) || (cat == BAD_FFT_BOTH_EVENT));
     if (isPulserEvent)
         cat = PULSER_EVENT;
-    histos["nFlatLineEvents"]->Fill(bFlatlineEvent);
-    if (bFlatlineEvent)
-        return;
+    histos["nFlatLineEvents"]->Fill((bool)(cat == FLAT_EVENT));
     histos["nBadFFTEvents"]->Fill(failsFFTCuts);
-    // categories:
-    // 0: good Event
-    // 1: flat line Event
-    // 2: badFFt Event
-    // 3: pulser Event
     histos["CategoryVsEvent"]->Fill(event_no,(int)cat);
-    if(bFlatlineEvent) return;
+    histos["Category"]->Fill((int)cat);
+    if (cat == FLAT_EVENT)
+            return;
     // check if the event passes/fails the FFT cuts
 
     // if (!(event_no%1000)) 

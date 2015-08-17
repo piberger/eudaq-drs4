@@ -309,11 +309,16 @@ void WaveformCollection::registerGlobalWaveforms(const SimpleStandardWaveform &p
             getWaveformHistos(p.getName(),p.getID())->getHisto("nBadFFTEvents"), "",0);
     }
     if (wf_type==0){
-    sprintf(tree,"%s/Ch %i - %s/CategoryVsEventNo",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+        sprintf(tree,"%s/Ch %i - %s/CategoryVsEventNo",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
         std::cout<<tree<<endl;
         _mon->getOnlineMon()->registerTreeItem(tree);
         _mon->getOnlineMon()->registerHisto(tree,
                 (TH2F*)getWaveformHistos(p.getName(),p.getID())->getHisto("CategoryVsEvent"), "colz",0);
+        sprintf(tree,"%s/Ch %i - %s/Category",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+        std::cout<<tree<<endl;
+        _mon->getOnlineMon()->registerTreeItem(tree);
+        _mon->getOnlineMon()->registerHisto(tree,
+                (TH2F*)getWaveformHistos(p.getName(),p.getID())->getHisto("Category"), "",0);
     }
 }
 
