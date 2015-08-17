@@ -34,7 +34,7 @@ protected:
 	std::map<SimpleStandardWaveform,WaveformHistos*> _map;
 	bool isWaveformRegistered(SimpleStandardWaveform p);
 	void fillHistograms(const SimpleStandardWaveform &simpWaveform);
-	eudaq::WaveformOptions *_WaveformOptions;
+	WaveformOptions *_WaveformOptions;
 public:
 	WaveformCollection() : BaseCollection(), _WaveformOptions(0)
 	{
@@ -54,7 +54,7 @@ public:
 	void setRootMonitor(RootMonitor *mon)  {_mon = mon; }
 	void Fill(const SimpleStandardEvent &simpev);
 	WaveformHistos * getWaveformHistos(std::string sensor, int id);
-	void SetWaveformOptions(eudaq::WaveformOptions *options){_WaveformOptions = options;}
+	void SetWaveformOptions(WaveformOptions *options){_WaveformOptions = options;}
 	void Reset();
 	virtual void Write(TFile *file);
 	virtual void Calculate(const unsigned int currentEventNumber);
