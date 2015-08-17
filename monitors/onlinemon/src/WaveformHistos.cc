@@ -12,7 +12,8 @@
 
 #include <math.h>
 
-WaveformHistos::WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon): _n_wfs(10),_sensor(p.getName()), _id(p.getID()),n_fills(0),_n_samples(1024),time_start(0)
+WaveformHistos::WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon):
+_n_wfs(10),_sensor(p.getName()), _id(p.getID()),n_fills(0),n_fills_bad(0),n_fills_good(0),_n_samples(1024),time_start(0)
 {
     char out[1024], out2[1024];
     _mon=mon;
@@ -34,10 +35,15 @@ void WaveformHistos::InitHistos() {
     float minVolt = -500; //-1000;
     float maxVolt = 500; //+1000;
     int nbins =  1000; //2000;
-    //	for (int i = 0; i < _n_wfs; i++)
-    //		_Waveforms.push_back(new TGraph());
-//    std::cout<<"maxSignalVoltage"<<std::endl;
     TString hName, hTitle;
+    hName = TString::Format("h_SignalEvents_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: no of signal events ; is signal event; number of entries",_sensor.c_str(),_id);
+    histos["SignalEvents"]= new TH1F(hName,hTitle,2,-.5,1.5);
+
+    hName = TString::Format("h_BadFFTEvents_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: no of badFFT events ; is badFFT event; number of entries",_sensor.c_str(),_id);
+    histos["BadFFTEvents"]= new TH1F(hName,hTitle,2,-.5,1.5);
+
     hName = TString::Format("h_PulserEvents_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: no of pulser events ; is pulser event; number of entries",_sensor.c_str(),_id);
     histos["PulserEvents"]= new TH1F(hName,hTitle,2,-.5,1.5);
@@ -49,6 +55,38 @@ void WaveformHistos::InitHistos() {
     hName = TString::Format("h_nBadFFTEvents_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: no of bad events acc to FFT cuts ; number of entries",_sensor.c_str(),_id);
     histos["nBadFFTEvents"]= new TH1F(hName,hTitle,2,-.5,1.5);
+
+    hName = TString::Format("hCategoryVsEventNo_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d:Categroy Vs Event No.; Event No.; Category",_sensor.c_str(),_id);
+    histos["CategoryVsEvent"] = new TH2F(hName,hTitle,1000,0,1000,7,-1,6);
+    histos["CategoryVsEvent"]->SetBit(TH1::kCanRebin);
+    /*
+        UNKNOWN_EVENT = -1,
+        GOOD_EVENT=0,
+        FLAT_EVENT=1,
+        BAD_FFT_MAX_EVENT=2,
+        BAD_FFT_MEAN_EVENT=3,
+        PULSER_EVENT=4,
+     */
+    histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(1,"UNKNOWN");
+    histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(2,"Good");
+    histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(3,"Flat");
+    histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(4,"FFT_{max}");
+    histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(5,"FFT_{mean}");
+    histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(6,"FFT_{both}");
+    histos["CategoryVsEvent"]->GetYaxis()->SetBinLabel(7,"Pulser");
+    histos["CategoryVsEvent"]->SetStats(false);
+
+    hName = TString::Format("hCategories_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Category;Category; number of entries",_sensor.c_str(),_id);
+    histos["Category"] = new TH1F(hName,hTitle,7,-1,6);
+    histos["Category"]->GetXaxis()->SetBinLabel(1,"UNKNOWN");
+    histos["Category"]->GetXaxis()->SetBinLabel(2,"Good");
+    histos["Category"]->GetXaxis()->SetBinLabel(3,"Flat");
+    histos["Category"]->GetXaxis()->SetBinLabel(4,"FFT_{max}");
+    histos["Category"]->GetXaxis()->SetBinLabel(5,"FFT_{mean}");
+    histos["Category"]->GetXaxis()->SetBinLabel(6,"FFT_{both}");
+    histos["Category"]->GetXaxis()->SetBinLabel(7,"Pulser");
 
     InitIntegralHistos();
     InitFFTHistos();
@@ -270,10 +308,23 @@ void WaveformHistos::InitProfiles(){
     TString hName;
     TString hTitle;
 
+    hName = TString::Format("h_ProfileSignalEvents_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Profile no of SIgnalEvents; event number / 5000events; rel. no of SignalEvents",_sensor.c_str(),_id);
+    profiles["SignalEvents"] = new TProfile(hName,hTitle,1,0,1000);
+    profiles["SignalEvents"]->SetStats(false);
+    profiles["SignalEvents"]->GetYaxis()->SetRangeUser(0., 1.);
+
+    hName = TString::Format("h_ProfileBadFFTEvents_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Profile no of BadFFTEvents; event number / 5000events; rel. no of BadFFTEvents",_sensor.c_str(),_id);
+    profiles["BadFFTEvents"] = new TProfile(hName,hTitle,1,0,1000);
+    profiles["BadFFTEvents"]->SetStats(false);
+    profiles["BadFFTEvents"]->GetYaxis()->SetRangeUser(0., 1.);
+
     hName = TString::Format("h_ProfilePulserEvents_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: Profile no of PulserEvents; event number / 5000events; rel. no of PulserEvents",_sensor.c_str(),_id);
     profiles["PulserEvents"] = new TProfile(hName,hTitle,1,0,1000);
     profiles["PulserEvents"]->SetStats(false);
+    profiles["PulserEvents"]->GetYaxis()->SetRangeUser(0., 1.);
 
     hName = TString::Format("h_ProfileFullAverage_%s_%d",_sensor.c_str(),_id);
     hTitle = TString::Format("%s %d: Profile FullAverage; event number / 5000events; signal/mV",_sensor.c_str(),_id);
@@ -378,30 +429,43 @@ void WaveformHistos::InitPulserProfiles(){
 void WaveformHistos::InitWaveformStacks(){
     TString hName = TString::Format("h_wf_stack_%s_%d",_sensor.c_str(),_id);
     TString hTitle = TString::Format("%s %d: Waveform Stack;time; signal/mV",_sensor.c_str(),_id);
-    TString hNameBadFFT = TString::Format("h_badfftwf_stack_%s_%d",_sensor.c_str(),_id);
-    TString hTitleBadFFT = TString::Format("%s %d: BadFFT Waveform Stack;time; signal/mV",_sensor.c_str(),_id);
     h_wf_stack = new THStack(hName,hTitle);
-    h_badfftwf_stack = new THStack(hNameBadFFT,hTitleBadFFT);
+
+    hName = TString::Format("h_goodtwf_stack_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: Good Waveform Stack;time; signal/mV",_sensor.c_str(),_id);
+    h_goodwf_stack= new THStack(hName,hTitle);
+
+    hName = TString::Format("h_badfftwf_stack_%s_%d",_sensor.c_str(),_id);
+    hTitle = TString::Format("%s %d: BadFFT Waveform Stack;time; signal/mV",_sensor.c_str(),_id);
+    h_badfftwf_stack = new THStack(hName,hTitle);
 
     for (int i = 0; i < _n_wfs; i++){
         hName = TString::Format("Waveform_%d_%d",_id,i);
         hTitle = TString::Format("Waveform ID %d - %d",_id,i);
-        _BadFFTWaveforms.push_back(new TH1F(hName      ,hTitle      ,_n_samples,0,_n_samples));
-        _Waveforms      .push_back(new TH1F(hNameBadFFT,hTitleBadFFT,_n_samples,0,_n_samples));
-        //		FixRangeY(string)
-        ////		_Waveforms.back()->SetPoint(0,0,0);
-        //		_Waveforms.back()->SetPoint(1,1,1);
-        //		_Waveforms.back()->Draw("APL");
+        _Waveforms      .push_back(new TH1F(hName,hTitle,_n_samples,0,_n_samples));
         if (_Waveforms.back()->GetXaxis())
             _Waveforms.back()->GetXaxis()->SetTitle("n");
         if (_Waveforms.back()->GetYaxis())
             _Waveforms.back()->GetYaxis()->SetTitle("Signal / mV");
         h_wf_stack->Add(_Waveforms.back());
+
+        hName = TString::Format("BadWaveform_%d_%d",_id,i);
+        hTitle = TString::Format("BadWaveform ID %d - %d",_id,i);
+        _BadFFTWaveforms.push_back(new TH1F(hName      ,hTitle      ,_n_samples,0,_n_samples));
         if (_BadFFTWaveforms.back()->GetXaxis())
             _BadFFTWaveforms.back()->GetXaxis()->SetTitle("n");
         if (_BadFFTWaveforms.back()->GetYaxis())
             _BadFFTWaveforms.back()->GetYaxis()->SetTitle("Signal / mV");
         h_badfftwf_stack->Add(_BadFFTWaveforms.back());
+
+        hName = TString::Format("GoodWaveform_%d_%d",_id,i);
+        hTitle = TString::Format("GoodWaveform ID %d - %d",_id,i);
+        _GoodWaveforms      .push_back(new TH1F(hName,hTitle,_n_samples,0,_n_samples));
+        if (_GoodWaveforms.back()->GetXaxis())
+            _GoodWaveforms.back()->GetXaxis()->SetTitle("n");
+        if (_GoodWaveforms.back()->GetYaxis())
+            _GoodWaveforms.back()->GetYaxis()->SetTitle("Signal / mV");
+        h_goodwf_stack->Add(_GoodWaveforms.back());
     }
 
     for (std::map<std::string, TH1*>::iterator it = profiles.begin();it!=profiles.end();it++){
@@ -427,20 +491,28 @@ void WaveformHistos::Reinitialize_Waveforms() {
 }
 
 void WaveformHistos::Reinitialize_BadFFTWaveforms() {
-    cout<<"WaveformHistos::Reinitialize_Waveforms of "<<_sensor.c_str()<<"_"<<_id<<" with "<<getNSamples()<<" Samples."<<endl;
+    cout<<"WaveformHistos::Reinitialize_BadFFTWaveforms of "<<_sensor.c_str()<<"_"<<_id<<" with "<<getNSamples()<<" Samples."<<endl;
     for (int i = 0; i < _n_wfs; i++){
         TH1F* histo = _BadFFTWaveforms.at(i);
         histo->SetBins(_n_samples,0,_n_samples);
     }
 }
 
+void WaveformHistos::Reinitialize_GoodWaveforms() {
+    cout<<"WaveformHistos::Reinitialize_GoodWaveforms of "<<_sensor.c_str()<<"_"<<_id<<" with "<<getNSamples()<<" Samples."<<endl;
+    for (int i = 0; i < _n_wfs; i++){
+        TH1F* histo = _GoodWaveforms.at(i);
+        histo->SetBins(_n_samples,0,_n_samples);
+    }
+}
 void WaveformHistos::Fill(const SimpleStandardWaveform & wf)
 {
 //    std::cout<<"WaveformHistos::Fill"<<std::endl;
     if (wf.getNSamples() > this->getNSamples()){
         _n_samples = wf.getNSamples();
-        Reinitialize_BadFFTWaveforms();
         Reinitialize_Waveforms();
+        Reinitialize_BadFFTWaveforms();
+        Reinitialize_GoodWaveforms();
     }
     bool isPulserEvent = wf.isPulserEvent();
     this->FillEvent(wf, isPulserEvent);
@@ -454,16 +526,34 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     int event_no = wf.getEvent();
     ULong64_t timestamp = wf.getTimestamp();
     int sign = wf.getSign(); //why is this here? it's never properly assigned
-
+    EventCategroy cat = GOOD_EVENT;
     float maxSpread   = wf.maxSpreadInRegion(200,400);
-    bool goodEvent = true;
     // do not record events with a flat line due to leakage current
-    if(maxSpread < 10) goodEvent = false;
-    histos["nFlatLineEvents"]->Fill(!goodEvent);
-    if(!goodEvent) return;
-    // check if the event passes/fails the FFT cuts
-    bool failsFFTCuts = !( (wf.getMeanFFT() < 500 ) || ( (1./wf.getMaxFFT()) > 1E-4 ) );
+//    bool bFlatlineEvent = false;
+    if(maxSpread < 10)
+        cat = FLAT_EVENT;
+    if ((wf.getMeanFFT() > 500 ) )
+        cat = BAD_FFT_MEAN_EVENT;
+    if   ( (1./wf.getMaxFFT()) < 1E-4 ){
+        if (cat == BAD_FFT_MEAN_EVENT)
+            cat = BAD_FFT_BOTH_EVENT;
+        else
+            cat = BAD_FFT_MAX_EVENT;
+    }
+    bool failsFFTCuts = ( (cat == BAD_FFT_MAX_EVENT)|| (cat == BAD_FFT_MEAN_EVENT) || (cat == BAD_FFT_BOTH_EVENT));
+    if (isPulserEvent)
+        cat = PULSER_EVENT;
+    histos["nFlatLineEvents"]->Fill((bool)(cat == FLAT_EVENT));
     histos["nBadFFTEvents"]->Fill(failsFFTCuts);
+    histos["CategoryVsEvent"]->Fill(event_no,(int)cat);
+    histos["Category"]->Fill((int)cat);
+    if (cat == FLAT_EVENT)
+            return;
+    // check if the event passes/fails the FFT cuts
+
+    // if (!(event_no%1000)) 
+    //     cout << "ev " << event_no << " in wf " << wf.getChannelName() << " this is the mean FFT: " << wf.getMeanFFT() << 
+    //     "   this is the inv. max: " << 1./wf.getMaxFFT() << "   at time " << timestamp << endl;
 
     float min      = wf.getMin();
     float max      = wf.getMax();
@@ -497,9 +587,25 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     if (failsFFTCuts)  prefix = "BadFFT_";
 
     histos["PulserEvents"]->Fill(isPulserEvent);
+    histos["BadFFTEvents"]->Fill(failsFFTCuts);
+    histos["SignalEvents"]->Fill((!failsFFTCuts) && !(isPulserEvent));
     histos[prefix+"MeanFFT"]     ->Fill(wf.getMeanFFT()   );
     histos[prefix+"InvMaxFFT"]   ->Fill(1./wf.getMaxFFT() );
     histos[prefix+"Signal"]     ->Fill(signalSpread);
+    for (it = profiles.begin();it!=profiles.end();it++){
+        if (it->second->GetXaxis()->GetXmax() < event_no){
+            int bins = (event_no+5000)/5000;
+            int max = (bins)*5000;
+            it->second->SetBins(bins,0,max);
+            //			cout<<it->first<<": Extend Profile "<<bins<<" "<<max<<endl;
+        }
+        if     (it->first == "SignalEvents")
+            it->second->Fill(event_no,!(isPulserEvent || failsFFTCuts));
+        else if(it->first == "BadFFTEvents")
+            it->second->Fill(event_no,failsFFTCuts);
+        else if(it->first == "PulserEvents")
+            it->second->Fill(event_no,isPulserEvent);
+    }
 
     if (!failsFFTCuts){
         histos[prefix+"FullAverage"]->Fill(sign*integral);
@@ -530,9 +636,7 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
                 it->second->SetBins(bins,0,max);
                 //			cout<<it->first<<": Extend Profile "<<bins<<" "<<max<<endl;
             }
-            if(it->first == "PulserEvents")
-                it->second->Fill(event_no,isPulserEvent);
-            else if (it->first == prefix+"FullIntegral")
+            if (it->first == prefix+"FullIntegral")
                 it->second->Fill(event_no,sign*integral);
             else if (it->first == prefix+"Signal")
                 it->second->Fill(event_no,signalSpread);
@@ -553,26 +657,54 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     }
 
     UpdateRanges();
-    TH1F* gr;
-    if (!failsFFTCuts) gr = _Waveforms[n_fills%_n_wfs];
-    else if (failsFFTCuts && !isPulserEvent) gr = _BadFFTWaveforms[n_fills%_n_wfs];
-    
-    if (gr == NULL) cout << " we might be screwed now... " << endl;
+    // all waveforms
+    TH1F* gr = _Waveforms[n_fills%_n_wfs];
     for (int n = 0; n < wf.getNSamples();n++)
         gr->SetBinContent(n+1,wf.getData()[n]);
-    for (int i = 0; i < _n_wfs; i++) {
+    for (int i = 0; i < _n_wfs; i++)
         _Waveforms[(n_fills-i)%_n_wfs]->SetLineColor(kAzure+i);
-        _BadFFTWaveforms[(n_fills-i)%_n_wfs]->SetLineColor(kOrange+i);
-    }
     gr->SetEntries(event_no);
     n_fills++;
-
     if (n_fills<=1){
-        //		gr->Draw("APL");
+        //      gr->Draw("APL");
         if (gr->GetXaxis())
             gr->GetXaxis()->SetTitle("n");
         if (gr->GetYaxis())
             gr->GetYaxis()->SetTitle("Signal / mV");
+    }
+    //good waveforms
+    if(!failsFFTCuts) {
+        gr = _GoodWaveforms[n_fills_good%_n_wfs];
+        for (int n = 0; n < wf.getNSamples();n++)
+            gr->SetBinContent(n+1,wf.getData()[n]);
+        for (int i = 0; i < _n_wfs; i++)
+            _GoodWaveforms[(n_fills_good-i)%_n_wfs]->SetLineColor(kAzure+i);
+        gr->SetEntries(event_no);
+        n_fills_good++;
+        if (n_fills_good<=1){
+            if (gr->GetXaxis())
+                gr->GetXaxis()->SetTitle("n");
+            if (gr->GetYaxis())
+                gr->GetYaxis()->SetTitle("Signal / mV");
+        }
+    }
+    // bad ffts
+    else if(failsFFTCuts && !isPulserEvent) {
+        gr = _BadFFTWaveforms[n_fills_bad%_n_wfs];
+        for (int n = 0; n < wf.getNSamples();n++)
+            gr->SetBinContent(n+1,wf.getData()[n]);
+        for (int i = 0; i < _n_wfs; i++)
+            _BadFFTWaveforms[(n_fills_bad-i)%_n_wfs]->SetLineColor(kAzure+i);
+        gr->SetEntries(event_no);
+        n_fills_bad++;
+
+        if (n_fills_bad<=1){
+            //		gr->Draw("APL");
+            if (gr->GetXaxis())
+                gr->GetXaxis()->SetTitle("n");
+            if (gr->GetYaxis())
+                gr->GetYaxis()->SetTitle("Signal / mV");
+        }
     }
 }
 
@@ -589,6 +721,8 @@ void WaveformHistos::Reset() {
         it->second->Reset();
 
     n_fills = 0;
+    n_fills_bad = 0;
+    n_fills_good = 0;
 }
 
 void WaveformHistos::Calculate(const int currentEventNum)
