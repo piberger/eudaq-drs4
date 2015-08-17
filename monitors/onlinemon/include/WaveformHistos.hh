@@ -24,7 +24,6 @@
 #include "SimpleStandardEvent.hh"
 #include "TGraphSet.hh"
 #include "WaveformOptions.hh"
-#include <typeinfo>
 
 
 class RootMonitor;
@@ -105,7 +104,7 @@ class WaveformHistos {
     TProfile* getPulserProfilePedestal() const { return (TProfile*)profiles.at("Pulser_Pedestal");};
     TProfile* getPulserProfileSignalMinusPedestal() const { return (TProfile*)profiles.at("Pulser_SignalMinusPedestal");};
     TProfile* getPulserProfile(std::string key) const;
-    TH2F* getCategoryVsEventHisto() const { return (TH2F*)profiles.at("CategoryVsEvent");}
+    TH2F* getCategoryVsEventHisto() const { return (TH2F*)histos.at("CategoryVsEvent");}
 
     TH1* getHisto(std::string key) const;
     TProfile* getTimeProfile(std::string key) const;
