@@ -57,7 +57,7 @@ public:
 	int getSignalSign(int ch)const{return ch==0||ch==4?-1:1;}
 
 private:
-	eudaq::WaveformOptions* _waveformoptions;
+	WaveformOptions* _waveformoptions;
 	float _pulserthreshold;
 	//general settings
 	std::string ConfigurationFileName;

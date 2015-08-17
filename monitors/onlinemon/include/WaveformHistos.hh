@@ -69,7 +69,7 @@ class WaveformHistos {
     void FillEvent(const SimpleStandardWaveform & wf, bool isPulserEvent);
     unsigned int getNSamples() const {return _n_samples;}
     void Reset();
-    void SetOptions(eudaq::WaveformOptions* options){_config = options;std::cout<<"Setting Options for "<<getName()<<std::endl;};
+    void SetOptions(WaveformOptions* options){_config = options;std::cout<<"Setting Options for "<<getName()<<std::endl;};
 
     void Calculate(const int currentEventNum);
     void Write();
@@ -140,7 +140,7 @@ class WaveformHistos {
     int SetHistoAxisLabely(TH1* histo,std::string ylabel);
     int SetHistoAxisLabels(TH1* histo,std::string xlabel, std::string ylabel);
     RootMonitor * _mon;
-    eudaq::WaveformOptions* _config;
+    WaveformOptions* _config;
     bool do_fitting;
     float min_wf;
     float max_wf;
