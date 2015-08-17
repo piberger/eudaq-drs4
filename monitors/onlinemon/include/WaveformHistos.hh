@@ -58,7 +58,8 @@ class WaveformHistos {
         FLAT_EVENT=1,
         BAD_FFT_MAX_EVENT=2,
         BAD_FFT_MEAN_EVENT=3,
-        PULSER_EVENT=4,
+        BAD_FFT_BOTH_EVENT=4,
+        PULSER_EVENT=5,
     };
   public:
     WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon);
@@ -72,7 +73,7 @@ class WaveformHistos {
 
     void Calculate(const int currentEventNum);
     void Write();
-    unsigned GetNWaveforms() const {return _n_wfs;};
+    unsigned int GetNWaveforms() const {return _n_wfs;};
     TH1F * getWaveformGraph(int i) { return _Waveforms[i%_n_wfs]; }
     TH1F * getBadFFTWaveformGraph(int i) { return _BadFFTWaveforms[i%_n_wfs]; }
     THStack* getWaveformStack(){return h_wf_stack;}

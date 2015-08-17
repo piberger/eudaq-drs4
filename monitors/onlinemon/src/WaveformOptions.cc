@@ -8,17 +8,16 @@
 #include <WaveformOptions.hh>
 namespace eudaq{
 WaveformOptions::WaveformOptions() {
-	// TODO Auto-generated constructor stub
+    // TODO Auto-generated constructor stub
     SetDefaults();
 }
 
 WaveformOptions::~WaveformOptions() {
-	// TODO Auto-generated destructor stub
+    // TODO Auto-generated destructor stub
 }
 
 void WaveformOptions::SetDefaults(){
     KeyValueMap["signal_range_min"] = "200";
     KeyValueMap["signal_range_max"] = "350";
-
 }
-}
+}//end eudaq namespace
