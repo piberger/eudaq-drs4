@@ -1,6 +1,7 @@
 #include "dictionaries.h"
 #include "constants.h"
 #include "datasource_evt.h"
+#include <exception>
 
 #if USE_LCIO
 #  include "IMPL/LCEventImpl.h"
@@ -95,16 +96,22 @@ namespace eudaq {
       passthroughSplitter splitter;
       dtbEventDecoder decoder;
       dataSink<pxar::Event*> Eventpump;
+      try{
+          // Connect the data source and set up the pipe:
+          src = evtSource(0, m_nplanes, m_tbmtype, m_roctype);
+          src >> splitter >> decoder >> Eventpump;
 
-      // Connect the data source and set up the pipe:
-      src = evtSource(0, m_nplanes, m_tbmtype, m_roctype);
-      src >> splitter >> decoder >> Eventpump;
-
-      // Transform from EUDAQ data, add it to the datasource:
-      src.AddData(TransformRawData(in_raw.GetBlock(0)));
-      // ...and pull it out at the other end:
-      pxar::Event* evt = Eventpump.Get();
-      decoding_stats += decoder.getStatistics();
+          // Transform from EUDAQ data, add it to the datasource:
+          src.AddData(TransformRawData(in_raw.GetBlock(0)));
+          // ...and pull it out at the other end:
+          pxar::Event* evt = Eventpump.Get();
+          decoding_stats += decoder.getStatistics();
+      }
+      catch (exception& e){
+          EUDAQ_WARN("Decoding crashed");
+          cout << e.what() << '\n';
+          return;
+      }
 
       // Iterate over all planes and check for pixel hits:
       for(size_t roc = 0; roc < m_nplanes; roc++) {
