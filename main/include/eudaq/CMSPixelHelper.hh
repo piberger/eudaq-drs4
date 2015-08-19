@@ -110,7 +110,7 @@ namespace eudaq {
       catch (exception& e){
           EUDAQ_WARN("Decoding crashed");
           cout << e.what() << '\n';
-          return;
+          return false;
       }
 
       // Iterate over all planes and check for pixel hits:
