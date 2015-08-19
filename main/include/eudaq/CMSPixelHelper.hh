@@ -31,6 +31,8 @@ using eutelescope::EUTELESCOPE;
 using namespace pxar;
 
 namespace eudaq {
+
+}
     struct VCALDict {
         int row;
         int col;
@@ -46,13 +48,15 @@ namespace eudaq {
     CMSPixelHelper(std::string event_type) : m_event_type(event_type) {};
     std::map< int, VCALDict> vcal_vals;
     TF1 * fFitfunction;
-    void initializeFitfunction(){fFitfunction = new TF1("fitfunc", "[3]*(TMath::Erf((x-[0])/[1])+[2])");}
-    float getCharge(VCALDict d, float val) const{  
+    void initializeFitfunction(){fFitfunction = new TF1("fitfunc", "[3]*(TMath::Erf((x-[0])/[1])+[2])",-4096,4096);}
+    float getCharge(VCALDict d, float val,float factor = 65.) const{  
         fFitfunction->SetParameter(0, d.par0);
         fFitfunction->SetParameter(1, d.par1);
         fFitfunction->SetParameter(2, d.par2);
         fFitfunction->SetParameter(3, d.par3);
-        return 65.*fFitfunction->GetX(val);
+        float charge = factor * fFitfunction->GetX(val);
+        //std::cout<<"get Charge: "<<val<<" "<<d.par0<<" "<<d.par1<<" "<<d.par2<<" "<<d.par3<<" "<<charge<<std::endl;
+        return charge;
     }
     void Initialize(const Event & bore, const Configuration & cnf) {
       DeviceDictionary* devDict;
@@ -70,7 +74,37 @@ namespace eudaq {
       m_tbmtype = devDict->getInstance()->getDevCode(tbmtype);
 
       if (m_roctype == 0x0)
-	EUDAQ_ERROR("Roctype" + to_string((int) m_roctype) + " not propagated correctly to CMSPixelConverterPlugin");
+	      EUDAQ_ERROR("Roctype" + to_string((int) m_roctype) + " not propagated correctly to CMSPixelConverterPlugin");
+      read_PHCalibrationData(cnf);
+      initializeFitfunction();
+     
+
+      std::cout<<"CMSPixel Converter initialized with detector " << m_detector << ", Event Type " << m_event_type 
+	       << ", TBM type " << tbmtype << " (" << static_cast<int>(m_tbmtype) << ")"
+	       << ", ROC type " << roctype << " (" << static_cast<int>(m_roctype) << ")" << std::endl;
+    }
+
+    void read_PHCalibrationData(const Configuration & cnf){
+      std::cout<<"CONFIG: "<<cnf.Name()<<std::endl;
+      cnf.SetSection("Producer.CMSPixel");
+      std::string ph_ana = cnf.Get("phCalibrationFile","");
+      if (ph_ana == ""){
+          ph_ana = cnf.Get("dacFile","");
+          std::size_t found = ph_ana.find_last_of("/");
+          ph_ana = ph_ana.substr(0,found) + (std::string)"phCalibrationGErfFit";
+      }
+      int nRocs_ana = split(cnf.Get("i2c","i2caddresses","-1"),' ');
+      cnf.SetSection("Producer.DigitalREF");
+      std::string ph_dig = cnf.Get("phCalibrationFile","");
+      int nRocs_dig = split(cnf.Get("i2c","i2caddresses","-1"),' ');
+      if (ph_dig == ""){
+          ph_dig = cnf.Get("dacFile","");
+          std::size_t found = ph_dig.find_last_of("/");
+          ph_dig = ph_dig.substr(0,found) + (std::string)"phCalibrationErfFit";
+      }
+
+      std::cout<<"ANA: "<<ph_ana<<" "<<nRocs_ana<<std::endl;
+      std::cout<<"DIG: "<<ph_dig<<" "<<nRocs_dig<<std::endl;
 
       // // Store all decoded pixels belonging to this plane:
       // for(std::vector<pxar::pixel>::iterator it = evt->pixels.begin(); it != evt->pixels.end(); ++it){
@@ -88,7 +122,7 @@ namespace eudaq {
 
       for (int iroc = 1; iroc<2; iroc++){
         FILE * fp;
-    
+        std::string fname = 
         fp = fopen ("/home/testbeam/marc/eudaq-drs4/main/include/eudaq/marcTestFile.dat", "r");
         //fp = fopen ( TString::Format("/home/testbeam/sdvlp/TrackingTelescope/Calibrations/telescope9/phCalibrationGErfFit_C%d.dat", iroc), "r");
         std::cout << "this is the file: " << fp << std::endl;
@@ -104,19 +138,13 @@ namespace eudaq {
               tmp_vcaldict.par1 = par1;
               tmp_vcaldict.par2 = par2;
               tmp_vcaldict.par3 = par3;
-              
               vcal_vals[atoi( TString::Format("%01d%02d%02d",1,row,col))] = tmp_vcaldict;
           }
         }
         delete fp;
       }
-      initializeFitfunction();
-     
-
-      std::cout<<"CMSPixel Converter initialized with detector " << m_detector << ", Event Type " << m_event_type 
-	       << ", TBM type " << tbmtype << " (" << static_cast<int>(m_tbmtype) << ")"
-	       << ", ROC type " << roctype << " (" << static_cast<int>(m_roctype) << ")" << std::endl;
     }
+
 
     bool GetStandardSubEvent(StandardEvent & out, const Event & in) const {
 
@@ -187,9 +215,14 @@ namespace eudaq {
 	for(std::vector<pxar::pixel>::iterator it = evt->pixels.begin(); it != evt->pixels.end(); ++it){
 	  // Check if current pixel belongs on this plane:
 	  if(it->roc() == roc) {
+          float factor;
+          if (m_detector == "DUT")
+              factor = 65;
+          else
+              factor = 47.;
       int identifier = atoi(TString::Format("%01d%02d%02d",1,it->row(),it->column()));
       float charge = getCharge(vcal_vals.find(identifier)->second, it->value());
-      std::cout << "filling charge " << charge << std::endl;
+      std::cout << "filling charge " << charge << " "<<factor<<std::endl;
 	    if(m_rotated_pcb) { plane.PushPixel(it->row(), it->column(), charge /*it->value()*/); }
 	    else { plane.PushPixel(it->column(), it->row(), charge /*it->value()*/); }
 	  }
