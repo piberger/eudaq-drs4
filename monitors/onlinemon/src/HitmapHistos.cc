@@ -108,7 +108,8 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
     if (p.is_USBPIXI4)
       _totCluster= new TH1I(out2, out,80,0,79);
     else
-      _totCluster= new TH1I(out2, out,8192,-4096,4096);
+      //_totCluster= new TH1I(out2, out,8192,-4096,4096);
+      _totCluster= new TH1I(out2, out, 250.,0., 50000.);
 
     sprintf(out,"%s %i Hitoccupancy",_sensor.c_str(), _id);
     sprintf(out2,"h_hitocc%s_%i",_sensor.c_str(), _id);
