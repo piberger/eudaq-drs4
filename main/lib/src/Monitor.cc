@@ -14,7 +14,8 @@ namespace eudaq {
     m_reader(0),
     limit(lim),
     skip(100-skip_),
-    skip_events_with_counter(skip_evts)
+    skip_events_with_counter(skip_evts),
+    start_event(0)
   {
     if (datafile != "") {
       // set offline
@@ -53,8 +54,9 @@ namespace eudaq {
       else
         counter_for_skipping = 0;
     }
-
-
+    if (evt_number < start_event){
+        return true;
+    }
 
     try {
       const DetectorEvent & dev = m_reader->GetDetectorEvent();

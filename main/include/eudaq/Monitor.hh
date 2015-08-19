@@ -22,7 +22,6 @@ namespace eudaq {
       Monitor(const std::string & name, const std::string & runcontrol, const unsigned lim,
           const unsigned skip_, const unsigned int skip_evts, const std::string & datafile = "");
       virtual ~Monitor() {}
-
       bool ProcessEvent();
       virtual void OnIdle();
 
@@ -41,6 +40,7 @@ namespace eudaq {
       unsigned skip;
       unsigned int skip_events_with_counter;
       unsigned int counter_for_skipping;
+      unsigned int start_event;
   };
 
 }
