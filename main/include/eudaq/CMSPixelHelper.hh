@@ -24,14 +24,36 @@
 using eutelescope::EUTELESCOPE;
 #endif
 
+#include <TMath.h>
+#include <TString.h>
+#include <TF1.h>
+
 using namespace pxar;
 
 namespace eudaq {
+    struct VCALDict {
+        int row;
+        int col;
+        float par0;
+        float par1;
+        float par2;
+        float par3;
+    };
+
 
   class CMSPixelHelper {
   public:
     CMSPixelHelper(std::string event_type) : m_event_type(event_type) {};
-
+    std::map< int, VCALDict> vcal_vals;
+    TF1 * fFitfunction;
+    void initializeFitfunction(){fFitfunction = new TF1("fitfunc", "[3]*(TMath::Erf((x-[0])/[1])+[2])");}
+    float getCharge(VCALDict d, float val) const{  
+        fFitfunction->SetParameter(0, d.par0);
+        fFitfunction->SetParameter(1, d.par1);
+        fFitfunction->SetParameter(2, d.par2);
+        fFitfunction->SetParameter(3, d.par3);
+        return 65.*fFitfunction->GetX(val);
+    }
     void Initialize(const Event & bore, const Configuration & cnf) {
       DeviceDictionary* devDict;
       std::string roctype = bore.GetTag("ROCTYPE", "");
@@ -49,6 +71,47 @@ namespace eudaq {
 
       if (m_roctype == 0x0)
 	EUDAQ_ERROR("Roctype" + to_string((int) m_roctype) + " not propagated correctly to CMSPixelConverterPlugin");
+
+      // // Store all decoded pixels belonging to this plane:
+      // for(std::vector<pxar::pixel>::iterator it = evt->pixels.begin(); it != evt->pixels.end(); ++it){
+      //   // Check if current pixel belongs on this plane:
+      //     if(it->roc() == roc) {
+      //         if(m_rotated_pcb) { plane.PushPixel(it->row(), it->column(), 10. /*it->value()*/); }
+      //         else { plane.PushPixel(it->column(), it->row(), 10. /*it->value()*/); }
+      //     }
+      // }
+
+      // getting vcal-charge translation from file
+      //
+      float par0, par1, par2, par3;
+      int row, col;
+
+      for (int iroc = 1; iroc<2; iroc++){
+        FILE * fp;
+    
+        fp = fopen ("/home/testbeam/marc/eudaq-drs4/main/include/eudaq/marcTestFile.dat", "r");
+        //fp = fopen ( TString::Format("/home/testbeam/sdvlp/TrackingTelescope/Calibrations/telescope9/phCalibrationGErfFit_C%d.dat", iroc), "r");
+        std::cout << "this is the file: " << fp << std::endl;
+
+        VCALDict tmp_vcaldict;
+        if (!fp) {
+          std::cout <<  " DID NOT FIND A FILE TO GO FROM ADC TO CHARGE!!!!" << std::endl;}
+        else{
+          std::cout <<  " FILLING THE VCAL - ADC TRANSLATION FACTORS!!!!" << std::endl;
+          while (fscanf(fp, "%f %f %f %f %d %d", &par0, &par1, &par2, &par3, &col, &row) == 6){
+              // std::cout << "par0: " << par0 << "  par1: " << par1 << " row and col " << row << " " << col << std::endl;
+              tmp_vcaldict.par0 = par0;
+              tmp_vcaldict.par1 = par1;
+              tmp_vcaldict.par2 = par2;
+              tmp_vcaldict.par3 = par3;
+              
+              vcal_vals[atoi( TString::Format("%01d%02d%02d",1,row,col))] = tmp_vcaldict;
+          }
+        }
+        delete fp;
+      }
+      initializeFitfunction();
+     
 
       std::cout<<"CMSPixel Converter initialized with detector " << m_detector << ", Event Type " << m_event_type 
 	       << ", TBM type " << tbmtype << " (" << static_cast<int>(m_tbmtype) << ")"
@@ -124,8 +187,11 @@ namespace eudaq {
 	for(std::vector<pxar::pixel>::iterator it = evt->pixels.begin(); it != evt->pixels.end(); ++it){
 	  // Check if current pixel belongs on this plane:
 	  if(it->roc() == roc) {
-	    if(m_rotated_pcb) { plane.PushPixel(it->row(), it->column(), it->value()); }
-	    else { plane.PushPixel(it->column(), it->row(), it->value()); }
+      int identifier = atoi(TString::Format("%01d%02d%02d",1,it->row(),it->column()));
+      float charge = getCharge(vcal_vals.find(identifier)->second, it->value());
+      std::cout << "filling charge " << charge << std::endl;
+	    if(m_rotated_pcb) { plane.PushPixel(it->row(), it->column(), charge /*it->value()*/); }
+	    else { plane.PushPixel(it->column(), it->row(), charge /*it->value()*/); }
 	  }
 	}
 
