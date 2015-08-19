@@ -46,7 +46,7 @@ namespace eudaq {
   class CMSPixelHelper {
   public:
     CMSPixelHelper(std::string event_type) : m_event_type(event_type) {};
-    std::map< int, VCALDict> vcal_vals;
+    std::map< std::string, VCALDict> vcal_vals;
     TF1 * fFitfunction;
     void initializeFitfunction(){fFitfunction = new TF1("fitfunc", "[3]*(TMath::Erf((x-[0])/[1])+[2])",-4096,4096);}
     float getCharge(VCALDict d, float val,float factor = 65.) const{  
@@ -77,7 +77,6 @@ namespace eudaq {
 	      EUDAQ_ERROR("Roctype" + to_string((int) m_roctype) + " not propagated correctly to CMSPixelConverterPlugin");
       read_PHCalibrationData(cnf);
       initializeFitfunction();
-     
 
       std::cout<<"CMSPixel Converter initialized with detector " << m_detector << ", Event Type " << m_event_type 
 	       << ", TBM type " << tbmtype << " (" << static_cast<int>(m_tbmtype) << ")"
@@ -85,26 +84,31 @@ namespace eudaq {
     }
 
     void read_PHCalibrationData(const Configuration & cnf){
-      std::cout<<"CONFIG: "<<cnf.Name()<<std::endl;
       cnf.SetSection("Producer.CMSPixel");
       std::string ph_ana = cnf.Get("phCalibrationFile","");
       if (ph_ana == ""){
           ph_ana = cnf.Get("dacFile","");
           std::size_t found = ph_ana.find_last_of("/");
-          ph_ana = ph_ana.substr(0,found) + (std::string)"phCalibrationGErfFit";
+          ph_ana = ph_ana.substr(0,found) + (std::string)"/phCalibrationGErfFit";
       }
-      int nRocs_ana = split(cnf.Get("i2c","i2caddresses","-1")," ").size();
+      std::string i2c_ana = cnf.Get("i2c","i2caddresses","-1");
+      read_PH_CalibrationFile("DUT",ph_ana,i2c_ana);
+
       cnf.SetSection("Producer.DigitalREF");
+      std::string i2c_dig = cnf.Get("i2c","i2caddresses","-1");
       std::string ph_dig = cnf.Get("phCalibrationFile","");
-      int nRocs_dig = split(cnf.Get("i2c","i2caddresses","-1")," ").size();
       if (ph_dig == ""){
           ph_dig = cnf.Get("dacFile","");
           std::size_t found = ph_dig.find_last_of("/");
-          ph_dig = ph_dig.substr(0,found) + (std::string)"phCalibrationErfFit";
+          ph_dig = ph_dig.substr(0,found) + (std::string)"/phCalibrationFitErr";
       }
+      read_PH_CalibrationFile("REF",ph_dig,i2c_dig);
+    }
 
-      std::cout<<"ANA: "<<ph_ana<<" "<<nRocs_ana<<std::endl;
-      std::cout<<"DIG: "<<ph_dig<<" "<<nRocs_dig<<std::endl;
+    void read_PH_CalibrationFile(std::string roc_type,std::string fname, std::string i2cs){
+      std::vector<std::string> vec_i2c = split(i2cs," ");
+      int nRocs  = vec_i2c.size();
+
 
       // // Store all decoded pixels belonging to this plane:
       // for(std::vector<pxar::pixel>::iterator it = evt->pixels.begin(); it != evt->pixels.end(); ++it){
@@ -119,27 +123,43 @@ namespace eudaq {
       //
       float par0, par1, par2, par3;
       int row, col;
-
-      for (int iroc = 1; iroc<2; iroc++){
+      std::string dump;
+      char trash[30];
+      for (int iroc = 0; iroc<nRocs; iroc++){
+        std::string i2c = vec_i2c.at(iroc);
         FILE * fp;
-        std::string fname ="";
-        fp = fopen ("/home/testbeam/marc/eudaq-drs4/main/include/eudaq/marcTestFile.dat", "r");
-        //fp = fopen ( TString::Format("/home/testbeam/sdvlp/TrackingTelescope/Calibrations/telescope9/phCalibrationGErfFit_C%d.dat", iroc), "r");
-        std::cout << "this is the file: " << fp << std::endl;
+        char *line = NULL;
+        size_t len= 0;
+        ssize_t read;
+        
+        TString filename = fname;
+        filename+=(std::string)"_C"+(std::string)i2c+(std::string)".dat";
+        std::cout<<filename<<std::endl;
+        fp = fopen (filename,"r");//String::Format("/home/testbeam/sdvlp/TrackingTelescope/Calibrations/telescope9/phCalibrationGErfFit_C%d.dat", iroc), "r");
+        //std::cout << "this is the file: " << fp << std::endl;
 
         VCALDict tmp_vcaldict;
         if (!fp) {
           std::cout <<  " DID NOT FIND A FILE TO GO FROM ADC TO CHARGE!!!!" << std::endl;}
         else{
           std::cout <<  " FILLING THE VCAL - ADC TRANSLATION FACTORS!!!!" << std::endl;
-          while (fscanf(fp, "%f %f %f %f %d %d", &par0, &par1, &par2, &par3, &col, &row) == 6){
+          read = getline(&line,&len,fp);
+          read = getline(&line,&len,fp);
+          read = getline(&line,&len,fp);
+
+          int q = 0;
+          while (fscanf(fp, "%f %f %f %f %s %d %d", &par0, &par1, &par2, &par3, trash,&col, &row) == 7){
               // std::cout << "par0: " << par0 << "  par1: " << par1 << " row and col " << row << " " << col << std::endl;
               tmp_vcaldict.par0 = par0;
               tmp_vcaldict.par1 = par1;
               tmp_vcaldict.par2 = par2;
               tmp_vcaldict.par3 = par3;
-              vcal_vals[atoi( TString::Format("%01d%02d%02d",1,row,col))] = tmp_vcaldict;
+              std::string identifier = roc_type + std::string( TString::Format("%01d%02d%02d",iroc,row,col));
+              //if (q==0) std::cout<<"IDENTIFIER: "<<identifier<<std::endl;
+              q++;
+              vcal_vals[identifier] = tmp_vcaldict;
           }
+          std::cout<<"Read "<<q <<" Pixels for "<<roc_type<<i2c<<std::endl;
         }
         delete fp;
       }
@@ -220,9 +240,9 @@ namespace eudaq {
               factor = 65;
           else
               factor = 47.;
-      int identifier = atoi(TString::Format("%01d%02d%02d",1,it->row(),it->column()));
+      std::string identifier = (std::string)m_detector+(std::string)TString::Format("%01d%02d%02d",1,it->row(),it->column());
       float charge = getCharge(vcal_vals.find(identifier)->second, it->value());
-      std::cout << "filling charge " << charge << " "<<factor<<std::endl;
+      //std::cout << "filling charge " << charge << " "<<factor<<" "<<identifier<<std::endl;
 	    if(m_rotated_pcb) { plane.PushPixel(it->row(), it->column(), charge /*it->value()*/); }
 	    else { plane.PushPixel(it->column(), it->row(), charge /*it->value()*/); }
 	  }
