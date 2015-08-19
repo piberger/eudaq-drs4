@@ -1,6 +1,7 @@
 #include "dictionaries.h"
 #include "constants.h"
 #include "datasource_evt.h"
+#include "Utils.hh"
 
 #if USE_LCIO
 #  include "IMPL/LCEventImpl.h"
@@ -31,23 +32,6 @@ using eutelescope::EUTELESCOPE;
 using namespace pxar;
 
 namespace eudaq {
-
-
-std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
-  std::stringstream ss(s);
-  std::string item;
-  while (std::getline(ss, item, delim)) {
-    elems.push_back(item);
-  }
-  return elems;
-}
-
-
-std::vector<std::string> split(const std::string &s, char delim) {
-  std::vector<std::string> elems;
-  split(s, delim, elems);
-  return elems;
-}
 
     struct VCALDict {
         int row;
@@ -109,10 +93,10 @@ std::vector<std::string> split(const std::string &s, char delim) {
           std::size_t found = ph_ana.find_last_of("/");
           ph_ana = ph_ana.substr(0,found) + (std::string)"phCalibrationGErfFit";
       }
-      int nRocs_ana = split(cnf.Get("i2c","i2caddresses","-1"),' ');
+      int nRocs_ana = split(cnf.Get("i2c","i2caddresses","-1")," ").size();
       cnf.SetSection("Producer.DigitalREF");
       std::string ph_dig = cnf.Get("phCalibrationFile","");
-      int nRocs_dig = split(cnf.Get("i2c","i2caddresses","-1"),' ');
+      int nRocs_dig = split(cnf.Get("i2c","i2caddresses","-1")," ").size();
       if (ph_dig == ""){
           ph_dig = cnf.Get("dacFile","");
           std::size_t found = ph_dig.find_last_of("/");
@@ -138,7 +122,7 @@ std::vector<std::string> split(const std::string &s, char delim) {
 
       for (int iroc = 1; iroc<2; iroc++){
         FILE * fp;
-        std::string fname = 
+        std::string fname ="";
         fp = fopen ("/home/testbeam/marc/eudaq-drs4/main/include/eudaq/marcTestFile.dat", "r");
         //fp = fopen ( TString::Format("/home/testbeam/sdvlp/TrackingTelescope/Calibrations/telescope9/phCalibrationGErfFit_C%d.dat", iroc), "r");
         std::cout << "this is the file: " << fp << std::endl;
