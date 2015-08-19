@@ -31,6 +31,8 @@ using eutelescope::EUTELESCOPE;
 using namespace pxar;
 
 namespace eudaq {
+
+}
     struct VCALDict {
         int row;
         int col;
@@ -91,17 +93,18 @@ namespace eudaq {
           std::size_t found = ph_ana.find_last_of("/");
           ph_ana = ph_ana.substr(0,found) + (std::string)"phCalibrationGErfFit";
       }
-
+      int nRocs_ana = split(cnf.Get("i2c","i2caddresses","-1"),' ');
       cnf.SetSection("Producer.DigitalREF");
       std::string ph_dig = cnf.Get("phCalibrationFile","");
+      int nRocs_dig = split(cnf.Get("i2c","i2caddresses","-1"),' ');
       if (ph_dig == ""){
           ph_dig = cnf.Get("dacFile","");
           std::size_t found = ph_dig.find_last_of("/");
           ph_dig = ph_dig.substr(0,found) + (std::string)"phCalibrationErfFit";
       }
 
-      std::cout<<"ANA: "<<ph_ana<<std::endl;
-      std::cout<<"DIG: "<<ph_dig<<std::endl;
+      std::cout<<"ANA: "<<ph_ana<<" "<<nRocs_ana<<std::endl;
+      std::cout<<"DIG: "<<ph_dig<<" "<<nRocs_dig<<std::endl;
 
       // // Store all decoded pixels belonging to this plane:
       // for(std::vector<pxar::pixel>::iterator it = evt->pixels.begin(); it != evt->pixels.end(); ++it){
