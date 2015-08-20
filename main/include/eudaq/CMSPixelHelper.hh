@@ -109,16 +109,6 @@ namespace eudaq {
       std::vector<std::string> vec_i2c = split(i2cs," ");
       int nRocs  = vec_i2c.size();
 
-
-      // // Store all decoded pixels belonging to this plane:
-      // for(std::vector<pxar::pixel>::iterator it = evt->pixels.begin(); it != evt->pixels.end(); ++it){
-      //   // Check if current pixel belongs on this plane:
-      //     if(it->roc() == roc) {
-      //         if(m_rotated_pcb) { plane.PushPixel(it->row(), it->column(), 10. /*it->value()*/); }
-      //         else { plane.PushPixel(it->column(), it->row(), 10. /*it->value()*/); }
-      //     }
-      // }
-
       // getting vcal-charge translation from file
       //
       float par0, par1, par2, par3;
