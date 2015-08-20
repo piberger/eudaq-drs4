@@ -208,6 +208,10 @@ void HitmapCollection::registerPlane(const SimpleStandardPlane &p) {
         _mon->getOnlineMon()->registerTreeItem(tree);
         _mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getTOTSingleHisto());
 
+		sprintf(tree,"%s/Sensor %i/PixelChargeProfile",p.getName().c_str(),p.getID());
+		_mon->getOnlineMon()->registerTreeItem(tree);
+		_mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getPixelChargeProfile());
+
 		sprintf(tree,"%s/Sensor %i/ClusterCharge",p.getName().c_str(),p.getID());
 		_mon->getOnlineMon()->registerTreeItem(tree);
 		_mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getTOTClusterHisto());
