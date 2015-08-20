@@ -30,6 +30,7 @@ class HitmapHistos {
     int _maxY;
     bool _wait;
     TH2I * _hitmap;
+    TH2F * _chargemap;
     TH1I * _hitXmap;
     TH1I * _hitYmap;
     TH2I * _clusterMap;
@@ -72,6 +73,7 @@ class HitmapHistos {
     void Write();
 
     TH2I * getHitmapHisto() { return _hitmap; }
+    TH2F * getChargemapHisto() { return _chargemap; }
     TH1I * getHitXmapHisto() { return _hitXmap; }
     TH1I * getHitYmapHisto() { return _hitYmap; }
     TH1I * getHitmapSectionsHisto() { return _hitmapSections; }

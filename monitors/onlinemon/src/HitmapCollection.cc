@@ -184,6 +184,10 @@ void HitmapCollection::registerPlane(const SimpleStandardPlane &p) {
     _mon->getOnlineMon()->registerTreeItem(tree);
     _mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getHitmapHisto(), "COLZ",0);
 
+    sprintf(tree,"%s/Sensor %i/RawChargemap",p.getName().c_str(),p.getID());
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getChargemapHisto(), "COLZ",0);
+
 
     sprintf(folder,"%s",p.getName().c_str());
 #ifdef DEBUG
