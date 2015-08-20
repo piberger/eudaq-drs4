@@ -97,12 +97,14 @@ namespace eudaq {
       cnf.SetSection("Producer.DigitalREF");
       std::string i2c_dig = cnf.Get("i2c","i2caddresses","-1");
       std::string ph_dig = cnf.Get("phCalibrationFile","");
-      if (ph_dig == ""){
+      if ((ph_dig.find("ErfFit")!=-1)|| (ph_dig == "")){
           ph_dig = cnf.Get("dacFile","");
           std::size_t found = ph_dig.find_last_of("/");
           ph_dig = ph_dig.substr(0,found) + (std::string)"/phCalibrationFitErr";
       }
       read_PH_CalibrationFile("REF",ph_dig,i2c_dig);
+      char t;
+      std::cin>>t;
     }
 
     void read_PH_CalibrationFile(std::string roc_type,std::string fname, std::string i2cs){
@@ -230,9 +232,9 @@ namespace eudaq {
               factor = 65;
           else
               factor = 47.;
-      std::string identifier = (std::string)m_detector+(std::string)TString::Format("%01d%02d%02d",1,it->row(),it->column());
+      std::string identifier = (std::string)m_detector+(std::string)TString::Format("%01zu%02d%02d",roc,it->row(),it->column());
       float charge = getCharge(vcal_vals.find(identifier)->second, it->value());
-      //std::cout << "filling charge " << charge << " "<<factor<<" "<<identifier<<std::endl;
+      //std::cout << "filling charge " <<it->value()<<" "<< charge << " "<<factor<<" "<<identifier<<std::endl;
 	    if(m_rotated_pcb) { plane.PushPixel(it->row(), it->column(), charge /*it->value()*/); }
 	    else { plane.PushPixel(it->column(), it->row(), charge /*it->value()*/); }
 	  }
