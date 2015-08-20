@@ -234,6 +234,11 @@ namespace eudaq {
               factor = 47.;
       std::string identifier = (std::string)m_detector+(std::string)TString::Format("%01zu%02d%02d",roc,it->row(),it->column());
       float charge = getCharge(vcal_vals.find(identifier)->second, it->value());
+      if (charge < 0){
+        EUDAQ_WARN(std::string("Invalid cluster charge -" + to_string(charge) +  "/" + to_string(it->value())));
+        charge = 0;
+      }
+
       //std::cout << "filling charge " <<it->value()<<" "<< charge << " "<<factor<<" "<<identifier<<std::endl;
 	    if(m_rotated_pcb) { plane.PushPixel(it->row(), it->column(), charge /*it->value()*/); }
 	    else { plane.PushPixel(it->column(), it->row(), charge /*it->value()*/); }
