@@ -58,7 +58,8 @@ class WaveformHistos {
         FLAT_EVENT=1,
         BAD_FFT_MAX_EVENT=2,
         BAD_FFT_MEAN_EVENT=3,
-        PULSER_EVENT=4,
+        BAD_FFT_BOTH_EVENT=4,
+        PULSER_EVENT=5,
     };
   public:
     WaveformHistos(SimpleStandardWaveform p, RootMonitor * mon);
@@ -68,11 +69,11 @@ class WaveformHistos {
     void FillEvent(const SimpleStandardWaveform & wf, bool isPulserEvent);
     unsigned int getNSamples() const {return _n_samples;}
     void Reset();
-    void SetOptions(eudaq::WaveformOptions* options){_config = options;std::cout<<"Setting Options for "<<getName()<<std::endl;};
+    void SetOptions(WaveformOptions* options){_config = options;std::cout<<"Setting Options for "<<getName()<<std::endl;};
 
     void Calculate(const int currentEventNum);
     void Write();
-    unsigned GetNWaveforms() const {return _n_wfs;};
+    unsigned int GetNWaveforms() const {return _n_wfs;};
     TH1F * getWaveformGraph(int i) { return _Waveforms[i%_n_wfs]; }
     TH1F * getBadFFTWaveformGraph(int i) { return _BadFFTWaveforms[i%_n_wfs]; }
     THStack* getWaveformStack(){return h_wf_stack;}
@@ -139,7 +140,7 @@ class WaveformHistos {
     int SetHistoAxisLabely(TH1* histo,std::string ylabel);
     int SetHistoAxisLabels(TH1* histo,std::string xlabel, std::string ylabel);
     RootMonitor * _mon;
-    eudaq::WaveformOptions* _config;
+    WaveformOptions* _config;
     bool do_fitting;
     float min_wf;
     float max_wf;
