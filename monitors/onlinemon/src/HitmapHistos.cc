@@ -7,6 +7,7 @@
 
 #include "HitmapHistos.hh"
 #include "OnlineMon.hh"
+#include <TGaxis.h>
 #include <cstdlib>
 
 HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.getName()), _id(p.getID()), _maxX(p.getMaxX()), _maxY(p.getMaxY()), _wait(false),
@@ -120,6 +121,9 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
     else
       //_totCluster= new TH1I(out2, out,8192,-4096,4096);
       _totCluster= new TH1I(out2, out, 250.,0., 50000.);
+//    _totCluster->Draw("goff");
+    _totCluster->GetXaxis()->SetNoExponent(false);
+    TGaxis::SetMaxDigits(3);
 
     sprintf(out,"%s %i Hitoccupancy",_sensor.c_str(), _id);
     sprintf(out2,"h_hitocc%s_%i",_sensor.c_str(), _id);
