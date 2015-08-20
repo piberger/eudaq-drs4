@@ -41,11 +41,15 @@ namespace eudaq {
         float par1;
         float par2;
         float par3;
+        float calibration_factor;
     };
+
+
 
 
   class CMSPixelHelper {
   public:
+    std::map<std::string, float >roc_calibrations = {{"psi46v2",65},{"psi46digv21respin",47}};
     CMSPixelHelper(std::string event_type) : m_event_type(event_type) {};
     std::map< std::string, VCALDict> vcal_vals;
     TF1 * fFitfunction;
@@ -55,7 +59,8 @@ namespace eudaq {
         fFitfunction->SetParameter(1, d.par1);
         fFitfunction->SetParameter(2, d.par2);
         fFitfunction->SetParameter(3, d.par3);
-        float charge = factor * fFitfunction->GetX(val);
+
+        float charge = d.calibration_factor * fFitfunction->GetX(val);
         //std::cout<<"get Charge: "<<val<<" "<<d.par0<<" "<<d.par1<<" "<<d.par2<<" "<<d.par3<<" "<<charge<<std::endl;
         return charge;
     }
@@ -85,30 +90,44 @@ namespace eudaq {
     }
 
     void read_PHCalibrationData(const Configuration & cnf){
-      cnf.SetSection("Producer.CMSPixel");
-      std::string ph_ana = cnf.Get("phCalibrationFile","");
-      if (ph_ana == ""){
-          ph_ana = cnf.Get("dacFile","");
-          std::size_t found = ph_ana.find_last_of("/");
-          ph_ana = ph_ana.substr(0,found) + (std::string)"/phCalibrationGErfFit";
-      }
-      std::string i2c_ana = cnf.Get("i2c","i2caddresses","-1");
-      read_PH_CalibrationFile("DUT",ph_ana,i2c_ana);
+        std::cout<<"REAAD PH CALIBRATION"<<std::endl;
+        for (auto i: cnf.GetSections()){
+            if (i.find("Producer.")==-1)
+                continue;
+            cnf.SetSection(i);
+            std::string roctype = cnf.Get("roctype","roctype","");
+            if (roctype == "")
+                continue;
+            bool is_digital = true;
+            if (roctype.find("dig")==-1)
+                is_digital = false;
 
-      cnf.SetSection("Producer.DigitalREF");
-      std::string i2c_dig = cnf.Get("i2c","i2caddresses","-1");
-      std::string ph_dig = cnf.Get("phCalibrationFile","");
-      if ((ph_dig.find("ErfFit")!=-1)|| (ph_dig == "")){
-          ph_dig = cnf.Get("dacFile","");
-          std::size_t found = ph_dig.find_last_of("/");
-          ph_dig = ph_dig.substr(0,found) + (std::string)"/phCalibrationFitErr";
-      }
-      read_PH_CalibrationFile("REF",ph_dig,i2c_dig);
-      // char t;
-      // std::cin>>t;
+            std::string fname = cnf.Get("phCalibrationFile","");
+            if (fname == ""){
+                fname = cnf.Get("dacFile","");
+                std::size_t found = fname.find_last_of("/");
+                if (is_digital)
+                    fname = fname.substr(0,found) + (std::string)"/phCalibrationFitErr";
+                else
+                    fname = fname.substr(0,found) + (std::string)"/phCalibrationGErfFit";
+            }
+            std::string i2c = cnf.Get("i2c","i2caddresses","0");
+            if (i.find("REF") != -1)
+                read_PH_CalibrationFile("REF",fname,i2c,roc_calibrations[roctype]);
+            else if (i.find("ANA") != -1)
+                read_PH_CalibrationFile("ANA",fname,i2c,roc_calibrations[roctype]);
+            else if (i.find("DIG") != -1)
+                read_PH_CalibrationFile("DIG",fname,i2c,roc_calibrations[roctype]);
+            else if (i.find("TRP") != -1)
+                read_PH_CalibrationFile("TRP",fname,i2c,roc_calibrations[roctype]);
+            else
+                read_PH_CalibrationFile("DUT",fname,i2c,roc_calibrations[roctype]);
+        }
+        char t;
+        std::cin>>t;
     }
 
-    void read_PH_CalibrationFile(std::string roc_type,std::string fname, std::string i2cs){
+    void read_PH_CalibrationFile(std::string roc_type,std::string fname, std::string i2cs,float factor){
       std::vector<std::string> vec_i2c = split(i2cs," ");
       int nRocs  = vec_i2c.size();
 
@@ -127,7 +146,7 @@ namespace eudaq {
         
         TString filename = fname;
         filename+=(std::string)"_C"+(std::string)i2c+(std::string)".dat";
-        std::cout<<filename<<std::endl;
+        std::cout<<filename<< " with " << factor <<" e/ADC" << std::endl;
         fp = fopen (filename,"r");//String::Format("/home/testbeam/sdvlp/TrackingTelescope/Calibrations/telescope9/phCalibrationGErfFit_C%d.dat", iroc), "r");
         //std::cout << "this is the file: " << fp << std::endl;
 
@@ -147,6 +166,7 @@ namespace eudaq {
               tmp_vcaldict.par1 = par1;
               tmp_vcaldict.par2 = par2;
               tmp_vcaldict.par3 = par3;
+              tmp_vcaldict.calibration_factor = factor;
               std::string identifier = roc_type + std::string( TString::Format("%01d%02d%02d",iroc,row,col));
               //if (q==0) std::cout<<"IDENTIFIER: "<<identifier<<std::endl;
               q++;
