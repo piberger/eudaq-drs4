@@ -298,12 +298,19 @@ void HitmapHistos::Fill(const SimpleStandardHit & hit)
 {
   int pixel_x=hit.getX();
   int pixel_y=hit.getY();
+  float prev_avg(0), new_avg(0);
+  int n_fill;
 
   bool pixelIsHot = false;
   if (_HotPixelMap->GetBinContent(pixel_x+1,pixel_y+1)>_mon->mon_configdata.getHotpixelcut()) pixelIsHot=true;
 
   if (_hitmap != NULL && !pixelIsHot) _hitmap->Fill(pixel_x,pixel_y);
-  if (_chargemap != NULL && !pixelIsHot) _chargemap->Fill(pixel_x,pixel_y,hit.getTOT());
+  if (_chargemap != NULL && _hitmap != NULL && !pixelIsHot) {
+      prev_avg = _chargemap->GetBinContent(_chargemap->FindBin(pixel_x,pixel_y));
+      n_fill   = _hitmap   ->GetBinContent(_hitmap   ->FindBin(pixel_x,pixel_y));
+      new_avg = prev_avg + 1/(float(n_fill)+1)*(float(hit.getTOT())-float(prev_avg));
+      _chargemap->SetBinContent(_chargemap->FindBin(pixel_x,pixel_y), new_avg );
+  }
   if (_hitXmap != NULL && !pixelIsHot) _hitXmap->Fill(pixel_x);
   if (_hitYmap != NULL && !pixelIsHot) _hitYmap->Fill(pixel_y);
   if ((is_MIMOSA26) && (_hitmapSections != NULL) && (!pixelIsHot))
