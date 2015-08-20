@@ -96,6 +96,7 @@ namespace eudaq {
       passthroughSplitter splitter;
       dtbEventDecoder decoder;
       dataSink<pxar::Event*> Eventpump;
+      pxar::Event* evt ;
       try{
           // Connect the data source and set up the pipe:
           src = evtSource(0, m_nplanes, m_tbmtype, m_roctype);
@@ -104,12 +105,12 @@ namespace eudaq {
           // Transform from EUDAQ data, add it to the datasource:
           src.AddData(TransformRawData(in_raw.GetBlock(0)));
           // ...and pull it out at the other end:
-          pxar::Event* evt = Eventpump.Get();
+          evt = Eventpump.Get();
           decoding_stats += decoder.getStatistics();
       }
-      catch (exception& e){
+      catch (std::exception& e){
           EUDAQ_WARN("Decoding crashed");
-          cout << e.what() << '\n';
+//cout << e.what() << '\n';
           return false;
       }
 
