@@ -40,7 +40,11 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
   {
     is_USBPIXI4=true;
   }
-  else if (_sensor == std::string("DUT"))
+  else if (_sensor == std::string("DUT") || 
+           _sensor == std::string("REF") || 
+           _sensor == std::string("TRP") ||
+           _sensor == std::string("DIG") ||
+           _sensor == std::string("ANA") )
 	  is_CMSPIXEL = true;
 
   //std::cout << "HitmapHistos::Sensorname: " << _sensor << " "<< _id<< std::endl;
