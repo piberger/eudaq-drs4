@@ -19,6 +19,7 @@ namespace eudaq {
       void Load(std::istream & file, const std::string & section);
       bool SetSection(const std::string & section) const;
       bool SetSection(const std::string & section);
+      std::vector<std::string> GetSections() const;
       std::string GetSection() const {return m_section;}
       std::string operator [] (const std::string & key) const { return GetString(key); }
       std::string Get(const std::string & key, const std::string & def) const;

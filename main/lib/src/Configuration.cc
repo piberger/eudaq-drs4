@@ -162,8 +162,14 @@ uint64_t Configuration::Get(const std::string & key, uint64_t def) const {
   }
 
   void Configuration::Print(std::ostream& out) const{
-      for (section_t::iterator it = m_cur->begin(); it!=m_cur->end(); ++it){
-     out << it->first << " : " << it->second << std::endl;
+     out<<"ConfigurationFile:"<<std::endl;
+     out<<" Sections: ";
+     for (auto& i: this->m_config)
+         out<<i.first<<" ";
+     out<<std::endl;
+     out << " CurrentSection: '" << this->GetSection() << "'" << std::endl;
+     for (section_t::iterator it = m_cur->begin(); it!=m_cur->end(); ++it){
+         out <<"  "<< it->first << " : " << it->second << std::endl;
     }
   }
 
@@ -179,6 +185,14 @@ uint64_t Configuration::Get(const std::string & key, uint64_t def) const {
       return i->second;
     }
     throw Exception("Configuration: key not found");
+  }
+
+  std::vector<std::string> Configuration::GetSections() const {
+      std::vector<std::string> sections;
+      for (auto& i: this->m_config){
+          sections.push_back(i.first);
+      }
+      return sections;
   }
 
   void Configuration::SetString(const std::string & key, const std::string & val) {
