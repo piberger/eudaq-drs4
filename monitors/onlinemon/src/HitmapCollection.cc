@@ -184,6 +184,10 @@ void HitmapCollection::registerPlane(const SimpleStandardPlane &p) {
     _mon->getOnlineMon()->registerTreeItem(tree);
     _mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getHitmapHisto(), "COLZ",0);
 
+    sprintf(tree,"%s/Sensor %i/RawChargemap",p.getName().c_str(),p.getID());
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getChargemapHisto(), "COLZ",0);
+
 
     sprintf(folder,"%s",p.getName().c_str());
 #ifdef DEBUG
@@ -208,11 +212,19 @@ void HitmapCollection::registerPlane(const SimpleStandardPlane &p) {
         _mon->getOnlineMon()->registerTreeItem(tree);
         _mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getTOTSingleHisto());
 
+		sprintf(tree,"%s/Sensor %i/PixelChargeProfile",p.getName().c_str(),p.getID());
+		_mon->getOnlineMon()->registerTreeItem(tree);
+		_mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getPixelChargeProfile());
+
 		sprintf(tree,"%s/Sensor %i/ClusterCharge",p.getName().c_str(),p.getID());
 		_mon->getOnlineMon()->registerTreeItem(tree);
 		_mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getTOTClusterHisto());
+
+		sprintf(tree,"%s/Sensor %i/ClusterChargeProfile",p.getName().c_str(),p.getID());
+		_mon->getOnlineMon()->registerTreeItem(tree);
+		_mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getClusterChargeProfile());
     }
-    if ((p.is_APIX) || (p.is_USBPIX) || (p.is_USBPIXI4))
+    if ((p.is_APIX) || (p.is_USBPIX) || (p.is_USBPIXI4) )
     {
       sprintf(tree,"%s/Sensor %i/LVL1Distr",p.getName().c_str(),p.getID());
       _mon->getOnlineMon()->registerTreeItem(tree);

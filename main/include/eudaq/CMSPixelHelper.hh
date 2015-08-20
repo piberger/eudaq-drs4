@@ -1,6 +1,7 @@
 #include "dictionaries.h"
 #include "constants.h"
 #include "datasource_evt.h"
+#include "Utils.hh"
 
 #if USE_LCIO
 #  include "IMPL/LCEventImpl.h"
@@ -24,14 +25,39 @@
 using eutelescope::EUTELESCOPE;
 #endif
 
+#include <TMath.h>
+#include <TString.h>
+#include <TF1.h>
+
 using namespace pxar;
 
 namespace eudaq {
 
+    struct VCALDict {
+        int row;
+        int col;
+        float par0;
+        float par1;
+        float par2;
+        float par3;
+    };
+
+
   class CMSPixelHelper {
   public:
     CMSPixelHelper(std::string event_type) : m_event_type(event_type) {};
-
+    std::map< std::string, VCALDict> vcal_vals;
+    TF1 * fFitfunction;
+    void initializeFitfunction(){fFitfunction = new TF1("fitfunc", "[3]*(TMath::Erf((x-[0])/[1])+[2])",-4096,4096);}
+    float getCharge(VCALDict d, float val,float factor = 65.) const{  
+        fFitfunction->SetParameter(0, d.par0);
+        fFitfunction->SetParameter(1, d.par1);
+        fFitfunction->SetParameter(2, d.par2);
+        fFitfunction->SetParameter(3, d.par3);
+        float charge = factor * fFitfunction->GetX(val);
+        //std::cout<<"get Charge: "<<val<<" "<<d.par0<<" "<<d.par1<<" "<<d.par2<<" "<<d.par3<<" "<<charge<<std::endl;
+        return charge;
+    }
     void Initialize(const Event & bore, const Configuration & cnf) {
       DeviceDictionary* devDict;
       std::string roctype = bore.GetTag("ROCTYPE", "");
@@ -48,12 +74,89 @@ namespace eudaq {
       m_tbmtype = devDict->getInstance()->getDevCode(tbmtype);
 
       if (m_roctype == 0x0)
-	EUDAQ_ERROR("Roctype" + to_string((int) m_roctype) + " not propagated correctly to CMSPixelConverterPlugin");
+	      EUDAQ_ERROR("Roctype" + to_string((int) m_roctype) + " not propagated correctly to CMSPixelConverterPlugin");
+      read_PHCalibrationData(cnf);
+      initializeFitfunction();
 
       std::cout<<"CMSPixel Converter initialized with detector " << m_detector << ", Event Type " << m_event_type 
 	       << ", TBM type " << tbmtype << " (" << static_cast<int>(m_tbmtype) << ")"
 	       << ", ROC type " << roctype << " (" << static_cast<int>(m_roctype) << ")" << std::endl;
     }
+
+    void read_PHCalibrationData(const Configuration & cnf){
+      cnf.SetSection("Producer.CMSPixel");
+      std::string ph_ana = cnf.Get("phCalibrationFile","");
+      if (ph_ana == ""){
+          ph_ana = cnf.Get("dacFile","");
+          std::size_t found = ph_ana.find_last_of("/");
+          ph_ana = ph_ana.substr(0,found) + (std::string)"/phCalibrationGErfFit";
+      }
+      std::string i2c_ana = cnf.Get("i2c","i2caddresses","-1");
+      read_PH_CalibrationFile("DUT",ph_ana,i2c_ana);
+
+      cnf.SetSection("Producer.DigitalREF");
+      std::string i2c_dig = cnf.Get("i2c","i2caddresses","-1");
+      std::string ph_dig = cnf.Get("phCalibrationFile","");
+      if ((ph_dig.find("ErfFit")!=-1)|| (ph_dig == "")){
+          ph_dig = cnf.Get("dacFile","");
+          std::size_t found = ph_dig.find_last_of("/");
+          ph_dig = ph_dig.substr(0,found) + (std::string)"/phCalibrationFitErr";
+      }
+      read_PH_CalibrationFile("REF",ph_dig,i2c_dig);
+      // char t;
+      // std::cin>>t;
+    }
+
+    void read_PH_CalibrationFile(std::string roc_type,std::string fname, std::string i2cs){
+      std::vector<std::string> vec_i2c = split(i2cs," ");
+      int nRocs  = vec_i2c.size();
+
+      // getting vcal-charge translation from file
+      //
+      float par0, par1, par2, par3;
+      int row, col;
+      std::string dump;
+      char trash[30];
+      for (int iroc = 0; iroc<nRocs; iroc++){
+        std::string i2c = vec_i2c.at(iroc);
+        FILE * fp;
+        char *line = NULL;
+        size_t len= 0;
+        ssize_t read;
+        
+        TString filename = fname;
+        filename+=(std::string)"_C"+(std::string)i2c+(std::string)".dat";
+        std::cout<<filename<<std::endl;
+        fp = fopen (filename,"r");//String::Format("/home/testbeam/sdvlp/TrackingTelescope/Calibrations/telescope9/phCalibrationGErfFit_C%d.dat", iroc), "r");
+        //std::cout << "this is the file: " << fp << std::endl;
+
+        VCALDict tmp_vcaldict;
+        if (!fp) {
+          std::cout <<  " DID NOT FIND A FILE TO GO FROM ADC TO CHARGE!!!!" << std::endl;}
+        else{
+          std::cout <<  " FILLING THE VCAL - ADC TRANSLATION FACTORS!!!!" << std::endl;
+          read = getline(&line,&len,fp);
+          read = getline(&line,&len,fp);
+          read = getline(&line,&len,fp);
+
+          int q = 0;
+          while (fscanf(fp, "%f %f %f %f %s %d %d", &par0, &par1, &par2, &par3, trash,&col, &row) == 7){
+              // std::cout << "par0: " << par0 << "  par1: " << par1 << " row and col " << row << " " << col << std::endl;
+              tmp_vcaldict.par0 = par0;
+              tmp_vcaldict.par1 = par1;
+              tmp_vcaldict.par2 = par2;
+              tmp_vcaldict.par3 = par3;
+              std::string identifier = roc_type + std::string( TString::Format("%01d%02d%02d",iroc,row,col));
+              //if (q==0) std::cout<<"IDENTIFIER: "<<identifier<<std::endl;
+              q++;
+              vcal_vals[identifier] = tmp_vcaldict;
+          }
+          std::cout<<"Read "<<q <<" Pixels for "<<roc_type<<i2c<<std::endl;
+        }
+        delete fp;
+      }
+    }
+
 
     bool GetStandardSubEvent(StandardEvent & out, const Event & in) const {
 
@@ -124,8 +227,21 @@ namespace eudaq {
 	for(std::vector<pxar::pixel>::iterator it = evt->pixels.begin(); it != evt->pixels.end(); ++it){
 	  // Check if current pixel belongs on this plane:
 	  if(it->roc() == roc) {
-	    if(m_rotated_pcb) { plane.PushPixel(it->row(), it->column(), it->value()); }
-	    else { plane.PushPixel(it->column(), it->row(), it->value()); }
+          float factor;
+          if (m_detector == "DUT")
+              factor = 65;
+          else
+              factor = 47.;
+      std::string identifier = (std::string)m_detector+(std::string)TString::Format("%01zu%02d%02d",roc,it->row(),it->column());
+      float charge = getCharge(vcal_vals.find(identifier)->second, it->value());
+      if (charge < 0){
+        EUDAQ_WARN(std::string("Invalid cluster charge -" + to_string(charge) +  "/" + to_string(it->value())));
+        charge = 0;
+      }
+
+      //std::cout << "filling charge " <<it->value()<<" "<< charge << " "<<factor<<" "<<identifier<<std::endl;
+	    if(m_rotated_pcb) { plane.PushPixel(it->row(), it->column(), charge /*it->value()*/); }
+	    else { plane.PushPixel(it->column(), it->row(), charge /*it->value()*/); }
 	  }
 	}
 
