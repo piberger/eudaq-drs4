@@ -103,8 +103,8 @@ namespace eudaq {
           ph_dig = ph_dig.substr(0,found) + (std::string)"/phCalibrationFitErr";
       }
       read_PH_CalibrationFile("REF",ph_dig,i2c_dig);
-      char t;
-      std::cin>>t;
+      // char t;
+      // std::cin>>t;
     }
 
     void read_PH_CalibrationFile(std::string roc_type,std::string fname, std::string i2cs){
