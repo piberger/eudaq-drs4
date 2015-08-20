@@ -54,6 +54,8 @@ class HitmapHistos {
     TH1I ** _nClustersize_section;
     TH1I ** _nHotPixels_section;
     TProfile * _efficencyPerEvent;
+    TProfile * _clusterChargeProfile;
+    unsigned _eventNumber;
 //    TH2D* _nTriggerPhase;
 
 
@@ -93,6 +95,7 @@ class HitmapHistos {
     TH1I * getNHotPixelsHisto() { return _nHotPixels; }
     TH1I * getNPivotPixelHisto(){ return _nPivotPixel;}
     TProfile* getEfficencyPerEvent(){return _efficencyPerEvent;}
+    TProfile* getClusterChargeProfile(){return _clusterChargeProfile;}
 //    TH2D * getTriggerPhaseHisto(){ return _nTriggerPhase;}
     void setRootMonitor(RootMonitor *mon)  {_mon = mon; }
 

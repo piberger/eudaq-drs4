@@ -12,6 +12,7 @@
 HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.getName()), _id(p.getID()), _maxX(p.getMaxX()), _maxY(p.getMaxY()), _wait(false),
 								     _hitmap(NULL),_hitXmap(NULL),_hitYmap(NULL),_clusterMap(NULL),_lvl1Distr(NULL), _lvl1Width(NULL),_lvl1Cluster(NULL),_totSingle(NULL),_totCluster(NULL),
   _hitOcc(NULL), _nClusters(NULL), _nHits(NULL), _clusterXWidth(NULL), _clusterYWidth(NULL),_nbadHits(NULL),_nHotPixels(NULL),_hitmapSections(NULL),_efficencyPerEvent(NULL),
+  _clusterChargeProfile(NULL),
   is_MIMOSA26(false), is_APIX(false), is_USBPIX(false),is_USBPIXI4(false),is_CMSPIXEL(false)
 {
   char out[1024], out2[1024];
@@ -141,6 +142,15 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
     _efficencyPerEvent->SetStats(false);
     _efficencyPerEvent->SetMaximum(1.1);
     _efficencyPerEvent->SetMinimum(0);
+
+    sprintf(out,"%s %i Cluster Charge Profile",_sensor.c_str(), _id);
+    sprintf(out2,"h_ClusterChargeProfile_%s_%i",_sensor.c_str(), _id);
+    _clusterChargeProfile = new TProfile(out2, out,1000,0,20000);
+    SetHistoAxisLabely(_clusterChargeProfile,"avrg. Cluster Charge");
+    SetHistoAxisLabelx(_clusterChargeProfile,"Event No.");
+    _clusterChargeProfile->SetBit(TH1::kCanRebin);
+    _clusterChargeProfile->SetStats(false);
+    _clusterChargeProfile->SetMinimum(0);
 
     sprintf(out,"%s %i Number of Hot Pixels",_sensor.c_str(), _id);
     sprintf(out2,"h_nhotpixels_%s_%i",_sensor.c_str(), _id);
@@ -323,9 +333,10 @@ void HitmapHistos::Fill(const SimpleStandardHit & hit)
 
 void HitmapHistos::Fill(const SimpleStandardPlane & plane, unsigned event_no)
 {
+  _eventNumber = event_no;
   if (_nHits != NULL) _nHits->Fill(plane.getNHits());
   if (_efficencyPerEvent != NULL)
-      _efficencyPerEvent->Fill(event_no,plane.getNHits()>0);
+      _efficencyPerEvent->Fill(_eventNumber,plane.getNHits()>0);
   if ((_nbadHits != NULL) &&(plane.getNBadHits()>0))
   {
     _nbadHits->Fill(plane.getNBadHits());
@@ -374,16 +385,16 @@ void HitmapHistos::Fill(const SimpleStandardCluster & cluster)
       }
     }
   }
-  if (is_CMSPIXEL)
-	  if (_totCluster != NULL ) _totCluster->Fill(cluster.getTOT());
 
-  if ( (is_APIX) || (is_USBPIX) || (is_USBPIXI4) )
+  if ( (is_APIX) || (is_USBPIX) || (is_USBPIXI4) || (is_CMSPIXEL))
   {
     if (_lvl1Width != NULL)   _lvl1Width->Fill(cluster.getLVL1Width());
     if (_totCluster != NULL ) _totCluster->Fill(cluster.getTOT());
     if (_lvl1Cluster != NULL) _lvl1Cluster->Fill(cluster.getFirstLVL1());
     if (_clusterXWidth != NULL) _clusterXWidth->Fill(cluster.getWidthX());
     if (_clusterYWidth != NULL) _clusterYWidth->Fill(cluster.getWidthY());
+    if (_clusterChargeProfile)
+        _clusterChargeProfile->Fill(_eventNumber,cluster.getTOT());
   }
 }
 
@@ -410,6 +421,7 @@ void HitmapHistos::Reset() {
   _hitmapSections->Reset();
   _nPivotPixel->Reset();
   _efficencyPerEvent->Reset();
+  _clusterChargeProfile->Reset();
   for (unsigned int  section=0; section<mimosa26_max_section; section++)
   {
     _nClusters_section[section]->Reset();
@@ -515,6 +527,7 @@ void HitmapHistos::Write()
   _hitmapSections->Write();
   _nPivotPixel->Write();
   _efficencyPerEvent->Write();
+  _clusterChargeProfile->Write();
   for (unsigned int  section=0; section<mimosa26_max_section; section++)
   {
     _nClusters_section[section]->Write();
