@@ -132,8 +132,7 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   sig_delays.push_back(std::make_pair("triggerlatency",config.Get("triggerlatency",86)));
   sig_delays.push_back(std::make_pair("tindelay",config.Get("tindelay",13)));
   sig_delays.push_back(std::make_pair("toutdelay",config.Get("toutdelay",10)));
-  //sig_delays.push_back(std::make_pair("triggertimeout",config.Get("triggertimeout",65000)));
-
+  sig_delays.push_back(std::make_pair("triggertimeout",config.Get("triggertimeout",65000)));
   //Power settings:
   power_settings.push_back( std::make_pair("va",config.Get("va",1.8)) );
   power_settings.push_back( std::make_pair("vd",config.Get("vd",2.5)) );
