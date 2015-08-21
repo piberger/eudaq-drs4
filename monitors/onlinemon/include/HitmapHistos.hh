@@ -74,7 +74,7 @@ class HitmapHistos {
 
     void Calculate(const int currentEventNum);
     void Write();
-
+    TH1  * getHisto(std::string name);
     TH2I * getHitmapHisto() { return _hitmap; }
     TH2F * getChargemapHisto() { return _chargemap; }
     TH1I * getHitXmapHisto() { return _hitXmap; }

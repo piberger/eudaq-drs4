@@ -171,6 +171,10 @@ void HitmapCollection::registerPlane(const SimpleStandardPlane &p) {
 		sprintf(tree,"%s/Sensor %i/ClusterChargeProfile",p.getName().c_str(),p.getID());
 		_mon->getOnlineMon()->registerTreeItem(tree);
 		_mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getClusterChargeProfile());
+
+		sprintf(tree,"%s/Sensor %i/ClusterChargeTimeProfile",p.getName().c_str(),p.getID());
+		        _mon->getOnlineMon()->registerTreeItem(tree);
+		        _mon->getOnlineMon()->registerHisto(tree,(TProfile*)getHitmapHistos(p.getName(),p.getID())->getHisto("ClusterChargeTimeProfile"));
     }
     if ((p.is_APIX) || (p.is_USBPIX) || (p.is_USBPIXI4) )
     {

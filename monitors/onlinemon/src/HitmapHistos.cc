@@ -633,3 +633,10 @@ int HitmapHistos::SetHistoAxisLabely(TH1* histo,string ylabel)
   }
   return 0;
 }
+
+TH1* HitmapHistos::getHisto(std::string name){
+    if( _histoMap.find(name) != _histoMap.end())
+        return _histoMap.at(name);
+    else
+        return NULL;
+}
