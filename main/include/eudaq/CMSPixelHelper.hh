@@ -123,8 +123,6 @@ namespace eudaq {
             else
                 read_PH_CalibrationFile("DUT",fname,i2c,roc_calibrations[roctype]);
         }
-        char t;
-        std::cin>>t;
     }
 
     void read_PH_CalibrationFile(std::string roc_type,std::string fname, std::string i2cs,float factor){
