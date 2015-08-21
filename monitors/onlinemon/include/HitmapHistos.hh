@@ -15,10 +15,7 @@
 
 #include "SimpleStandardEvent.hh"
 
-
-
 using namespace std;
-
 
 class RootMonitor;
 
@@ -29,6 +26,7 @@ class HitmapHistos {
     int _maxX;
     int _maxY;
     bool _wait;
+    std::map<std::string, TH1*> _histoMap;
     TH2I * _hitmap;
     TH2F * _chargemap;
     TH1I * _hitXmap;
@@ -57,6 +55,7 @@ class HitmapHistos {
     TProfile * _efficencyPerEvent;
     TProfile * _clusterChargeProfile;
     TProfile * _pixelChargeProfile;
+    ULong64_t _start_time;
     unsigned _eventNumber;
     unsigned _timestamp;
 //    TH2D* _nTriggerPhase;

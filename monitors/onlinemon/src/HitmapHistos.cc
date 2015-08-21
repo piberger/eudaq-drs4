@@ -9,11 +9,13 @@
 #include "OnlineMon.hh"
 #include <TGaxis.h>
 #include <cstdlib>
+#include <TStyle.h>
+#include <TROOT.h>
 
 HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.getName()), _id(p.getID()), _maxX(p.getMaxX()), _maxY(p.getMaxY()), _wait(false),
 								     _hitmap(NULL),_chargemap(NULL),_hitXmap(NULL),_hitYmap(NULL),_clusterMap(NULL),_lvl1Distr(NULL), _lvl1Width(NULL),_lvl1Cluster(NULL),_totSingle(NULL),_totCluster(NULL),
   _hitOcc(NULL), _nClusters(NULL), _nHits(NULL), _clusterXWidth(NULL), _clusterYWidth(NULL),_nbadHits(NULL),_nHotPixels(NULL),_hitmapSections(NULL),_efficencyPerEvent(NULL),
-  _clusterChargeProfile(NULL),_pixelChargeProfile(NULL),
+  _clusterChargeProfile(NULL),_pixelChargeProfile(NULL),_start_time(0),
   is_MIMOSA26(false), is_APIX(false), is_USBPIX(false),is_USBPIXI4(false),is_CMSPIXEL(false)
 {
   char out[1024], out2[1024];
@@ -173,6 +175,17 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
     _clusterChargeProfile->SetBit(TH1::kCanRebin);
     _clusterChargeProfile->SetStats(false);
     _clusterChargeProfile->SetMinimum(0);
+
+    sprintf(out,"%s %i Cluster Charge Time Profile",_sensor.c_str(), _id);
+    sprintf(out2,"h_ClusterChargeTimeProfile_%s_%i",_sensor.c_str(), _id);
+    _histoMap["clusterChargeTimeProfile"] = new TProfile(out2, out,100,0,20000);
+    SetHistoAxisLabely(_histoMap["clusterChargeTimeProfile"],"avrg. Cluster Charge");
+    SetHistoAxisLabelx(_histoMap["clusterChargeTimeProfile"],"Time / s");
+    _histoMap["clusterChargeTimeProfile"]->SetBit(TH1::kCanRebin);
+    _histoMap["clusterChargeTimeProfile"]->SetStats(false);
+    _histoMap["clusterChargeTimeProfile"]->SetMinimum(0);
+    _histoMap["clusterChargeTimeProfile"]->GetXaxis()->SetTimeDisplay(1);
+    _histoMap["clusterChargeTimeProfile"]->GetXaxis()->SetTimeFormat("%H:%M:%S");
 
     sprintf(out,"%s %i Number of Hot Pixels",_sensor.c_str(), _id);
     sprintf(out2,"h_nhotpixels_%s_%i",_sensor.c_str(), _id);
@@ -367,6 +380,11 @@ void HitmapHistos::Fill(const SimpleStandardPlane & plane, unsigned event_no,uns
 {
   _eventNumber = event_no;
   _timestamp = time_stamp;
+  if (_start_time==0){
+      _start_time = time_stamp;
+      gStyle->SetTimeOffset(_start_time/1e7);
+  }
+
   if (_nHits != NULL) _nHits->Fill(plane.getNHits());
   if (_efficencyPerEvent != NULL)
       _efficencyPerEvent->Fill(_eventNumber,plane.getNHits()>0);
@@ -449,6 +467,8 @@ void HitmapHistos::Fill(const SimpleStandardCluster & cluster)
     if (_clusterYWidth != NULL) _clusterYWidth->Fill(cluster.getWidthY());
     if (_clusterChargeProfile)
         _clusterChargeProfile->Fill(_eventNumber,cluster.getTOT());
+    if (_histoMap.find( "clusterChargeTimeProfile" ) != _histoMap.end())
+        _histoMap["clusterChargeTimeProfile"]->Fill(_timestamp,cluster.getTOT());
   }
 }
 
@@ -584,6 +604,8 @@ void HitmapHistos::Write()
     _nClustersize_section[section]->Write();
     _nHotPixels_section[section]->Write();
   }
+  for (auto &i: this->_histoMap)
+      i.second->Write();
 }
 
 int HitmapHistos::SetHistoAxisLabelx(TH1* histo,string xlabel)
