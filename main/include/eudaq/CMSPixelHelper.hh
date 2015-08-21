@@ -2,6 +2,7 @@
 #include "constants.h"
 #include "datasource_evt.h"
 #include "Utils.hh"
+#include <exception>
 
 #if USE_LCIO
 #  include "IMPL/LCEventImpl.h"
@@ -122,8 +123,6 @@ namespace eudaq {
             else
                 read_PH_CalibrationFile("DUT",fname,i2c,roc_calibrations[roctype]);
         }
-        char t;
-        std::cin>>t;
     }
 
     void read_PH_CalibrationFile(std::string roc_type,std::string fname, std::string i2cs,float factor){
@@ -218,16 +217,23 @@ namespace eudaq {
       passthroughSplitter splitter;
       dtbEventDecoder decoder;
       dataSink<pxar::Event*> Eventpump;
+      pxar::Event* evt ;
+      try{
+          // Connect the data source and set up the pipe:
+          src = evtSource(0, m_nplanes, m_tbmtype, m_roctype);
+          src >> splitter >> decoder >> Eventpump;
 
-      // Connect the data source and set up the pipe:
-      src = evtSource(0, m_nplanes, m_tbmtype, m_roctype);
-      src >> splitter >> decoder >> Eventpump;
-
-      // Transform from EUDAQ data, add it to the datasource:
-      src.AddData(TransformRawData(in_raw.GetBlock(0)));
-      // ...and pull it out at the other end:
-      pxar::Event* evt = Eventpump.Get();
-      decoding_stats += decoder.getStatistics();
+          // Transform from EUDAQ data, add it to the datasource:
+          src.AddData(TransformRawData(in_raw.GetBlock(0)));
+          // ...and pull it out at the other end:
+          evt = Eventpump.Get();
+          decoding_stats += decoder.getStatistics();
+      }
+      catch (std::exception& e){
+          EUDAQ_WARN("Decoding crashed");
+//cout << e.what() << '\n';
+          return false;
+      }
 
       // Iterate over all planes and check for pixel hits:
       for(size_t roc = 0; roc < m_nplanes; roc++) {
