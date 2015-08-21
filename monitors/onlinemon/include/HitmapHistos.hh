@@ -58,14 +58,18 @@ class HitmapHistos {
     TProfile * _clusterChargeProfile;
     TProfile * _pixelChargeProfile;
     unsigned _eventNumber;
+    unsigned _timestamp;
 //    TH2D* _nTriggerPhase;
+    void fillMimosaHistos(const SimpleStandardPlane *simpPlane);
+    void loopOverPixelHits(const SimpleStandardPlane *simpPlane);
+    void loopOverClusterHits(const SimpleStandardPlane *simpPlane);
 
 
   public:
     HitmapHistos(SimpleStandardPlane p, RootMonitor * mon);
 
     void Fill(const SimpleStandardHit & hit);
-    void Fill(const SimpleStandardPlane & plane, unsigned event_no);
+    void Fill(const SimpleStandardPlane & plane, unsigned event_no, unsigned time_stamp);
     void Fill(const SimpleStandardCluster & cluster);
     void Reset();
 
