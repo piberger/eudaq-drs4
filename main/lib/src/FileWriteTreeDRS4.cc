@@ -203,6 +203,8 @@ namespace eudaq {
     
         if (ev.IsBORE()) {
             eudaq::PluginManager::Initialize(ev);
+            eudaq::PluginManager::GetInstance().PrintPlugins();
+            eudaq::PluginManager::GetInstance().SetCMSPixelConversion(false);
             //firstEvent =true;
             cout << "loading the first event...." << endl;
             return;
