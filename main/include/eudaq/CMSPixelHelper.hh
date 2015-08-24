@@ -50,7 +50,9 @@ namespace eudaq {
   class CMSPixelHelper {
   public:
     std::map<std::string, float >roc_calibrations = {{"psi46v2",65},{"psi46digv21respin",47}};
-    CMSPixelHelper(std::string event_type) : m_event_type(event_type) {};
+    CMSPixelHelper(std::string event_type) : do_conversion(true),m_event_type(event_type) {};
+    void set_conversion(bool val){do_conversion = val;}
+    bool get_conversion(){return do_conversion;}
     std::map< std::string, VCALDict> vcal_vals;
     TF1 * fFitfunction;
     void initializeFitfunction(){fFitfunction = new TF1("fitfunc", "[3]*(TMath::Erf((x-[0])/[1])+[2])",-4096,4096);}
@@ -176,7 +178,6 @@ namespace eudaq {
       }
     }
 
-
     bool GetStandardSubEvent(StandardEvent & out, const Event & in) const {
 
       // If we receive the EORE print the collected statistics:
@@ -253,17 +254,18 @@ namespace eudaq {
 	for(std::vector<pxar::pixel>::iterator it = evt->pixels.begin(); it != evt->pixels.end(); ++it){
 	  // Check if current pixel belongs on this plane:
 	  if(it->roc() == roc) {
-          float factor;
-          if (m_detector == "DUT")
-              factor = 65;
-          else
-              factor = 47.;
       std::string identifier = (std::string)m_detector+(std::string)TString::Format("%01zu%02d%02d",roc,it->row(),it->column());
-      float charge = getCharge(vcal_vals.find(identifier)->second, it->value());
-      if (charge < 0){
-        EUDAQ_WARN(std::string("Invalid cluster charge -" + to_string(charge) +  "/" + to_string(it->value())));
-        charge = 0;
+
+      float charge;
+      if (do_conversion){
+          charge = getCharge(vcal_vals.find(identifier)->second, it->value());
+          if (charge < 0){
+            EUDAQ_WARN(std::string("Invalid cluster charge -" + to_string(charge) +  "/" + to_string(it->value())));
+            charge = 0;
+          }
       }
+      else
+          charge = it->value();
 
       //std::cout << "filling charge " <<it->value()<<" "<< charge << " "<<factor<<" "<<identifier<<std::endl;
 	    if(m_rotated_pcb) { plane.PushPixel(it->row(), it->column(), charge /*it->value()*/); }
@@ -394,7 +396,7 @@ namespace eudaq {
     bool m_rotated_pcb;
     std::string m_event_type;
     mutable pxar::statistics decoding_stats;
-
+    bool do_conversion;
     static std::vector<uint16_t> TransformRawData(const std::vector<unsigned char> & block) {
 
       // Transform data of form char* to vector<int16_t>

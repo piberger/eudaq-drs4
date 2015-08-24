@@ -49,6 +49,11 @@ namespace eudaq {
        */
       DataConverterPlugin & GetPlugin(t_eventid eventtype);
       DataConverterPlugin & GetPlugin(const Event & event);
+      DataConverterPlugin *FindPlugin(std::string pluginName);
+
+      void PrintPlugins() const;
+      std::vector<std::string> PluginNames() const;
+      void SetCMSPixelConversion(bool val);
 
     private:
       /** The map that correlates the event type with its converter plugin.

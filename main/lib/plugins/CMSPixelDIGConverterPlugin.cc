@@ -35,6 +35,8 @@ namespace eudaq {
     }
 #endif
 
+    virtual void set_conversion(bool val){m_converter.set_conversion(val);}
+    virtual bool get_conversion(){return m_converter.get_conversion();}
   private:
     CMSPixelDIGConverterPlugin() : DataConverterPlugin(EVENT_TYPE),
 				   m_converter(EVENT_TYPE) {}
