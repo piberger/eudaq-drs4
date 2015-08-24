@@ -2,7 +2,10 @@
 #include "eudaq/Logger.hh"
 #include "eudaq/PluginManager.hh"
 
-#define EUDAQ_MAX_EVENTS_PER_IDLE 1000
+// #define EUDAQ_MAX_EVENTS_PER_IDLE 1000
+#define EUDAQ_MAX_EVENTS_PER_IDLE  50000
+
+#include "TStopwatch.h"
 
 namespace eudaq {
 
@@ -34,6 +37,7 @@ namespace eudaq {
     if (!m_reader->NextEvent()) return false;
 
     unsigned evt_number = m_reader->GetDetectorEvent().GetEventNumber();
+    //  std::cout<< "at event number; " << evt_number << std::endl;
     if(limit > 0 && evt_number > limit)
       return true;
 
