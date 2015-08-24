@@ -668,8 +668,13 @@ int main(int argc, const char ** argv) {
     {
       gStyle->SetPalette(1);
       gStyle->SetNumberContours(99);
-      gStyle->SetOptStat(111111);
-      gStyle->SetStatH(0.15);
+      // gStyle->SetOptStat(111111);
+      gStyle->SetOptStat(1101);
+      gStyle->SetStatH(0.07);
+      gStyle->SetStatW(0.12);
+      gStyle->SetStatX(0.20);
+      gStyle->SetStatY(1.00);
+      gStyle->SetPadRightMargin(0.12);
     }
     else
     {
