@@ -43,9 +43,9 @@ namespace eudaq {
 
 
     if (evt_number % 1000 == 0) {
-      std::cout << "ProcessEvent " << m_reader->GetDetectorEvent().GetEventNumber()
+      std::cout << "\rProcessEvent " << m_reader->GetDetectorEvent().GetEventNumber()
         << (m_reader->GetDetectorEvent().IsBORE() ? "B" : m_reader->GetDetectorEvent().IsEORE() ? "E" : "")
-        << std::endl;
+        << std::flush;
     }
 
     if(skip > 0 && (evt_number % 100 >= skip))  //-s functionality
