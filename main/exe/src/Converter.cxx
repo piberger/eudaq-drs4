@@ -51,7 +51,7 @@ int main(int, char ** argv) {
 			  ++event_nr;
 			  if (event_nr%1000==0)
 			  {
-				  std::cout<<"Processing event "<< event_nr<<std::endl;
+				  std::cout<<"\rProcessing event "<< event_nr<<std::flush;
 			  }
 			}
       } while (reader.NextEvent());
