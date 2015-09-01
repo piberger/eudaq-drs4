@@ -1043,26 +1043,27 @@ void FileWriterTreeDRS4::FillPedestalRange(int iwf, const StandardWaveform *wf, 
     
     float pedestal2_integral = pol*wf->getIntegral( 400,  480);
     float pedestal3_integral = pol*wf->getIntegral( 500,  580);
+    float pedestalMID_integral;
     if (pedestal_integral>pedestal2_integral){
     	if (pedestal2_integral>pedestal3_integral){
-    		float pedestalMID_integral = pedestal2_integral;
+    		pedestalMID_integral = pedestal2_integral;
     	}
     	else if (pedestal3_integral>pedestal_integral){
-    		float pedestalMID_integral = pedestal_integral;
+    		pedestalMID_integral = pedestal_integral;
     	}
     	else{
-    		float pedestalMID_integral = pedestal3_integral;
+    		pedestalMID_integral = pedestal3_integral;
     	}
     }
     else{
     	if (pedestal2_integral<pedestal3_integral){
-    		float pedestalMID_integral = pedestal2_integral;
+    		pedestalMID_integral = pedestal2_integral;
     	}
     	else if (pedestal3_integral<pedestal_integral){
-    		float pedestalMID_integral = pedestal_integral;
+    		pedestalMID_integral = pedestal_integral;
     	}
     	else{
-    		float pedestalMID_integral = pedestal3_integral;
+    		pedestalMID_integral = pedestal3_integral;
     	}
     }
     
