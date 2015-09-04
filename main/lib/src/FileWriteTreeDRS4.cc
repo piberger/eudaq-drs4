@@ -1077,7 +1077,7 @@ void FileWriterTreeDRS4::FillPedestalRange(int iwf, const StandardWaveform *wf, 
     v_ped_median    ->at(iwf) = (pedestal_median);       // Pedestal: Median in Pedestalrange
     v_ped_median1    ->at(iwf) = (pedestal_median1);       // Pedestal: Median in first half of Pedestalrange
     v_ped_median2    ->at(iwf) = (pedestal_median2);       // Pedestal: Median in second half of Pedestalrange
-    v_ped_min_int	 ->at(iwf) = (pedestalL	OW_integral);       // Pedestal: lowest integral value of 3 different pedestal range integrals
+    v_ped_min_int	 ->at(iwf) = (pedestalLOW_integral);       // Pedestal: lowest integral value of 3 different pedestal range integrals
     
 }
 
