@@ -153,6 +153,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         std::vector<float>  *  v_sig_int;
         std::vector<float>  *  v_sig_time;
         std::vector<float>  *  v_sig_spread       ;
+        std::vector<float>  *  v_sig_spread_short       ;
         std::vector<float>  *  v_sig_integral1;
         std::vector<float>  *  v_sig_integral2;
         std::vector<float>  *  v_sig_integral3;
@@ -164,6 +165,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         std::vector<float>  *  v_ped_median       ;
         std::vector<float>  *  v_ped_median1       ;
         std::vector<float>  *  v_ped_median2       ;
+        std::vector<float>  *  v_ped_min_int       ;
         std::vector<float>  *  v_pul_int;
         std::vector<float>  *  v_pul_spread	      ;
 
@@ -263,6 +265,7 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     v_sig_peak          = new std::vector<float>;
     v_peaktime          = new std::vector<float>;
     v_sig_spread        = new std::vector<float>;
+    v_sig_spread_short        = new std::vector<float>;
     v_sig_integral1     = new std::vector<float>;
     v_sig_integral2     = new std::vector<float>;
     v_sig_integral3     = new std::vector<float>;
@@ -273,6 +276,7 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     v_ped_median        = new std::vector<float>;
     v_ped_median1       = new std::vector<float>;
     v_ped_median2       = new std::vector<float>;
+    v_ped_min_int       = new std::vector<float>;
     v_pul_spread        = new std::vector<float>;
 
     v_is_saturated  	= new std::vector<bool>;
@@ -465,6 +469,7 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("sig_int", 		&v_sig_int);
     m_ttree->Branch("sig_peak", 	&v_sig_peak);
     m_ttree->Branch("sig_spread", 	&v_sig_spread);
+    m_ttree->Branch("sig_spread_short", 	&v_sig_spread_short);
     m_ttree->Branch("sig_integral1", &v_sig_integral1);
     m_ttree->Branch("sig_integral2", &v_sig_integral2);
     m_ttree->Branch("sig_integral3", &v_sig_integral3);
@@ -476,6 +481,7 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("ped_median", 	&v_ped_median);
     m_ttree->Branch("ped_median1", 	&v_ped_median1);
     m_ttree->Branch("ped_median2", 	&v_ped_median2);
+    m_ttree->Branch("ped_min_int", 	&v_ped_min_int);
     m_ttree->Branch("ped_int", 		&v_ped_int);
 
     m_ttree->Branch("pul_spread", &v_pul_spread);
@@ -530,12 +536,14 @@ void FileWriterTreeDRS4::ClearVectors(){
     v_ped_median    ->clear();
     v_ped_median1   ->clear();
     v_ped_median2   ->clear();
+    v_ped_min_int   ->clear();
 
     v_sig_int		->clear();
     v_sig_time		->clear();
     v_sig_peak      ->clear();
     v_peaktime      ->clear();
     v_sig_spread    ->clear();
+    v_sig_spread_short    ->clear();
     v_sig_integral1 ->clear();
     v_sig_integral2->clear();
     v_sig_integral3->clear();
@@ -791,6 +799,7 @@ inline void FileWriterTreeDRS4::ResizeVectors(unsigned n_channels) {
 
     v_sig_int->resize(n_channels);
     v_sig_spread->resize(n_channels);
+    v_sig_spread_short->resize(n_channels);
     v_sig_peak->resize(n_channels);
     v_sig_integral1->resize(n_channels);
     v_sig_integral2->resize(n_channels);
@@ -807,6 +816,7 @@ inline void FileWriterTreeDRS4::ResizeVectors(unsigned n_channels) {
     v_ped_median->resize(n_channels);
     v_ped_median1->resize(n_channels);
     v_ped_median2->resize(n_channels);
+    v_ped_min_int->resize(n_channels);
 
     v_pul_int->resize(n_channels);
     v_pul_spread->resize(n_channels);
@@ -1007,9 +1017,11 @@ void FileWriterTreeDRS4::FillSignalRange(int iwf, const StandardWaveform *wf, in
         cout<<"get Values2 "<<iwf<<endl;
     float sig_static = pol*wf->getIntegral( ranges["signal"]->first,  ranges["signal"]->second);
     float signalSpread      = wf->getSpreadInRange(ranges["signal"]->first,  ranges["signal"]->second);
+    float signalSpreadShort      = wf->getSpreadInRange(ranges["signal"]->first,  ranges["signal"]->first + 30);
 
     v_sig_int       ->at(iwf) = (signal_integral);      // Signal: Integral over Signalrange
     v_sig_spread    ->at(iwf) = (signalSpread);         // Signal: Spread in Signalrange
+    v_sig_spread_short    ->at(iwf) = (signalSpreadShort);         // Signal: Spread in short Signalrange
     v_sig_peak      ->at(iwf) = (pol*maxAndValue.second);   // Signal: Value of peak (no pedestal correction)
     v_sig_integral1 ->at(iwf) = (int_9);                 // Signal: Integral around peak with range set in config file
     v_sig_integral2 ->at(iwf) = (int_27);                // Signal: Integral around peak with range set in config file
@@ -1035,6 +1047,27 @@ void FileWriterTreeDRS4::FillPedestalRange(int iwf, const StandardWaveform *wf, 
     float int_27            = pol*wf->getIntegral(ranges["pedestal"]->first + halfped - r->first, ranges["pedestal"]->first + halfped + r->second);
     r = ranges["PeakIntegral3"];
     float int_54            = pol*wf->getIntegral(ranges["pedestal"]->first + halfped - r->first, ranges["pedestal"]->first + halfped + r->second);
+    
+    float pedestal2_integral = pol*wf->getIntegral( 400,  480);
+    float pedestal3_integral = pol*wf->getIntegral( 500,  580);
+    float pedestalLOW_integral;
+    if (pedestal_integral>pedestal2_integral){
+    	if (pedestal2_integral>pedestal3_integral){
+    		pedestalLOW_integral = pedestal3_integral;
+    	}
+    	else{
+    		pedestalLOW_integral = pedestal2_integral;
+    	}
+    }
+    else{
+    	if (pedestal_integral<pedestal3_integral){
+    		pedestalLOW_integral = pedestal_integral;
+    	}
+    	else{
+    		pedestalLOW_integral = pedestal3_integral;
+    	}
+    }
+    
 
     v_ped_int       ->at(iwf) = (pedestal_integral);        // Pedestal: Integral over Pedestalrange
     v_ped_spread    ->at(iwf) = (pedestal);              // Pedestal: Spread in Pedestalrange
@@ -1044,6 +1077,8 @@ void FileWriterTreeDRS4::FillPedestalRange(int iwf, const StandardWaveform *wf, 
     v_ped_median    ->at(iwf) = (pedestal_median);       // Pedestal: Median in Pedestalrange
     v_ped_median1    ->at(iwf) = (pedestal_median1);       // Pedestal: Median in first half of Pedestalrange
     v_ped_median2    ->at(iwf) = (pedestal_median2);       // Pedestal: Median in second half of Pedestalrange
+    v_ped_min_int	 ->at(iwf) = (pedestalLOW_integral);       // Pedestal: lowest integral value of 3 different pedestal range integrals
+    
 }
 
 void FileWriterTreeDRS4::FillPulserRange(int iwf, const StandardWaveform *wf, int pol){
