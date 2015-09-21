@@ -855,7 +855,7 @@ void FileWriterTreeDRS4::DoFFTAnalysis(int iwf){
     int n = data->size();
     float sample_rate = 2e6;
     if(fft_own->GetN()[0] != n+1){
-        n_samples = n+1;
+        n_samples = n-2+1;
         cout<<"RECreating a new VirtualFFT with "<<n_samples<<" Samples, before "<<fft_own->GetN()<<endl;
         delete fft_own;
         delete in;
@@ -870,7 +870,7 @@ void FileWriterTreeDRS4::DoFFTAnalysis(int iwf){
     for (int j = 0; j < n; ++j) {
         in[j] = data->at(j);
     }
-    fft_own->SetPoints(in);
+    fft_own->SetPoints(in[2]);
     fft_own->Transform();
     fft_own->GetPointsComplex(re_full,im_full);
     float finalVal = 0;
