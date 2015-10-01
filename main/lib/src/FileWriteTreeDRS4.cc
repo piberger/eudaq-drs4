@@ -1055,7 +1055,7 @@ void FileWriterTreeDRS4::FillSignalRange(int iwf, const StandardWaveform *wf, in
 
     pair<float,float>* r = ranges["PeakIntegral1"];
     float int_9             = pol*wf->getIntegral( maxAndValue.first-r->first, maxAndValue.first+r->second);
-    r = ranges["PeakIntegral2"];
+    r = ranges["PeakIntegral2"];	
     float int_27            = pol*wf->getIntegral( maxAndValue.first-r->first, maxAndValue.first+r->second);
     r = ranges["PeakIntegral3"];
     float int_54            = pol*wf->getIntegral( maxAndValue.first-r->first, maxAndValue.first+r->second);
