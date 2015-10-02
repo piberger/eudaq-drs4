@@ -397,11 +397,11 @@ void FileWriterTreeDRS4::Configure(){
 
     ranges["pulser"] = new pair<float,float>(m_config->Get("pulser_range",make_pair((float)770,(float)860)));
     ranges["pedestal"] =  new pair<float,float>(m_config->Get("pedestal_range",make_pair((float)350,(float)450)));
-    ranges["pedestalFit"] =  new pair<float,float>(m_config->Get("pedestalFit_range",make_pair((float)250,(float)650)));
+    ranges["pedestalFit"] =  new pair<float,float>(m_config->Get("pedestalfit_range",make_pair((float)250,(float)650)));
     ranges["signal"] =  new pair<float,float>(m_config->Get("signal_range",make_pair((float)25,(float)175)));
-    ranges["PeakIntegral1"] =  new pair<float,float>(m_config->Get("PeakIntegral1_range",make_pair((int)3,(int)9)));
-    ranges["PeakIntegral2"] =  new pair<float,float>(m_config->Get("PeakIntegral2_range",make_pair((int)9,(int)18)));
-    ranges["PeakIntegral3"] =  new pair<float,float>(m_config->Get("PeakIntegral3_range",make_pair((int)18,(int)36)));
+    ranges["PeakIntegral1"] =  new pair<float,float>(m_config->Get("peakintegral1_range",make_pair((int)3,(int)9)));
+    ranges["PeakIntegral2"] =  new pair<float,float>(m_config->Get("peakintegral2_range",make_pair((int)9,(int)18)));
+    ranges["PeakIntegral3"] =  new pair<float,float>(m_config->Get("peakintegral3_range",make_pair((int)18,(int)36)));
     std::cout<<"  - Ranges: "<<ranges.size()<<std::endl;
     for (auto& it: ranges)
         cout<<"     * range_"<<it.first<<" "<<to_string(*(it.second))<<endl;
