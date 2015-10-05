@@ -1097,12 +1097,12 @@ void FileWriterTreeDRS4::FillSignalRange(int iwf, const StandardWaveform *wf, in
 }
 
 void FileWriterTreeDRS4::FillPedestalRange(int iwf, const StandardWaveform *wf, int pol){
+	int halfped = (ranges["pedestal"]->second - ranges["pedestal"]->first)/2;
 	
     float pedestal = wf->getSpreadInRange(ranges["pedestal"]->first,  ranges["pedestal"]->second);
     float pedestal2 = wf->getSpreadInRange(ranges["pedestal"]->first - 2*halfped,  ranges["pedestal"]->first);
     float pedestal_integral   = pol*wf->getIntegral( ranges["pedestal"]->first,  ranges["pedestal"]->second);
     float pedestal_median   = pol*wf->getMedian( ranges["pedestal"]->first,  ranges["pedestal"]->second);
-    int halfped = (ranges["pedestal"]->second - ranges["pedestal"]->first)/2;
     float pedestal_median1   = pol*wf->getMedian( ranges["pedestal"]->first,  ranges["pedestal"]->first + halfped);
     float pedestal_median2   = pol*wf->getMedian( ranges["pedestal"]->second - halfped,  ranges["pedestal"]->second);
 
