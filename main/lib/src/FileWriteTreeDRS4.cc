@@ -142,6 +142,9 @@ class FileWriterTreeDRS4 : public FileWriter {
 
         int spectrum_waveforms;
         int fft_waveforms;
+        int pulser_threshold;
+        int pulser_channel;
+        int trigger_channel;
         int linear_fitting_waveforms;
 
         // Vector Branches     
@@ -396,8 +399,13 @@ void FileWriterTreeDRS4::Configure(){
     spectrum_waveforms = (int)m_config->Get("spectrum_waveforms",9);
     fft_waveforms = (int)m_config->Get("fft_waveforms",9);
     linear_fitting_waveforms = (int)m_config->Get("linear_fitting_waveforms",9);
+    pulser_threshold = (int)m_config->Get("pulser_drs4_threshold",80);
+    pulser_channel = (int)m_config->Get("pulser_drs4_threshold",1);
+    trigger_channel = (int)m_config->Get("pulser_drs4_threshold",2);
+    
 
     ranges["pulser"] = new pair<float,float>(m_config->Get("pulser_range",make_pair((float)770,(float)860)));
+    ranges["pulserDRS4"] = new pair<float,float>(m_config->Get("pulser_range_drs4",make_pair((float)740,(float)860))); //  august: 740, 860,
     ranges["pedestal"] =  new pair<float,float>(m_config->Get("pedestal_range",make_pair((float)350,(float)450)));
     ranges["pedestalFit"] =  new pair<float,float>(m_config->Get("pedestalfit_range",make_pair((float)250,(float)650)));
     ranges["signal"] =  new pair<float,float>(m_config->Get("signal_range",make_pair((float)25,(float)175)));
@@ -710,7 +718,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
 
         if (verbose > 3)
             cout<<"get trigger wf "<<iwf<<endl;
-        if(iwf == 2){ // trigger WF
+        if(iwf == trigger_channel){ // trigger WF august: 2, may: 1
             for (int j=0; j<data->size(); j++){
                 if( abs(data->at(j)) > 90. ) {f_trig_time = j; break;}
             }
@@ -718,7 +726,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
 
         if (verbose > 3)
             cout<<"get pulser wf "<<iwf<<endl;
-        if(iwf == 1){ // pulser WF
+        if(iwf == pulser_channel){ // pulser WF august: 1, may: 2
             f_pulser = this->IsPulserEvent(&waveform);
             if (f_pulser)
                 f_pulser_events++;
@@ -1236,8 +1244,8 @@ void FileWriterTreeDRS4::UpdateWaveforms(int iwf, const StandardWaveform *wf){
 }
 
 int FileWriterTreeDRS4::IsPulserEvent(const StandardWaveform *wf){
-    f_pulser_int = wf->getIntegral(740, 860, true);
-    return f_pulser_int > 80.;
+    f_pulser_int = wf->getIntegral(ranges["pulserDRS4"]->first, ranges["pulserDRS4"]->second, true);//740, 860, true);
+    return f_pulser_int > pulser_threshold;
 } //end IsPulserEvent
 
 } //end namespace eudaq
