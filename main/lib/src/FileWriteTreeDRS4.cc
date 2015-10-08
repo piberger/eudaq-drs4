@@ -400,8 +400,8 @@ void FileWriterTreeDRS4::Configure(){
     fft_waveforms = (int)m_config->Get("fft_waveforms",9);
     linear_fitting_waveforms = (int)m_config->Get("linear_fitting_waveforms",9);
     pulser_threshold = (int)m_config->Get("pulser_drs4_threshold",80);
-    pulser_channel = (int)m_config->Get("pulser_drs4_threshold",1);
-    trigger_channel = (int)m_config->Get("pulser_drs4_threshold",2);
+    pulser_channel = (int)m_config->Get("pulser_channel",1);
+    trigger_channel = (int)m_config->Get("trigger_channel",2);
     cout<<"CHANNEL AND PULSER SETTINGS: "<<endl;
     cout<<"\t\tpulser channel: "<<pulser_channel<<endl;
     cout<<"\t\ttrigger channel: "<<trigger_channel<<endl;
@@ -721,7 +721,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
 
         if (verbose > 3)
             cout<<"get trigger wf "<<iwf<<endl;
-        if(iwf == 1){ // trigger WF august: 2, may: 1
+        if(iwf == trigger_channel){ // trigger WF august: 2, may: 1
             for (int j=0; j<data->size(); j++){
                 if( abs(data->at(j)) > 90. ) {f_trig_time = j; break;}
             }
@@ -729,7 +729,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
 
         if (verbose > 3)
             cout<<"get pulser wf "<<iwf<<endl;
-        if(iwf == 2){ // pulser WF august: 1, may: 2
+        if(iwf == pulser_channel){ // pulser WF august: 1, may: 2
             f_pulser = this->IsPulserEvent(&waveform);
             if (f_pulser)
                 f_pulser_events++;
