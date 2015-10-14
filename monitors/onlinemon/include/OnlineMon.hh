@@ -11,6 +11,8 @@
 #include <TPRegexp.h>
 #include <TObjString.h>
 #include <TStopwatch.h>
+#include <TVirtualFFT.h>
+#include <TMath.h>
 
 //EUDAQ includes
 #ifndef __CINT__
@@ -92,6 +94,9 @@ class RootMonitor : private eudaq::Holder<int>,
       EUDAQMonitorCollection * eudaqCollection;
       WaveformCollection *wfCollection;
 
+      TVirtualFFT *fft_own;
+      std::vector< float > * fft_vals;
+      float abs_fft, mean_fft, max_fft, min_fft;
 
       virtual void StartIdleing() { }
       OnlineMonWindow * getOnlineMon() { return onlinemon; }
@@ -125,6 +130,7 @@ class RootMonitor : private eudaq::Holder<int>,
       void setCorr_width(const unsigned c_w)  { corrCollection->setWindowWidthForCorrelation(c_w); }
       void setCorr_planes(const unsigned c_p) { corrCollection->setPlanesNumberForCorrelation(c_p); }
       void setUseTrack_corr(const bool t_c)      { useTrackCorrelator = t_c; }
+      void setStartEvent(const unsigned int start_event) { this->start_event = start_event;}
       bool getUseTrack_corr() const              { return useTrackCorrelator; }
       void setTracksPerEvent(const unsigned int tracks) { tracksPerEvent = tracks; }
       unsigned int getTracksPerEvent() const     { return tracksPerEvent; }
@@ -132,6 +138,11 @@ class RootMonitor : private eudaq::Holder<int>,
       void SetSnapShotDir(string s);
       string GetSnapShotDir();
       OnlineMonConfiguration mon_configdata; //FIXME
+
+      unsigned int _fft_resets;
+      std::vector<float> _last_fft_min;
+      std::vector<float> _last_fft_max;
+      std::vector<float> _last_fft_mean;
     private:
       string snapshotdir;
       EventSanityChecker myevent; //FIXME

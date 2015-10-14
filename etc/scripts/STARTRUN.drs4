@@ -46,18 +46,6 @@ sleep 2
 # Old Version
 #ssh -X -Y rapidshare ("xterm -sb -sl 1000 -geom 80x10-500-169 -fn fixed -T 'DataCollector' -e 'tmux attach -s eudaq || tmux new -s eudaq;  cd sdvlp/eudaq-drs4/bin/; Collector' ")
 
-if [ "$TLU" = true ]; then
-    echo '        TLU @ PiM1'
-    xterm -geom 78x20+490-30 -hold -e 'ssh -tY pim1 scripts/StartTLU.sh' &
-    #echo '\033[1;36;48m PLEASE WAIT...\033[0m'
-fi
-
-if [ "$CMS" = true ]; then
-    echo '        CMSPixel @ PiM1'
-    xterm -geom 78x20+970-30 -hold -e 'ssh -tY pim1 scripts/StartCMSPixel.sh' &
-    #echo '\033[1;36;48m PLEASE WAIT...\033[0m'
-fi
-
 if [ "$DRS" = true ]; then
     echo '        DRS4 @ PiM1'
     xterm -geom 78x20+1450-30 -hold -e 'ssh -tY pim1 scripts/StartDRS4.sh' &

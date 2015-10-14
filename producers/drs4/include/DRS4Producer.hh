@@ -36,6 +36,7 @@ private:
 	virtual void SendRawEvent();
 	void SetTimeStamp();
 	unsigned m_run, m_ev;
+	unsigned m_tlu_waiting_time;
 	std::string m_verbosity, m_producerNamem,m_event_type, m_producerName;
 	bool m_terminated, m_running, triggering,m_self_triggering;;
 	int m_n_self_trigger;
@@ -45,6 +46,7 @@ private:
 	DRS *m_drs;
 	int m_serialno;
 	DRSBoard *m_b;
+	bool is_initalized;
 	float time_array[8][1024];
 	unsigned short raw_wave_array[8][1024];
 	float wave_array[8][1024];

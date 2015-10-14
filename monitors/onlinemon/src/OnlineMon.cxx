@@ -52,7 +52,7 @@ using namespace std;
 RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & datafile, int /*x*/, int /*y*/, int /*w*/,
 			 int /*h*/, int argc, int offline, const unsigned lim, const unsigned skip_, const unsigned int skip_with_counter,
 			 const std::string & conffile)
-  : eudaq::Holder<int>(argc), eudaq::Monitor("OnlineMon", runcontrol, lim, skip_, skip_with_counter, datafile), _offline(offline), _planesInitialized(false) {
+  : eudaq::Holder<int>(argc), eudaq::Monitor("OnlineMon", runcontrol, lim, skip_, skip_with_counter, datafile), _offline(offline), _planesInitialized(false), _fft_resets(0){
 
   if (_offline <= 0)
   {
@@ -152,6 +152,16 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
 
   cout << "End of Constructor" << endl;
 
+  // construct the FFT stuff
+  int n_samples = 1024;
+  Int_t n_size = n_samples+1;
+  fft_own = TVirtualFFT::FFT(1, &n_size, "R2C P K");
+  if (!fft_own) {
+      cout << "something went wrong with the fft creation" << endl;
+      return; 
+  }
+
+
   //set a few defaults
   snapshotdir=mon_configdata.getSnapShotDir();
   previous_event_analysis_time=0;
@@ -183,11 +193,13 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
   if (ev.IsBORE())
   {
     std::cout << "This is a BORE" << std::endl;
-//ev.GetRunNumber();
   }
   if (ev.GetEventNumber()<10)
       if (ev.GetRunNumber()!=0)
           this->onlinemon->setRunNumber(ev.GetRunNumber());
+  if (ev.GetEventNumber() < this->start_event){
+      return;
+  }
 
   //    cout << "Called onEvent " << ev.GetEventNumber()<< endl;
 
@@ -298,7 +310,9 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
             //     cout << "PulserEvent, minimum is " << pulserMin << std::endl;
     	}
     }
-
+    if (_last_fft_min.size() <nwf)_last_fft_min.resize(nwf,-1);
+    if (_last_fft_max.size() <nwf)_last_fft_max.resize(nwf,-1);
+    if (_last_fft_mean.size() <nwf)_last_fft_mean.resize(nwf,-1);
 	for (unsigned int i = 0; i < nwf;i++){
 			const eudaq::StandardWaveform & waveform = ev.GetWaveform(i);
 #ifdef DEBUG
@@ -314,12 +328,41 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
             // cout << " 
 			std::string sensorname;
 			sensorname = waveform.GetType();
-//             cout << "sensorname " << sensorname << endl; // this gives V1730 or drs4
-//			SimpleStandardWaveform simpWaveform(sensorname,waveform.ID(),&mon_configdata);//,plane.XSize(),plane.YSize(), plane.TLUEvent(),plane.PivotPixel(),&mon_configdata);
 			SimpleStandardWaveform simpWaveform(sensorname,waveform.ID(),waveform.GetNSamples(),&mon_configdata);//,plane.XSize(),plane.YSize(), plane.TLUEvent(),plane.PivotPixel(),&mon_configdata);
 			simpWaveform.setSign(mon_configdata.getSignalSign(waveform.GetChannelNumber()));
 			simpWaveform.setNSamples(waveform.GetNSamples());
 			simpWaveform.addData(&(*waveform.GetData())[0]);
+            // perform the fft and put it into the simpleWF directly
+            simpWaveform.performFFT(fft_own);
+            int count = 0;
+            //cout<<"Bla"<<endl;
+            if (simpWaveform.getMeanFFT() == _last_fft_mean.at(i)){
+                //cout<<i<<"FFT Means disagree\t";
+                count+=1;
+            }
+            if (simpWaveform.getMaxFFT() == _last_fft_max.at(i)){
+                //cout<<i<<"FFT Max disagree\t";
+                count+=1;
+            }
+            if (simpWaveform.getMinFFT() == _last_fft_min.at(i)){
+                //cout<<i<<"FFT Min disagree\t";
+                count+=1;
+            }
+            if (count!=0){
+                if (fft_own){
+                    delete fft_own;
+                    _fft_resets+=1;
+                    cout<<ev.GetEventNumber()<<" Reinitialized FFT "<<_fft_resets<<endl;
+                    int n_samples = 1024;
+                    Int_t n_size = n_samples+1;
+                    fft_own = TVirtualFFT::FFT(1, &n_size, "R2C P K");
+                }
+                simpWaveform.performFFT(fft_own);
+            }
+            _last_fft_min[i] = simpWaveform.getMinFFT();
+            _last_fft_max[i] = simpWaveform.getMaxFFT();
+            _last_fft_mean[i] = simpWaveform.getMeanFFT();
+
 			simpWaveform.Calculate();
 			//simpWaveform.setTimestamp(ev.GetTimestamp());
 			simpWaveform.setTimestamp(waveform.GetTimeStamp());
@@ -334,6 +377,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 //					<<" ch name \""<<simpWaveform.getChannelName()<<"\""<<endl;//<<"\" mon:"<<_mon<<endl;
 			simpEv.addWaveform(simpWaveform);
 		}
+
 		
     if (skip_dodgy_event)
     {
@@ -599,10 +643,12 @@ int main(int argc, const char ** argv) {
   eudaq::Option<unsigned>        corr_planes(op, "cp", "corr_planes",  5, "Minimum amount of planes for track reconstruction in the correlation");
   eudaq::Option<bool>            track_corr(op, "tc", "track_correlation", false, "Using (EXPERIMENTAL) track correlation(true) or cluster correlation(false)");
   eudaq::Option<int>             update(op, "u", "update",  1000, "update every ms");
+  eudaq::Option<unsigned int>             start_event(op, "st", "start",  0, "starting at event <num>");
   eudaq::Option<int>             offline(op, "o", "offline",  0, "running is offlinemode - analyse until event <num>");
   eudaq::Option<std::string>     configfile(op, "c", "config_file"," ", "filename","Config file to use for onlinemon");
   eudaq::OptionFlag do_rootatend (op, "rf","root","Write out root-file after each run");
   eudaq::OptionFlag do_resetatend (op, "rs","reset","Reset Histograms when run stops");
+
 
   try {
     op.Parse(argv);
@@ -622,8 +668,13 @@ int main(int argc, const char ** argv) {
     {
       gStyle->SetPalette(1);
       gStyle->SetNumberContours(99);
-      gStyle->SetOptStat(111111);
-      gStyle->SetStatH(0.15);
+      // gStyle->SetOptStat(111111);
+      gStyle->SetOptStat(1101);
+      gStyle->SetStatH(0.07);
+      gStyle->SetStatW(0.12);
+      gStyle->SetStatX(0.20);
+      gStyle->SetStatY(1.00);
+      gStyle->SetPadRightMargin(0.12);
     }
     else
     {
@@ -644,6 +695,7 @@ int main(int argc, const char ** argv) {
     mon.setCorr_width(corr_width.Value());
     mon.setCorr_planes(corr_planes.Value());
     mon.setUseTrack_corr(track_corr.Value());
+    mon.setStartEvent(start_event.Value());
 
     cout <<"Monitor Settings:" <<endl;
     cout <<"Update Interval :" <<update.Value() <<" ms" <<endl;

@@ -15,8 +15,8 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/sdvlp/eudaq-drs4/bin:/usr/local/li
 echo $(pwd)
 echo 'STARTING DAQ'
 echo '    Cleaning up first...'
+/bin/bash ~/sdvlp/eudaq-drs4/etc/scripts/KILLRUN.local
 /bin/bash ~/sdvlp/eudaq-drs4/etc/scripts/KILLRUN.psi
-#cd `dirname $1`/bin
 cd ~/sdvlp/eudaq-drs4/bin
 
 sleep 1
@@ -38,42 +38,38 @@ echo '        LogCollector'
 echo '\033[1;36;48m PLEASE WAIT...\033[0m'
 sleep 2
 
-echo '        DataCollector @ rapidshare'
-xterm -geom 78x20+10-30 -hold -e 'ssh -tY rapidshare scripts/StartDataCollector.sh' &
+echo '        DataCollector @ daq'
+xterm -geom 78x20+10-30 -hold -e 
+~/sdvlp/eudaq-drs4/bin/TestDataCollector.exe -r tcp://$HOSTNAME:$RCPORT &
 echo '\033[1;36;48m PLEASE WAIT...\033[0m'
 sleep 2
-
-# Old Version
-#ssh -X -Y rapidshare ("xterm -sb -sl 1000 -geom 80x10-500-169 -fn fixed -T 'DataCollector' -e 'tmux attach -s eudaq || tmux new -s eudaq;  cd sdvlp/eudaq-drs4/bin/; Collector' ")
 
 if [ "$TLU" = true ]; then
     echo '        TLU @ PiM1'
     xterm -geom 78x20+490-30 -hold -e 'ssh -tY pim1 scripts/StartTLU.sh' &
     #echo '\033[1;36;48m PLEASE WAIT...\033[0m'
+    sleep 0.2
 fi
 
 if [ "$CMS" = true ]; then
-    echo '        CMSPixel @ PiM1'
+    echo '        CMSPixel analogue @ PiM1'
     xterm -geom 78x20+970-30 -hold -e 'ssh -tY pim1 scripts/StartCMSPixel.sh' &
     #echo '\033[1;36;48m PLEASE WAIT...\033[0m'
+    sleep 0.2
+fi
+
+if [ "$CMS" = true ]; then
+    echo '        CMSPixel digital @ PiM1'
+    xterm -geom 78x20+1450-30 -hold -e 'ssh -tY pim1 scripts/StartCMSPixelDig.sh' &
+    #echo '\033[1;36;48m PLEASE WAIT...\033[0m'
+    sleep 0.2
 fi
 
 if [ "$DRS" = true ]; then
     echo '        DRS4 @ PiM1'
-    xterm -geom 78x20+1450-30 -hold -e 'ssh -tY pim1 scripts/StartDRS4.sh' &
+    xterm -geom 78x20+10-30 -hold -e 'ssh -tY pim1 scripts/StartDRS4.sh' &
     echo '\033[1;36;48m PLEASE WAIT...\033[0m'
 fi
-
-
-#echo '        OnlineMonitor'
-#./OnlineMon.exe -tc 0 -r tcp://$HOSTNAME:$RCPORT  &
-
-#ssh -X -Y eudet@$EUDRBIP1 "(xterm -sb -sl 1000 -geom 80x10-500-169 -fn fixed -T 'EUDRB Producer 1' -e 'cd eudaq/bin/; ./EUDRBProducer.exe -n EUDRB1 -r $HOSTNAME:$RCPORT | tee log')" &
-
-#sleep 1
-
-#echo '        EUDRB 2'
-#ssh -X -Y eudet@$EUDRBIP2 "(xterm -sb -sl 1000 -geom 80x10-500-20 -fn fixed -T 'EUDRB Producer 2' -e 'cd eudaq/bin/; ./EUDRBProducer.exe -n EUDRB2 -r $HOSTNAME:$RCPORT | tee log')" &
 
 
 cd -

@@ -128,6 +128,11 @@ void WaveformCollection::registerSignalWaveforms(const SimpleStandardWaveform &p
     registerDataWaveforms(p,"","SignalEvents");
 }
 
+void WaveformCollection::registerBadFFTWaveforms(const SimpleStandardWaveform &p){
+    registerBadFFTWaveforms(p,"BadFFTEvents");
+}
+
+
 void WaveformCollection::registerDataWaveforms(const SimpleStandardWaveform &p,string prefix, string desc){
     char tree[1024], folder[1024];
 
@@ -207,6 +212,16 @@ void WaveformCollection::registerDataWaveforms(const SimpleStandardWaveform &p,s
     _mon->getOnlineMon()->registerTreeItem(tree);
     _mon->getOnlineMon()->registerHisto(tree,wf_histo->getHisto(prefix+"PedestalIntegral"), "",0);
 
+    sprintf(tree,"%s/MeanFFT",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getHisto(prefix+"MeanFFT"), "",0);
+
+    sprintf(tree,"%s/InvMaxFFT",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getHisto(prefix+"InvMaxFFT"), "",0);
+
     sprintf(tree,"%s/Integral/Pulser",main_path.c_str());
     std::cout<<tree<<endl;
     _mon->getOnlineMon()->registerTreeItem(tree);
@@ -218,27 +233,93 @@ void WaveformCollection::registerDataWaveforms(const SimpleStandardWaveform &p,s
     _mon->getOnlineMon()->makeTreeItemSummary(tree); //make summary page
 }
 
-void WaveformCollection::registerGlobalWaveforms(const SimpleStandardWaveform &p){
+void WaveformCollection::registerBadFFTWaveforms(const SimpleStandardWaveform &p, string desc){
     char tree[1024], folder[1024];
-    sprintf(tree,"%s/Ch %i - %s/IsPulserEvent",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+
+    WaveformHistos* wf_histo =getWaveformHistos(p.getName(),p.getID());
+    string main_path = (string)TString::Format("%s/Ch %i - %s/%s",p.getName().c_str(),p.getID(),p.getChannelName().c_str(),desc.c_str());
+
+    sprintf(tree,"%s/Signal",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getHisto("BadFFT_Signal"), "",0);
+
+    sprintf(tree,"%s/MeanFFT",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getHisto("BadFFT_MeanFFT"), "",0);
+
+    sprintf(tree,"%s/InvMaxFFT",main_path.c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,wf_histo->getHisto("BadFFT_InvMaxFFT"), "",0);
+}
+
+void WaveformCollection::registerGlobalWaveforms(const SimpleStandardWaveform &p,int wf_type){
+    char tree[1024], folder[1024];
+    if (wf_type==0){
+        sprintf(tree,"%s/Ch %i - %s/CategoryVsEventNo",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+        std::cout<<tree<<endl;
+        _mon->getOnlineMon()->registerTreeItem(tree);
+        _mon->getOnlineMon()->registerHisto(tree,
+                (TH2F*)getWaveformHistos(p.getName(),p.getID())->getHisto("CategoryVsEvent"), "colz",0);
+        sprintf(tree,"%s/Ch %i - %s/Category",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+        std::cout<<tree<<endl;
+        _mon->getOnlineMon()->registerTreeItem(tree);
+        _mon->getOnlineMon()->registerHisto(tree,
+                (TH2F*)getWaveformHistos(p.getName(),p.getID())->getHisto("Category"), "",0);
+    }
+
+    sprintf(tree,"%s/Ch %i - %s/Categories/IsSignalEvent",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
     std::cout<<tree<<endl;
     WaveformHistos* wf_histo =getWaveformHistos(p.getName(),p.getID());
     _mon->getOnlineMon()->registerTreeItem(tree);
     _mon->getOnlineMon()->registerHisto(tree,
+            wf_histo->getHisto("SignalEvents"), "",0);
+    if (wf_type==0){
+        sprintf(tree,"%s/Ch %i - %s/Categories/IsBadFFTEvent",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+        std::cout<<tree<<endl;
+        _mon->getOnlineMon()->registerTreeItem(tree);
+        _mon->getOnlineMon()->registerHisto(tree,
+                wf_histo->getHisto("BadFFTEvents"), "",0);
+    }
+
+    sprintf(tree,"%s/Ch %i - %s/Categories/IsPulserEvent",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,
             wf_histo->getHisto("PulserEvents"), "",0);
 
+    sprintf(tree,"%s/Ch %i - %s/SignalEventsProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+    std::cout<<tree<<endl;
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,
+            getWaveformHistos(p.getName(),p.getID())->getProfile("SignalEvents"), "",0);
+    if (wf_type==0){
+        sprintf(tree,"%s/Ch %i - %s/BadFFTEventsProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+        std::cout<<tree<<endl;
+        _mon->getOnlineMon()->registerTreeItem(tree);
+        _mon->getOnlineMon()->registerHisto(tree,
+                getWaveformHistos(p.getName(),p.getID())->getProfile("BadFFTEvents"), "",0);
+    }
     sprintf(tree,"%s/Ch %i - %s/PulserEventsProfile",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
     std::cout<<tree<<endl;
     _mon->getOnlineMon()->registerTreeItem(tree);
     _mon->getOnlineMon()->registerHisto(tree,
             getWaveformHistos(p.getName(),p.getID())->getProfile("PulserEvents"), "",0);
+    if (wf_type==0){
+        sprintf(tree,"%s/Ch %i - %s/Categories/nFlatLineEvents",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+        std::cout<<tree<<endl;
+        _mon->getOnlineMon()->registerTreeItem(tree);
+        _mon->getOnlineMon()->registerHisto(tree,
+                getWaveformHistos(p.getName(),p.getID())->getHisto("nFlatLineEvents"), "",0);
 
-    sprintf(tree,"%s/Ch %i - %s/nFlatLineEvents",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
-    std::cout<<tree<<endl;
-    _mon->getOnlineMon()->registerTreeItem(tree);
-    _mon->getOnlineMon()->registerHisto(tree,
-            getWaveformHistos(p.getName(),p.getID())->getHisto("nFlatLineEvents"), "",0);
-
+        sprintf(tree,"%s/Ch %i - %s/Categories/nBadFFTEvents",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+        std::cout<<tree<<endl;
+        _mon->getOnlineMon()->registerTreeItem(tree);
+        _mon->getOnlineMon()->registerHisto(tree,
+                getWaveformHistos(p.getName(),p.getID())->getHisto("nBadFFTEvents"), "",0);
+    }
 }
 
 void WaveformCollection::registerPulserWaveforms(const SimpleStandardWaveform &p){
@@ -246,10 +327,17 @@ void WaveformCollection::registerPulserWaveforms(const SimpleStandardWaveform &p
 }
 
 void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
-    //	cout<<"WaveformCollection::registerWaveform \t\""<<p.getName()<<"\" "<<p.getID()<<" \""<<p.getChannelName()<<"\" mon:"<<_mon<<endl;
+    cout<<"WaveformCollection::registerWaveform \t\""<<p.getName()<<"\" "<<p.getID()<<" \""<<p.getChannelName()<<"\" mon:"<<_mon<<endl;
     WaveformHistos *tmphisto = new WaveformHistos(p,_mon);
     tmphisto->SetOptions(_WaveformOptions);
     _map[p] = tmphisto;
+    int wf_type = 0; //0 diamond
+    if (p.getChannelName().find("Pulser")!=-1)
+        wf_type = 1;
+    if (p.getChannelName().find("FORC")!=-1)
+        wf_type = 2;
+    std::cout<<p.getChannelName()<<std::endl;
+    std::cout<<"wf type: "<<wf_type<<std::endl;
     //std::cout << "Registered Waveform: " << p.getName() << " " << p.getID() << std::endl;
     //WaveformRegistered(p.getName(),p.getID());
     if (_mon != NULL)
@@ -261,9 +349,11 @@ void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
         //		cout << "WaveformCollection:: Monitor running in online-mode" << endl;
         char tree[1024], folder[1024];
         WaveformHistos* wf_histo =getWaveformHistos(p.getName(),p.getID());
-        registerGlobalWaveforms(p);
-
-        registerSignalWaveforms(p);
+        registerGlobalWaveforms(p,wf_type);
+        if (wf_type==0){
+            registerSignalWaveforms(p);
+            registerBadFFTWaveforms(p);
+        }
         //
         //=====================================================================
         //=============== WAVEFORM STACKS =====================================
@@ -272,6 +362,18 @@ void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
         std::cout<<tree<<endl;
         _mon->getOnlineMon()->registerTreeItem(tree);
         _mon->getOnlineMon()->registerHisto(tree,getWaveformHistos(p.getName(),p.getID())->getWaveformGraph(0), "L",0);
+        if (wf_type==0){
+            sprintf(tree,"%s/Ch %i - %s/BadFFTEvents/RawWaveformStackBadFFT",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+            std::cout<<tree<<endl;
+            _mon->getOnlineMon()->registerTreeItem(tree);
+            _mon->getOnlineMon()->registerHistoStack(tree,getWaveformHistos(p.getName(),p.getID())->getBadFFTWaveformStack(), "nostack",0);
+        }
+        if (wf_type==0){
+            sprintf(tree,"%s/Ch %i - %s/SignalEvents/RawWaveformStackGood",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
+            std::cout<<tree<<endl;
+            _mon->getOnlineMon()->registerTreeItem(tree);
+            _mon->getOnlineMon()->registerHistoStack(tree,getWaveformHistos(p.getName(),p.getID())->getGoodWaveformStack(), "nostack",0);
+        }
 
         sprintf(tree,"%s/Ch %i - %s/RawWaveformStack",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
         std::cout<<tree<<endl;
@@ -287,7 +389,7 @@ void WaveformCollection::registerWaveform(const SimpleStandardWaveform &p) {
 
         sprintf(tree,"%s/Ch %i - %s",p.getName().c_str(),p.getID(),p.getChannelName().c_str());
         _mon->getOnlineMon()->makeTreeItemSummary(tree); //make summary page
-
-        registerPulserWaveforms(p);
+        if (wf_type==0)
+            registerPulserWaveforms(p);
     }
 }

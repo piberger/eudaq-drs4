@@ -44,8 +44,10 @@ public:
 	}
 	virtual ~WaveformCollection() {};
 	void registerWaveform(const SimpleStandardWaveform &p);
-	void registerGlobalWaveforms(const SimpleStandardWaveform &p);
+	void registerGlobalWaveforms(const SimpleStandardWaveform &p,int wf_type=0);
 	void registerDataWaveforms(const SimpleStandardWaveform &p,std::string prefix,std::string desc);
+	void registerBadFFTWaveforms(const SimpleStandardWaveform &p,std::string desc);
+	void registerBadFFTWaveforms(const SimpleStandardWaveform &p);
 	void registerSignalWaveforms(const SimpleStandardWaveform &p);
 	void registerPulserWaveforms(const SimpleStandardWaveform &p);
 	void bookHistograms(const SimpleStandardEvent &simpev);

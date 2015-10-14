@@ -5,7 +5,7 @@
 #include "eudaq/PluginManager.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/FileSerializer.hh"
-#include "eudaq/WaveformSignalRegion.h"
+#include "eudaq/WaveformSignalRegion.hh"
 #include "eudaq/WaveformSignalRegions.hh"
 #include "eudaq/WaveformIntegral.hh"
 
@@ -401,7 +401,6 @@ void FileWriterTreeDRS4::Configure(){
         std::cout<<"\t\t* ch"<<i<<":"<<to_string(((save_waveforms & 1<<i) == 1<<i));
         std::cout<<std::endl;
     }
-
     polarities = m_config->Get("polarities",polarities);
     cout<<"POLARITIES: ";
     for (auto& i:polarities)

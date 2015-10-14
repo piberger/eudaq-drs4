@@ -30,9 +30,11 @@ class HitmapCollection : public BaseCollection
   protected:
     bool isOnePlaneRegistered;
     std::map<SimpleStandardPlane,HitmapHistos*> _map;
+    unsigned _current_timestamp;
+    unsigned _current_eventnumber;
+    HitmapHistos *current_hitmap;
     bool isPlaneRegistered(SimpleStandardPlane p);
-    void fillHistograms(const SimpleStandardPlane &simpPlane);
-
+    void fillHistograms(const SimpleStandardPlane &simpPlane,unsigned event_no,unsigned time_stamp);
   public:
 
     void registerPlane(const SimpleStandardPlane &p);

@@ -181,6 +181,9 @@ namespace eudaq{
        */
       virtual ~DataConverterPlugin() {}
 
+      virtual void set_conversion(bool val) {};
+      virtual bool get_conversion(){return false;}
+
     protected:
       /** The string storing the event type this plugin can convert to lcio.
        *  This string has to be set in the constructor of the actual implementations

@@ -15,10 +15,7 @@
 
 #include "SimpleStandardEvent.hh"
 
-
-
 using namespace std;
-
 
 class RootMonitor;
 
@@ -29,7 +26,9 @@ class HitmapHistos {
     int _maxX;
     int _maxY;
     bool _wait;
+    std::map<std::string, TH1*> _histoMap;
     TH2I * _hitmap;
+    TH2F * _chargemap;
     TH1I * _hitXmap;
     TH1I * _hitYmap;
     TH2I * _clusterMap;
@@ -53,21 +52,31 @@ class HitmapHistos {
     TH1I ** _nClusters_section;
     TH1I ** _nClustersize_section;
     TH1I ** _nHotPixels_section;
+    TProfile * _efficencyPerEvent;
+    TProfile * _clusterChargeProfile;
+    TProfile * _pixelChargeProfile;
+    ULong64_t _start_time;
+    unsigned _eventNumber;
+    unsigned _timestamp;
 //    TH2D* _nTriggerPhase;
+    void fillMimosaHistos(const SimpleStandardPlane *simpPlane);
+    void loopOverPixelHits(const SimpleStandardPlane *simpPlane);
+    void loopOverClusterHits(const SimpleStandardPlane *simpPlane);
 
 
   public:
     HitmapHistos(SimpleStandardPlane p, RootMonitor * mon);
 
     void Fill(const SimpleStandardHit & hit);
-    void Fill(const SimpleStandardPlane & plane);
+    void Fill(const SimpleStandardPlane & plane, unsigned event_no, unsigned time_stamp);
     void Fill(const SimpleStandardCluster & cluster);
     void Reset();
 
     void Calculate(const int currentEventNum);
     void Write();
-
+    TH1  * getHisto(std::string name);
     TH2I * getHitmapHisto() { return _hitmap; }
+    TH2F * getChargemapHisto() { return _chargemap; }
     TH1I * getHitXmapHisto() { return _hitXmap; }
     TH1I * getHitYmapHisto() { return _hitYmap; }
     TH1I * getHitmapSectionsHisto() { return _hitmapSections; }
@@ -91,6 +100,9 @@ class HitmapHistos {
     TH1I * getSectionsNHotPixelsHisto(unsigned int section) { return _nHotPixels_section[section]; }
     TH1I * getNHotPixelsHisto() { return _nHotPixels; }
     TH1I * getNPivotPixelHisto(){ return _nPivotPixel;}
+    TProfile* getEfficencyPerEvent(){return _efficencyPerEvent;}
+    TProfile* getClusterChargeProfile(){return _clusterChargeProfile;}
+    TProfile* getPixelChargeProfile(){return _pixelChargeProfile;}
 //    TH2D * getTriggerPhaseHisto(){ return _nTriggerPhase;}
     void setRootMonitor(RootMonitor *mon)  {_mon = mon; }
 
