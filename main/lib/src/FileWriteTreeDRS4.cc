@@ -5,6 +5,9 @@
 #include "eudaq/PluginManager.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/FileSerializer.hh"
+#include "eudaq/WaveformSignalRegion.h"
+#include "eudaq/WaveformSignalRegions.hh"
+#include "eudaq/WaveformIntegral.hh"
 
 
 #include "include/SimpleStandardEvent.hh"
@@ -94,6 +97,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         void ResizeVectors(unsigned n_channels);
         int IsPulserEvent(const StandardWaveform *wf);
         void FillSignalRange(int iwf,const StandardWaveform *wf, int pol);
+        void FillRegionIntegrals(int iwf,const StandardWaveform *wf);
         void FillPulserRange(int iwf,const StandardWaveform *wf, int pol);
         void FillPedestalRange(int iwf,const StandardWaveform *wf, int pol);
         void FillTotalRange(int iwf,const StandardWaveform *wf, int pol);
@@ -146,6 +150,8 @@ class FileWriterTreeDRS4 : public FileWriter {
 
         // Vector Branches     
         // DUT
+        std::map<int,WaveformSignalRegions* > *regions;
+
         std::vector< std::string >  * v_sensor_name;
         std::vector< std::string >  * v_type_name;
         std::vector<float>  *  v_sig_peak;
@@ -252,6 +258,7 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     f_pulser_int    =  0.;
     f_trig_time     =  0.;
 
+    regions = new std::map<int,WaveformSignalRegions* >;
     // dut
     v_sensor_name 	= new std::vector< std::string >;
     v_type_name   	= new std::vector< std::string >;
@@ -403,6 +410,53 @@ void FileWriterTreeDRS4::Configure(){
     v_polarities = &polarities;
 
     max_event_number = m_config->Get("max_event_number",0);
+    m_config->PrintKeys();
+    cout<<endl;
+    int active_regions = m_config->Get("active_regions",0);
+    cout<<"BLA"<<active_regions<<endl;
+    for (int i = 0; i< 4;i++)
+        if ((active_regions & 1<<i) == 1<<i)
+            cout<<"CHANNEL: "<<i<<endl;
+    for (int i = 0; i< 4;i++)
+        if ((active_regions & 1<<i) == 1<<i)
+            (*regions)[int(i)] = new WaveformSignalRegions(i,polarities.at(i));
+
+    for (auto i: m_config->GetKeys()){
+        size_t found = i.find("_region");
+        if (found ==std::string::npos)
+            continue;
+        if (i.find("active_regions")!=std::string::npos)
+            continue;
+        cout<<"FOUND "<<i<<" "<<found<<endl;
+        std::string name = i.substr(0,found);
+        cout<<"\t\""<<name<<"\""<<endl;
+
+        std::pair<int,int> range = (m_config->Get(i,make_pair((int)0,(int)0)));
+        WaveformSignalRegion region = WaveformSignalRegion(range.first,range.second,name);
+        for (auto i: ranges){
+            if (i.first.find("PeakIntegral")!=std::string::npos){
+                WaveformIntegral integralDef = WaveformIntegral(i.second->first,i.second->second,i.first);
+                region.AddIntegral(integralDef);
+            }
+        }
+
+        for (int i = 0; i< 4;i++)
+            if ((active_regions & 1<<i) == 1<<i){
+                (*regions)[int(i)]->AddRegion(region);
+            }
+
+    }
+    std::cout<<"Active WaveformRegions with Integrals: "<<std::endl;
+    for (auto i: *regions)
+        i.second->Print();
+    std::cout<<"End of Configure.";
+    if (true){
+        std::cout<<" Please press a key and enter to continue."<<std::flush;
+        char t;
+        cin>>t;
+    }
+    else
+        std::cout<<std::endl;
 }
 
 void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
@@ -431,6 +485,10 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("trig_time"     ,&f_trig_time    , "trig_time/I");
     m_ttree->Branch("nwfs"          ,&f_nwfs        , "n_waveforms/I");
 
+    //regions
+    m_ttree->Branch("integral_regions",&regions);
+    char t;
+    cin>>t;
     // linearfitting
     m_ttree->Branch("chi2",&chi2);
     m_ttree->Branch("par0",&par0);
@@ -655,6 +713,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
 
         // calculate the signal and so on
         // float sig = CalculatePeak(data, 1075, 1150);
+        FillRegionIntegrals(iwf,&waveform);
         FillSignalRange(iwf, &waveform,pol);
         FillPedestalRange(iwf, &waveform,pol);
         FillPulserRange(iwf, &waveform,pol);
@@ -794,6 +853,8 @@ float FileWriterTreeDRS4::avgWF(float old_avg, float new_value, int n) {
 uint64_t FileWriterTreeDRS4::FileBytes() const { return 0; }
 
 inline void FileWriterTreeDRS4::ResizeVectors(unsigned n_channels) {
+    for (auto r: *regions)
+        r.second->Reset();
     v_type_name->resize(n_channels);
     v_sensor_name->resize(n_channels);
 
@@ -999,6 +1060,13 @@ void FileWriterTreeDRS4::DoLinearFitting(int iwf){
     }
 }
 
+void FileWriterTreeDRS4::FillRegionIntegrals(int iwf,const StandardWaveform *wf){
+    if (regions->count(iwf)==0)
+        return;
+    WaveformSignalRegions *region = (*regions)[iwf];
+    region->CalculateIntegrals(wf);
+//    region->Print();
+}
 
 void FileWriterTreeDRS4::FillSignalRange(int iwf, const StandardWaveform *wf, int pol){
     std::pair<int, float> maxAndValue =wf->getAbsMaxAndValue(ranges["signal"]->first,  ranges["signal"]->second);
