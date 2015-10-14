@@ -199,4 +199,20 @@ uint64_t Configuration::Get(const std::string & key, uint64_t def) const {
     (*m_cur)[key] = val;
   }
 
+  void Configuration::PrintKeys(const std::string section) const {
+        PrintKeys(std::cout,section);
+    }
+
+  void Configuration::PrintKeys() const {
+      PrintKeys(m_section);
+  }
+  std::vector<std::string> Configuration::GetKeys(std::string section) {
+      std::vector<std::string> keys;
+      section_t sec = (m_config.at(section));
+      for (section_t::const_iterator it = sec.begin(); it!=sec.end();it++)
+          keys.push_back(it->first);
+      return keys;
+
+  }
+
 }
