@@ -39,6 +39,39 @@ public:
 	void SetTimeStamp(uint64_t timestamp){m_timestamp=timestamp;}
 	uint64_t GetTimeStamp() const {return m_timestamp;}
 //	std::string GetName() const {return m_sensor+(std::string)"_"+m_type+(std::string)to_string(m_id);}
+    float getMinInRange(int min, int max) const{
+        return (*std::min_element(&m_samples.at(min), &m_samples.at(max)));
+    };
+    float getMaxInRange(int min, int max) const{
+        return (*std::max_element(&m_samples.at(min), &m_samples.at(max)));
+    };
+    float getAbsMaxInRange(int min,int max) const{
+        return abs(m_samples.at(getIndexAbsMax(min,max)));
+    }
+    int getIndexMin(int min, int max) const{
+        float* min_el = std::min_element(&m_samples.at(min), &m_samples.at(max));
+        return std::distance(&m_samples.at(0),min_el);//-m_samples.begin();
+    };
+    int getIndexAbsMax(int min,int max) const{
+        float mi = getIndexMin(min,max);
+        float ma = getIndexMax(min,max);
+        return abs(m_samples.at(mi))>abs(m_samples.at(ma))?mi:ma;
+    }
+    int getIndexMax(int min, int max) const{
+        float* max_el = std::max_element(&m_samples.at(min), &m_samples.at(max));
+        return std::distance(&m_samples.at(0),max_el);//-m_samples.begin();
+    };
+
+    std::pair<int,float> getAbsMaxAndValue(int min, int max) const{
+        int index = getIndexAbsMax(min,max);
+        return std::make_pair(index,m_samples.at(index));
+    }
+    float getMedian(int min, int max) const;
+
+    float getSpreadInRange(int min, int max) const{return (getMaxInRange(min,max)-getMinInRange(min,max));};
+    float getPeakToPeak(int min, int max) const{return getSpreadInRange(min,max);}
+    float getIntegral(int min, int max,bool _abs=false) const;
+
 private:
 	uint64_t m_timestamp;
 	int m_n_samples;
