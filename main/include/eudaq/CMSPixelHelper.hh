@@ -50,7 +50,7 @@ namespace eudaq {
   class CMSPixelHelper {
   public:
     std::map<std::string, float >roc_calibrations = {{"psi46v2",65},{"psi46digv21respin",47}};
-    CMSPixelHelper(std::string event_type) : do_conversion(true),m_event_type(event_type) {};
+    CMSPixelHelper(std::string event_type) : do_conversion(false),m_event_type(event_type) {};
     void set_conversion(bool val){do_conversion = val;}
     bool get_conversion(){return do_conversion;}
     std::map< std::string, VCALDict> vcal_vals;
