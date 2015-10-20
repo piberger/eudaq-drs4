@@ -199,6 +199,27 @@ uint64_t Configuration::Get(const std::string & key, uint64_t def) const {
     (*m_cur)[key] = val;
   }
 
+  void Configuration::PrintSectionNames() const {
+      PrintSectionNames(std::cout);
+  }
+
+  void Configuration::PrintSectionNames(std::ostream& out) const {
+      out<<"SectionNames:";
+      for (map_t::const_iterator it = m_config.begin(); it!=m_config.end();it++)
+          out<<" "<<it->first;
+      out<<std::endl;
+  }
+  void Configuration::PrintKeys(std::ostream& out) const{
+      return PrintKeys(out,m_section);
+  }
+  void Configuration::PrintKeys(std::ostream& out, const std::string section) const {
+              out<<" Keys in "<<section<<": ";
+      section_t sec = (m_config.at(section));
+      for (section_t::const_iterator it = sec.begin(); it!=sec.end();it++)
+          out<<" \""<<it->first<<"\"/"<<it->second;
+      out<<std::endl;
+  }
+
   void Configuration::PrintKeys(const std::string section) const {
         PrintKeys(std::cout,section);
     }
