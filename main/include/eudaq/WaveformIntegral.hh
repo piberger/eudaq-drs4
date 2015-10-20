@@ -24,11 +24,13 @@ class WaveformIntegral:public TObject{
         int GetIntegralStart() const {return integral_start;}
         int GetIntegralStop() const {return integral_stop;}
         void SetIntegral(float integral);
-        float getIntegral(){return !calculated?std::numeric_limits<double>::quiet_NaN():integral;}
+        float GetIntegral(){return !calculated?std::numeric_limits<double>::quiet_NaN():integral;}
         virtual ~WaveformIntegral();
         void Reset();
         void Print() const {Print(std::cout,true);}
         void Print(std::ostream& out, bool bEndl=false) const;
+        void SetName(std::string name){this->name=name;}
+        const char *GetName() const {return name.c_str();}
     private:
         bool calculated;
         int down_range;
@@ -37,7 +39,6 @@ class WaveformIntegral:public TObject{
         int integral_stop;
         float integral;
         std::string name;
-        ClassDef(WaveformIntegral,1);
 };
 
 

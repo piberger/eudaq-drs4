@@ -14,26 +14,27 @@
 #include <limits>
 #include <vector>
 #include "TROOT.h"
-#include "WaveformSignalRegion.h"
-namespace eudaq {
+#include "WaveformSignalRegion.hh"
 
 class WaveformSignalRegions:public TObject{
     public:
-        WaveformSignalRegions(int channel=-1, signed char pol=0){this->channel=channel;polarity=pol;}
+        WaveformSignalRegions(int channel=-1, signed char pol=0);
         virtual ~WaveformSignalRegions(){};
         void AddRegion(WaveformSignalRegion region);
         void Clear(){channel=-1;regions.clear();polarity=0;}
         void Print() const{Print(std::cout);}
         void Print(std::ostream& out) const;
-        void CalculateIntegrals(const StandardWaveform* wf);
+//        void CalculateIntegrals(const StandardWaveform* wf);
         void Reset();
+        size_t GetNRegions(){return regions.size();}
+        signed char GetPolarity(){return polarity;}
+        WaveformSignalRegion* GetRegion(UInt_t i);
     private:
         std::vector<WaveformSignalRegion> regions;
         int channel;
-        unsigned char polarity;
+        signed char polarity;
 //        ClassDef(WaveformSignalRegions,1);
 };
-inline std::ostream & operator << (std::ostream& os, const WaveformSignalRegions& region) { region.Print(os); return os;}
-} /* namespace eudaq */
+inline std::ostream & operator << (std::ostream& os, const WaveformSignalRegions& regions) { regions.Print(os); return os;}
 
 #endif /* WAVEFORMSIGNALREGIONS_HH_ */

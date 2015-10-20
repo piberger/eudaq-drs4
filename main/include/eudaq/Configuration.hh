@@ -24,6 +24,8 @@ namespace eudaq {
       unsigned NKeys(){ return m_config[m_section].size();}
       unsigned NKeys(std::string section){return m_config[section].size();}
       std::vector<std::string> GetSections() const;
+      std::vector<std::string> GetKeys(){return GetKeys(m_section);};
+      std::vector<std::string> GetKeys(std::string section);
       std::string GetSection() const {return m_section;}
       std::string operator [] (const std::string & key) const { return GetString(key); }
       std::string Get(const std::string & key, const std::string & def) const;

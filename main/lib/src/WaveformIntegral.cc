@@ -7,7 +7,7 @@
 
 #include <eudaq/WaveformIntegral.hh>
 
-ClassImp(WaveformIntegral);
+//ClassImp(WaveformIntegral);
 
 WaveformIntegral::WaveformIntegral(int down_range, int up_range, std::string name):calculated(false) {
     this->down_range = down_range;
@@ -16,20 +16,8 @@ WaveformIntegral::WaveformIntegral(int down_range, int up_range, std::string nam
         this->name = TString::Format("Integral_%d-%d",down_range,up_range);
     else
         this->name=name;
+    this->SetName(name);
 }
-//
-//void WaveformIntegral::calculateIntegral(int peak_position, const StandardWaveform* wf) {
-//    calculated = true;
-//    if (peak_position-down_range>=0)
-//        integral_start = peak_position-down_range;
-//    else
-//        integral_start = 0;
-//    if (peak_position+up_range<wf->GetNSamples())
-//        integral_stop = peak_position+up_range+1;
-//    else
-//        integral_stop = wf->GetNSamples();
-//    integral = wf->getIntegral(integral_start,integral_stop);
-//}
 
 void WaveformIntegral::Reset() {
     calculated = false;

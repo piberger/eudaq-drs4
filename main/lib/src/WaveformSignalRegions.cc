@@ -7,25 +7,33 @@
 
 #include <eudaq/WaveformSignalRegions.hh>
 
-//ClassImp(eudaq::WaveformSignalRegions);
-void eudaq::WaveformSignalRegions::AddRegion(WaveformSignalRegion region) {
+WaveformSignalRegions::WaveformSignalRegions(int channel, signed char pol) {
+    std::cout<<"New WaveformSignalRegions "<<channel<<" "<<(int)pol<<std::flush;
+    this->channel=channel;
+    polarity=pol;
+    std::cout<<"."<<std::endl;
+}
+
+
+void WaveformSignalRegions::AddRegion(WaveformSignalRegion region) {
+    std::cout<<"AddRegion: "<<region<<std::endl;
     region.SetPolarity(polarity);
     this->regions.push_back(region);
 }
 
-void eudaq::WaveformSignalRegions::Print(std::ostream& out) const {
+void WaveformSignalRegions::Print(std::ostream& out) const {
     for (auto i: this->regions)
         out<<"\t"<<i<<"\n";
 }
 
-void eudaq::WaveformSignalRegions::CalculateIntegrals(const StandardWaveform* wf){
-    for (size_t i=0; i<this->regions.size();i++){
-        regions[i].calculateIntegrals(wf);
-//        std::cout<<"calculated: "<<regions[i]<<std::endl;
-    }
-}
-
-void eudaq::WaveformSignalRegions::Reset(){
+void WaveformSignalRegions::Reset(){
     for (auto i: this->regions)
             i.ResetIntegrals();
+}
+
+
+WaveformSignalRegion* WaveformSignalRegions::GetRegion(UInt_t i) {
+    if (i<regions.size())
+        return &(regions[i]);
+    return 0;
 }
