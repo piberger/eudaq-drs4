@@ -1167,7 +1167,9 @@ void FileWriterTreeDRS4::FillRegionIntegrals(int iwf,const StandardWaveform *wf)
         return;
     WaveformSignalRegions *this_regions = (*regions)[iwf];
     //
-    for (size_t i=0; i<this_regions->GetNRegions();i++){
+    UInt_t nRegions = this_regions->GetNRegions();
+    for (size_t i=0; i < nRegions;i++){
+        
         signed char polarity = this_regions->GetPolarity();
         WaveformSignalRegion* region = this_regions->GetRegion(i);
         Int_t peak_pos;
@@ -1178,8 +1180,14 @@ void FileWriterTreeDRS4::FillRegionIntegrals(int iwf,const StandardWaveform *wf)
         else
             peak_pos = wf->getIndexMin(low_border,high_border);
         region->SetPeakPostion(peak_pos);
-        for (UInt_t i = 0; i<region->GetNIntegrals();i++){
-            WaveformIntegral* p = region->GetIntegralPointer(i);
+        UInt_t nIntegrals = region->GetNIntegrals();
+        for (UInt_t k = 0; k < nIntegrals;k++){
+            WaveformIntegral* p = region->GetIntegralPointer(k);
+            if (p==0){
+                std::cout<<"Invalid Integral Pointer. Continue."<<std::endl;
+                continue;
+            }
+
             std::string name = p->GetName();
             std::transform(name.begin(), name.end(), name.begin(), ::tolower);
             p->SetPeakPosition(peak_pos,wf->GetNSamples());
@@ -1190,8 +1198,9 @@ void FileWriterTreeDRS4::FillRegionIntegrals(int iwf,const StandardWaveform *wf)
             else if (name.find("median")!=name.npos){
                 integral = wf->getMedian(low_border,high_border);
             }
-            else
+            else{
                 integral = wf->getIntegral(p->GetIntegralStart(),p->GetIntegralStop());
+            }
             p->SetIntegral(integral);
         }
     }
