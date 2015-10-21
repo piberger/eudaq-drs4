@@ -71,6 +71,7 @@ public:
     float getMedian(int min, int max) const;
 
     float getSpreadInRange(int min, int max) const{return (getMaxInRange(min,max)-getMinInRange(min,max));};
+    float getPeakToPeak(int min, int max) const{return getSpreadInRange(min,max);}
     float getIntegral(int min, int max,bool _abs=false) const;
 
 private:

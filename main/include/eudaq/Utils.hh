@@ -26,7 +26,7 @@ typedef int int32_t
 #endif
 
 namespace eudaq {
-
+  void DLLEXPORT PressEnterToContinue();
   std::string DLLEXPORT ucase(const std::string &);
   std::string DLLEXPORT lcase(const std::string &);
 //  std::string DLLEXPORT trim(const std::string & s);
