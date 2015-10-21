@@ -47,8 +47,8 @@ unsigned StandardWaveform::ID() const {
 
 
 float StandardWaveform::getIntegral(int min, int max, bool _abs) const {
-    if ( max + 1 > this->GetNSamples())
-        max = this->GetNSamples();
+    if ( max  > this->GetNSamples() - 1)
+        max = this->GetNSamples() -1;
     if (min < 0)
         min = 0;
     float integral = 0;
