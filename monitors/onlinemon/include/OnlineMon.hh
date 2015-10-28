@@ -130,6 +130,7 @@ class RootMonitor : private eudaq::Holder<int>,
       void setCorr_width(const unsigned c_w)  { corrCollection->setWindowWidthForCorrelation(c_w); }
       void setCorr_planes(const unsigned c_p) { corrCollection->setPlanesNumberForCorrelation(c_p); }
       void setUseTrack_corr(const bool t_c)      { useTrackCorrelator = t_c; }
+      void setStartEvent(const unsigned int start_event) { this->start_event = start_event;}
       bool getUseTrack_corr() const              { return useTrackCorrelator; }
       void setTracksPerEvent(const unsigned int tracks) { tracksPerEvent = tracks; }
       unsigned int getTracksPerEvent() const     { return tracksPerEvent; }

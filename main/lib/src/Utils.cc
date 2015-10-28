@@ -24,6 +24,11 @@
 #endif
 
 namespace eudaq {
+    void PressEnterToContinue()
+      {
+      std::cout << "Press ENTER to continue... " << std::flush;
+      std::cin.ignore( std::numeric_limits <std::streamsize> ::max(), '\n' );
+      }
 
   std::string ucase(const std::string & str) {
     std::string result(str);

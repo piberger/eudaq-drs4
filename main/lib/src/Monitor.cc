@@ -2,7 +2,10 @@
 #include "eudaq/Logger.hh"
 #include "eudaq/PluginManager.hh"
 
-#define EUDAQ_MAX_EVENTS_PER_IDLE 1000
+// #define EUDAQ_MAX_EVENTS_PER_IDLE 1000
+#define EUDAQ_MAX_EVENTS_PER_IDLE  50000
+
+#include "TStopwatch.h"
 
 namespace eudaq {
 
@@ -14,7 +17,8 @@ namespace eudaq {
     m_reader(0),
     limit(lim),
     skip(100-skip_),
-    skip_events_with_counter(skip_evts)
+    skip_events_with_counter(skip_evts),
+    start_event(0)
   {
     if (datafile != "") {
       // set offline
@@ -33,14 +37,15 @@ namespace eudaq {
     if (!m_reader->NextEvent()) return false;
 
     unsigned evt_number = m_reader->GetDetectorEvent().GetEventNumber();
+    //  std::cout<< "at event number; " << evt_number << std::endl;
     if(limit > 0 && evt_number > limit)
       return true;
 
 
     if (evt_number % 1000 == 0) {
-      std::cout << "ProcessEvent " << m_reader->GetDetectorEvent().GetEventNumber()
+      std::cout << "\rProcessEvent " << m_reader->GetDetectorEvent().GetEventNumber()
         << (m_reader->GetDetectorEvent().IsBORE() ? "B" : m_reader->GetDetectorEvent().IsEORE() ? "E" : "")
-        << std::endl;
+        << std::flush;
     }
 
     if(skip > 0 && (evt_number % 100 >= skip))  //-s functionality
@@ -53,8 +58,9 @@ namespace eudaq {
       else
         counter_for_skipping = 0;
     }
-
-
+    if (evt_number < start_event){
+        return true;
+    }
 
     try {
       const DetectorEvent & dev = m_reader->GetDetectorEvent();

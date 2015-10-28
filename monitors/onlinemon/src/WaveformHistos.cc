@@ -541,6 +541,7 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
             cat = BAD_FFT_MAX_EVENT;
     }
     bool failsFFTCuts = ( (cat == BAD_FFT_MAX_EVENT)|| (cat == BAD_FFT_MEAN_EVENT) || (cat == BAD_FFT_BOTH_EVENT));
+    float maxfft = (wf.getMaxFFT() ? wf.getMaxFFT() : 1000000.);
     if (isPulserEvent)
         cat = PULSER_EVENT;
     histos["nFlatLineEvents"]->Fill((bool)(cat == FLAT_EVENT));
@@ -590,7 +591,7 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
     histos["BadFFTEvents"]->Fill(failsFFTCuts);
     histos["SignalEvents"]->Fill((!failsFFTCuts) && !(isPulserEvent));
     histos[prefix+"MeanFFT"]     ->Fill(wf.getMeanFFT()   );
-    histos[prefix+"InvMaxFFT"]   ->Fill(1./wf.getMaxFFT() );
+    histos[prefix+"InvMaxFFT"]   ->Fill(1./maxfft );
     histos[prefix+"Signal"]     ->Fill(signalSpread);
     for (it = profiles.begin();it!=profiles.end();it++){
         if (it->second->GetXaxis()->GetXmax() < event_no){

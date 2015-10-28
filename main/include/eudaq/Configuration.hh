@@ -4,6 +4,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/Platform.hh"
+#include <iostream>
 #include <string>
 #include <map>
 
@@ -19,6 +20,12 @@ namespace eudaq {
       void Load(std::istream & file, const std::string & section);
       bool SetSection(const std::string & section) const;
       bool SetSection(const std::string & section);
+      unsigned NSections(){return m_config.size();}
+      unsigned NKeys(){ return m_config[m_section].size();}
+      unsigned NKeys(std::string section){return m_config[section].size();}
+      std::vector<std::string> GetSections() const;
+      std::vector<std::string> GetKeys(){return GetKeys(m_section);};
+      std::vector<std::string> GetKeys(std::string section);
       std::string GetSection() const {return m_section;}
       std::string operator [] (const std::string & key) const { return GetString(key); }
       std::string Get(const std::string & key, const std::string & def) const;
@@ -27,7 +34,8 @@ namespace eudaq {
 	  uint64_t Get(const std::string & key,uint64_t def) const;
 	  template <typename T>
 	  T Get(const std::string &key, T def) const {
-		  return eudaq::from_string(Get(key,to_string(def)),  def);
+	      std::string str = Get(key,to_string(def));
+		  return eudaq::from_string(str,  def);
 	  }
       int Get(const std::string & key, int def) const;
       template <typename T>
@@ -48,6 +56,12 @@ namespace eudaq {
       Configuration & operator = (const Configuration & other);
       void Print(std::ostream & out) const;
       void Print() const;
+      void PrintSectionNames(std::ostream& out) const;
+      void PrintSectionNames() const;
+      void PrintKeys(std::ostream& out, const std::string section) const;
+      void PrintKeys(std::ostream& out) const;
+      void PrintKeys(const std::string section) const;
+      void PrintKeys() const;
     private:
       std::string GetString(const std::string & key) const;
       void SetString(const std::string & key, const std::string & val);

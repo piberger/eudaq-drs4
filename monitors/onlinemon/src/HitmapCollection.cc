@@ -18,71 +18,20 @@ bool HitmapCollection::isPlaneRegistered(SimpleStandardPlane p)
   return (it != _map.end());
 }
 
-void HitmapCollection::fillHistograms(const SimpleStandardPlane &simpPlane, unsigned event_no)
+void HitmapCollection::fillHistograms(const SimpleStandardPlane &simpPlane, unsigned event_no, unsigned time_stamp)
 {
-  /*
-     section_counter[0] = 0;
-     section_counter[1] = 0;
-     section_counter[2] = 0;
-     section_counter[3] = 0;
-   */
-
+    this->_current_timestamp = time_stamp;
+    this->_current_eventnumber = event_no;
   if (!isPlaneRegistered(simpPlane))
   {
-
     registerPlane(simpPlane);
-
     isOnePlaneRegistered = true;
   }
-
-  HitmapHistos *hitmap = _map[simpPlane];
-  hitmap->Fill(simpPlane,event_no);
-
+  current_hitmap = _map[simpPlane];
+  current_hitmap->Fill(simpPlane,_current_eventnumber,_current_timestamp);
   ++counting;
   events += simpPlane.getNHits();
-
-  //    if(counting == 60000)
-  //        std::cout << "Final AVG: " << std::scientific << (double)events / (double)10000 << std::endl;
-
-  for (int hitpix = 0; hitpix < simpPlane.getNHits();hitpix++)
-  {
-    const SimpleStandardHit& onehit = simpPlane.getHit(hitpix);
-
-    hitmap->Fill(onehit);
-  }
-
-  /*bool flag = true;
-    std::cout<< "FILL with plane" <<std::endl;
-    for(int i=0; i<4; i++)
-    {
-    std::cout<< "Section " << i << " filling with " << simpPlane.getNSectionHits(i) << std::endl;
-
-    }
-
-    cout<<"FILL with events." << endl;
-    for(int i=0; i<4; i++)
-    {
-    std::cout<<"Section " << i << " filling with " << section_counter[i] << std::endl;
-    simpPlane.getNSectionHits(i) != section_counter[i] )
-    flag = false;
-    if (flag == true)
-    ;//cout << "(DEBUG)Flag: True" << endl;
-    else
-    ;
-  //cout << "(DEBUG)Flag: False" << endl;
-  }*/
-
-  for (int cluster = 0; cluster < simpPlane.getNClusters();cluster++)
-  {
-    const SimpleStandardCluster& onecluster = simpPlane.getCluster(cluster);
-
-    hitmap->Fill(onecluster);
-  }
-
 }
-
-
-
 
 void HitmapCollection::bookHistograms(const SimpleStandardEvent &simpev)
 {
@@ -97,7 +46,6 @@ void HitmapCollection::bookHistograms(const SimpleStandardEvent &simpev)
 
   }
 }
-
 
 void HitmapCollection::Write(TFile *file)
 {
@@ -157,7 +105,7 @@ void HitmapCollection::Fill(const SimpleStandardEvent &simpev)
 
   for (int plane = 0; plane < simpev.getNPlanes(); plane++) {
     const SimpleStandardPlane&  simpPlane = simpev.getPlane(plane);
-    fillHistograms(simpPlane,simpev.getEvent_number());
+    fillHistograms(simpPlane,simpev.getEvent_number(),simpev.getEvent_timestamp());
   }
 }
 HitmapHistos * HitmapCollection::getHitmapHistos(std::string sensor, int id)
@@ -184,6 +132,10 @@ void HitmapCollection::registerPlane(const SimpleStandardPlane &p) {
     _mon->getOnlineMon()->registerTreeItem(tree);
     _mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getHitmapHisto(), "COLZ",0);
 
+    sprintf(tree,"%s/Sensor %i/RawChargemap",p.getName().c_str(),p.getID());
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getChargemapHisto(), "COLZ",0);
+
 
     sprintf(folder,"%s",p.getName().c_str());
 #ifdef DEBUG
@@ -208,11 +160,23 @@ void HitmapCollection::registerPlane(const SimpleStandardPlane &p) {
         _mon->getOnlineMon()->registerTreeItem(tree);
         _mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getTOTSingleHisto());
 
+		sprintf(tree,"%s/Sensor %i/PixelChargeProfile",p.getName().c_str(),p.getID());
+		_mon->getOnlineMon()->registerTreeItem(tree);
+		_mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getPixelChargeProfile());
+
 		sprintf(tree,"%s/Sensor %i/ClusterCharge",p.getName().c_str(),p.getID());
 		_mon->getOnlineMon()->registerTreeItem(tree);
 		_mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getTOTClusterHisto());
+
+		sprintf(tree,"%s/Sensor %i/ClusterChargeProfile",p.getName().c_str(),p.getID());
+		_mon->getOnlineMon()->registerTreeItem(tree);
+		_mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getClusterChargeProfile());
+
+		sprintf(tree,"%s/Sensor %i/ClusterChargeTimeProfile",p.getName().c_str(),p.getID());
+		        _mon->getOnlineMon()->registerTreeItem(tree);
+		        _mon->getOnlineMon()->registerHisto(tree,(TProfile*)getHitmapHistos(p.getName(),p.getID())->getHisto("ClusterChargeTimeProfile"));
     }
-    if ((p.is_APIX) || (p.is_USBPIX) || (p.is_USBPIXI4))
+    if ((p.is_APIX) || (p.is_USBPIX) || (p.is_USBPIXI4) )
     {
       sprintf(tree,"%s/Sensor %i/LVL1Distr",p.getName().c_str(),p.getID());
       _mon->getOnlineMon()->registerTreeItem(tree);

@@ -35,6 +35,42 @@ namespace eudaq {
     return GetPlugin(std::make_pair(event.get_id(), event.GetSubType()));
   }
 
+  DataConverterPlugin *PluginManager::FindPlugin(std::string PluginName){
+      std::map<t_eventid, DataConverterPlugin *>::iterator it;
+      for (it =  m_pluginmap.begin(); it!= m_pluginmap.end(); it++)
+          if (it->first.second == PluginName)
+              return it->second;
+      return  0;
+  }
+
+  std::vector<std::string> PluginManager::PluginNames() const{
+      std::vector<std::string> retVal;
+      std::map<t_eventid, DataConverterPlugin *>::const_iterator it;
+      for (it =  m_pluginmap.begin(); it!= m_pluginmap.end(); it++)
+          retVal.push_back(it->first.second);
+      return retVal;
+  }
+
+  void PluginManager::SetCMSPixelConversion(bool val){
+      std::map<t_eventid, DataConverterPlugin *>::iterator it;
+      for (it =  m_pluginmap.begin(); it!= m_pluginmap.end(); it++){
+          if (it->first.second.find("CMSPixel") == -1)
+              continue;
+          DataConverterPlugin* plugin = it->second;
+          std::cout<<"Found Plugin: "<<it->first.second<<" "<<it->second->get_conversion()<<"-->";
+          it->second->set_conversion(val);
+          std::cout<<it->second->get_conversion()<<std::endl;
+      }
+  }
+
+
+  void PluginManager::PrintPlugins() const{
+      std::map<t_eventid, DataConverterPlugin *>::const_iterator it;
+//           = m_pluginmap.find(eventtype);
+      std::cout<<"PluginManager: "<<m_pluginmap.size()<<" Plugins"<<std::endl;
+      for (it =  m_pluginmap.begin(); it!= m_pluginmap.end(); it++)
+          std::cout<<"Plugin: "<<it->first.first<<"/"<<it->first.second<<": "<<it->second<<std::endl;
+  }
   DataConverterPlugin & PluginManager::GetPlugin(PluginManager::t_eventid eventtype) {
     std::map<t_eventid, DataConverterPlugin *>::iterator pluginiter
       = m_pluginmap.find(eventtype);

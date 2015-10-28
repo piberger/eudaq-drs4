@@ -162,8 +162,14 @@ uint64_t Configuration::Get(const std::string & key, uint64_t def) const {
   }
 
   void Configuration::Print(std::ostream& out) const{
-      for (section_t::iterator it = m_cur->begin(); it!=m_cur->end(); ++it){
-     out << it->first << " : " << it->second << std::endl;
+     out<<"ConfigurationFile:"<<std::endl;
+     out<<" Sections: ";
+     for (auto& i: this->m_config)
+         out<<i.first<<" ";
+     out<<std::endl;
+     out << " CurrentSection: '" << this->GetSection() << "'" << std::endl;
+     for (section_t::iterator it = m_cur->begin(); it!=m_cur->end(); ++it){
+         out <<"  "<< it->first << " : " << it->second << std::endl;
     }
   }
 
@@ -181,8 +187,53 @@ uint64_t Configuration::Get(const std::string & key, uint64_t def) const {
     throw Exception("Configuration: key not found");
   }
 
+  std::vector<std::string> Configuration::GetSections() const {
+      std::vector<std::string> sections;
+      for (auto& i: this->m_config){
+          sections.push_back(i.first);
+      }
+      return sections;
+  }
+
   void Configuration::SetString(const std::string & key, const std::string & val) {
     (*m_cur)[key] = val;
+  }
+
+  void Configuration::PrintSectionNames() const {
+      PrintSectionNames(std::cout);
+  }
+
+  void Configuration::PrintSectionNames(std::ostream& out) const {
+      out<<"SectionNames:";
+      for (map_t::const_iterator it = m_config.begin(); it!=m_config.end();it++)
+          out<<" "<<it->first;
+      out<<std::endl;
+  }
+  void Configuration::PrintKeys(std::ostream& out) const{
+      return PrintKeys(out,m_section);
+  }
+  void Configuration::PrintKeys(std::ostream& out, const std::string section) const {
+              out<<" Keys in "<<section<<": ";
+      section_t sec = (m_config.at(section));
+      for (section_t::const_iterator it = sec.begin(); it!=sec.end();it++)
+          out<<" \""<<it->first<<"\"/"<<it->second;
+      out<<std::endl;
+  }
+
+  void Configuration::PrintKeys(const std::string section) const {
+        PrintKeys(std::cout,section);
+    }
+
+  void Configuration::PrintKeys() const {
+      PrintKeys(m_section);
+  }
+  std::vector<std::string> Configuration::GetKeys(std::string section) {
+      std::vector<std::string> keys;
+      section_t sec = (m_config.at(section));
+      for (section_t::const_iterator it = sec.begin(); it!=sec.end();it++)
+          keys.push_back(it->first);
+      return keys;
+
   }
 
 }
