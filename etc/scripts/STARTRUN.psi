@@ -30,11 +30,11 @@ ls
 echo '    Starting Subprocesses'
 
 echo '        RunControl'
-~/sdvlp/eudaq-drs4/bin/euRun.exe -x 0 -y 0 -w 600 -g 500 -a tcp://$RCPORT  &
+~/sdvlp/eudaq-drs4/bin/euRun.exe -x 1681 -y -28 -w 916 -g 460 -a tcp://$RCPORT  &
 sleep 2
 
 echo '        LogCollector'
-~/sdvlp/eudaq-drs4/bin/euLog.exe -l DEBUG -x 900 -y 0 -w 1000 -g 550 -r  tcp://$HOSTNAME:$RCPORT &
+~/sdvlp/eudaq-drs4/bin/euLog.exe -l DEBUG -x 2599 -y -28 -w 1000 -g 784 -r  tcp://$HOSTNAME:$RCPORT &
 echo '\033[1;36;48m PLEASE WAIT...\033[0m'
 sleep 2
 
@@ -48,7 +48,7 @@ sleep 2
 
 if [ "$TLU" = true ]; then
     echo '        TLU @ PiM1'
-    xterm -geom 78x20+490-30 -hold -e 'ssh -tY pim1 scripts/StartTLU.sh' &
+    xterm -geom 78x20+2164-0 -hold -e 'ssh -tY pim1 scripts/StartTLU.sh' &
     #echo '\033[1;36;48m PLEASE WAIT...\033[0m'
 fi
 
@@ -60,7 +60,7 @@ fi
 
 if [ "$DRS" = true ]; then
     echo '        DRS4 @ PiM1'
-    xterm -geom 78x20+1450-30 -hold -e 'ssh -tY pim1 scripts/StartDRS4.sh' &
+    xterm -geom 78x20+2644-0 -hold -e 'ssh -tY pim1 scripts/StartDRS4.sh' &
     echo '\033[1;36;48m PLEASE WAIT...\033[0m'
 fi
 

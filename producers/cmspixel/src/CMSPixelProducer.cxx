@@ -163,7 +163,7 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   try {
     // Check for multiple ROCs using the I2C parameter:
     std::vector<int32_t> i2c_addresses = split(config.Get("i2c","i2caddresses","-1"),' ');
-    std::cout << "Found " << i2c_addresses.size() << " I2C addresses: " << pxar::listVector(i2c_addresses) << std::endl;
+    std::cout << "Found BLA " << i2c_addresses.size() << " I2C addresses: " << pxar::listVector(i2c_addresses) << std::endl;
 
     // Set the type of the TBM and read registers if any:
     m_tbmtype = config.Get("tbmtype","notbm");
@@ -175,6 +175,12 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
 
     // Set the type of the ROC correctly:
     m_roctype = config.Get("roctype","psi46digv21respin");
+    
+    /** Set different wbcs */
+      std::vector<int32_t> wbc_values = split(config.Get("wbc","wbcaddresses","-1"),' ');
+      std::cout << "WBC ADRESSES:" << std::endl;
+      for (int i =0; i != wbc_values.size(); i++)
+        std::cout << wbc_values[i] << std::endl;
 
     // Read the type of carrier PCB used ("desytb", "desytb-rot"):
     m_pcbtype = config.Get("pcbtype","desytb");
@@ -193,15 +199,11 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
       else { rocI2C.push_back(static_cast<uint8_t>(0)); }
     }
 
-//<<<<<<< HEAD
-//=======
-
     // Set the type of the ROC correctly:
     m_roctype = config.Get("roctype","psi46digv2");
 
     // Read the type of carrier PCB used ("desytb", "desytb-rot"):
     m_pcbtype = config.Get("pcbtype","desytb");
-//>>>>>>> e3909fa378d09c097e867dbeacb5a1f75eb82687
 
     // create api
     if(m_api != NULL) { delete m_api; }
