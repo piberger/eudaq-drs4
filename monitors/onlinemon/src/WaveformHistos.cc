@@ -22,9 +22,11 @@ _n_wfs(10),_sensor(p.getName()), _id(p.getID()),n_fills(0),n_fills_bad(0),n_fill
     do_fitting = false;
 
     // signal_integral_range = make_pair(500.,800.);
-    signal_integral_range   = make_pair(  200, 350.);
-    pedestal_integral_range = make_pair(   10, 160.);// should be the same length as signal
+    //signal_integral_range   = make_pair(  200, 350.);
+    signal_integral_range = make_pair(140, 220.); //changed to this by cdorfer on oct 31
+    //pedestal_integral_range = make_pair(   10, 160.);// should be the same length as signal
     pulser_integral_range = make_pair(760,860);
+    pedestal_integral_range = make_pair(20, 100.);//changed to this by cdorfer on oct 31
     //	std::cout << "WaveformHistos::Sensorname: " << _sensor << " "<< _id<< std::endl;
     this->InitHistos();
 }
@@ -552,8 +554,8 @@ void WaveformHistos::FillEvent(const SimpleStandardWaveform & wf, bool isPulserE
             return;
     // check if the event passes/fails the FFT cuts
 
-    // if (!(event_no%1000)) 
-    //     cout << "ev " << event_no << " in wf " << wf.getChannelName() << " this is the mean FFT: " << wf.getMeanFFT() << 
+    // if (!(event_no%1000))
+    //     cout << "ev " << event_no << " in wf " << wf.getChannelName() << " this is the mean FFT: " << wf.getMeanFFT() <<
     //     "   this is the inv. max: " << 1./wf.getMaxFFT() << "   at time " << timestamp << endl;
 
     float min      = wf.getMin();

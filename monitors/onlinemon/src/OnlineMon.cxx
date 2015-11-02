@@ -298,14 +298,14 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
     	const eudaq::StandardWaveform & waveform = ev.GetWaveform(i);
     	if (waveform.GetChannelName() == "Pulser"){
     		SimpleStandardWaveform simpWaveform(waveform.GetType(),waveform.ID(),waveform.GetNSamples(),&mon_configdata);
-			simpWaveform.addData(&(*waveform.GetData())[0]);
-			simpWaveform.Calculate();
-			float integral = simpWaveform.getIntegral(700,900);
-			//if (TMath::Abs(integral) > 40) //mon_configdata.getPulserThreshold())
-			//	isPulserEvent = true;
-            float pulserMin = simpWaveform.getMinimum(700, 900);
+		simpWaveform.addData(&(*waveform.GetData())[0]);
+		simpWaveform.Calculate();
+		float integral = simpWaveform.getIntegral(700,900); 
+		//if (TMath::Abs(integral) > 40) //mon_configdata.getPulserThreshold())
+		//	isPulserEvent = true;
+		float pulserMin = simpWaveform.getMinimum(700, 900); 
             if( pulserMin < -100.) 
-                isPulserEvent = true;
+	      isPulserEvent = true;
             // if (isPulserEvent)
             //     cout << "PulserEvent, minimum is " << pulserMin << std::endl;
     	}

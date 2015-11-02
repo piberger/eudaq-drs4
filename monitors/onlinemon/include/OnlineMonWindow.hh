@@ -104,7 +104,7 @@ class OnlineMonWindow : public TGMainFrame{
 
     TH2F *h1;
     TH2F *h2;
-    unsigned int _eventnum, _runnum;
+    unsigned int _eventnum, _runnum, _lastEvent;
     bool _autoreset;
     unsigned int _reduce, _reduceUpdate;
     unsigned int _analysedEvents;
@@ -132,7 +132,7 @@ class OnlineMonWindow : public TGMainFrame{
     void actorMenu(TGListTreeItem* item, Int_t btn, Int_t x, Int_t y);
     void registerPlane(char* sensor, int id);
     void autoUpdate();
-    virtual ~OnlineMonWindow(); 
+    virtual ~OnlineMonWindow();
     void setCollections(std::vector<BaseCollection*> colls) {_colls = colls;}
     void Write();
     void Reset();
@@ -150,7 +150,7 @@ class OnlineMonWindow : public TGMainFrame{
     void setEventNumber(const int num) {_eventnum = num;}
     void setRunNumber(const int num) {_runnum = num; }
     void setAutoReset(bool reset);
-    bool getAutoReset() const {return _autoreset; } 
+    bool getAutoReset() const {return _autoreset; }
     void setReduce(const unsigned int red);
     unsigned int getReduce() {return _reduce; }
     void setUpdate(const unsigned int up);
