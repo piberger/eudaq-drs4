@@ -67,7 +67,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
   hmCollection = new HitmapCollection();
   corrCollection = new CorrelationCollection();
   wfCollection = new WaveformCollection();
-  
+
   MonitorPerformanceCollection *monCollection =new MonitorPerformanceCollection();
   eudaqCollection = new EUDAQMonitorCollection();
 
@@ -158,7 +158,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
   fft_own = TVirtualFFT::FFT(1, &n_size, "R2C P K");
   if (!fft_own) {
       cout << "something went wrong with the fft creation" << endl;
-      return; 
+      return;
   }
 
 
@@ -169,7 +169,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
   previous_event_clustering_time=0;
   previous_event_correlation_time=0;
 
-  onlinemon->SetOnlineMon(this);    
+  onlinemon->SetOnlineMon(this);
 
 }
 
@@ -296,15 +296,16 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
     bool isPulserEvent = false;
     for (unsigned int i = 0; i < nwf;i++){
     	const eudaq::StandardWaveform & waveform = ev.GetWaveform(i);
-    	if (waveform.GetChannelName() == "Pulser"){
+    	if (waveform.GetChannelName() == "PULSER"){
     		SimpleStandardWaveform simpWaveform(waveform.GetType(),waveform.ID(),waveform.GetNSamples(),&mon_configdata);
 		simpWaveform.addData(&(*waveform.GetData())[0]);
 		simpWaveform.Calculate();
-		float integral = simpWaveform.getIntegral(700,900); 
+		float integral = simpWaveform.getIntegral(700,900);
 		//if (TMath::Abs(integral) > 40) //mon_configdata.getPulserThreshold())
 		//	isPulserEvent = true;
-		float pulserMin = simpWaveform.getMinimum(700, 900); 
-            if( pulserMin < -100.) 
+		float pulserMin = simpWaveform.getMinimum(700, 900);
+//            cout << "pulserMin: " << pulserMin << endl;
+            if( pulserMin < -100.)
 	      isPulserEvent = true;
             // if (isPulserEvent)
             //     cout << "PulserEvent, minimum is " << pulserMin << std::endl;
@@ -325,7 +326,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 			cout << "Waveform Type        " << waveform.GetType() << endl;
 			cout << "Waveform NSamples    " << waveform.GetNSamples() <<endl; // gives 2560 for V1730
 #endif
-            // cout << " 
+            // cout << "
 			std::string sensorname;
 			sensorname = waveform.GetType();
 			SimpleStandardWaveform simpWaveform(sensorname,waveform.ID(),waveform.GetNSamples(),&mon_configdata);//,plane.XSize(),plane.YSize(), plane.TLUEvent(),plane.PivotPixel(),&mon_configdata);
@@ -378,7 +379,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 			simpEv.addWaveform(simpWaveform);
 		}
 
-		
+
     if (skip_dodgy_event)
     {
       return; //don't process any further
