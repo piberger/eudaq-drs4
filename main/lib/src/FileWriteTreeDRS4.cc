@@ -230,6 +230,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         Double_t *re_full;
         Double_t *im_full;
         Double_t *in;
+        TMacro * macro;
 
         std::vector<Double_t> v_x;
         std::vector<Double_t> v_y;
@@ -259,7 +260,7 @@ static RegisterFileWriter<FileWriterTreeDRS4> reg("drs4tree");
 }
 
 FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
-: m_tfile(0), m_ttree(0),m_noe(0),chan(4),n_pixels(90*90+60*60), histo(0),spec(0),fft_own(0),runnumber(0)
+: m_tfile(0), m_ttree(0),m_noe(0),chan(4),n_pixels(90*90+60*60), histo(0),spec(0),fft_own(0),runnumber(0),macro(0)
 {
     gROOT->ProcessLine("#include <vector>");
     gROOT->ProcessLine(".L ~/lib/root_loader.c+");
@@ -476,7 +477,7 @@ void FileWriterTreeDRS4::Configure(){
     int active_regions = m_config->Get("active_regions",0);
     cout<<"active_regions: "<<active_regions<<endl;
 
-    TMacro *macro = new TMacro();
+    macro = new TMacro();
     for (int i = 0; i< 4;i++)
         if ((active_regions & 1<<i) == 1<<i)
             cout<<"CHANNEL: "<<i<<endl;
@@ -920,7 +921,8 @@ FileWriterTreeDRS4::~FileWriterTreeDRS4() {
     avgWF_3->Write();
     avgWF_3_sig->Write();
     avgWF_3_pul->Write();
-
+    if (macro)
+        macro->Write();
     if(m_tfile->IsOpen()) m_tfile->Close();
 }
 
