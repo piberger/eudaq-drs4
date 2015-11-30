@@ -476,7 +476,7 @@ void FileWriterTreeDRS4::Configure(){
     int active_regions = m_config->Get("active_regions",0);
     cout<<"active_regions: "<<active_regions<<endl;
 
-    TMacro *macro = new TMacro(m_config->Configuration())
+    TMacro *macro = new TMacro();
     for (int i = 0; i< 4;i++)
         if ((active_regions & 1<<i) == 1<<i)
             cout<<"CHANNEL: "<<i<<endl;
@@ -505,7 +505,7 @@ void FileWriterTreeDRS4::Configure(){
                 WaveformIntegral integralDef = WaveformIntegral(i.second->first,i.second->second,i.first);
                 region.AddIntegral(integralDef);
                 key = "* " + i.first;
-                key.Append(TString::Format(": %d - %d",i.second->first,i.second->second,i.first));
+                key.Append(TString::Format(": %f - %f",i.second->first,i.second->second));
                 macro->AddLine(key);
             }
         }
