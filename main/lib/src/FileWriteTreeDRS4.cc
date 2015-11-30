@@ -30,6 +30,7 @@
 #include "TSystem.h"
 #include "TInterpreter.h"
 #include "TROOT.h"
+#include "TMacro.h"
 #include "TF1.h"
 #include "TGraph.h"
 #include "TCanvas.h"
@@ -474,9 +475,12 @@ void FileWriterTreeDRS4::Configure(){
     cout<<endl;
     int active_regions = m_config->Get("active_regions",0);
     cout<<"active_regions: "<<active_regions<<endl;
+
+    TMacro *macro = new TMacro(m_config->Configuration())
     for (int i = 0; i< 4;i++)
         if ((active_regions & 1<<i) == 1<<i)
             cout<<"CHANNEL: "<<i<<endl;
+    macro->AddLine(TString::Format("active_regions: %d",active_regions));
     for (int i = 0; i< 4;i++)
         if ((active_regions & 1<<i) == 1<<i){
             (*regions)[int(i)] = new WaveformSignalRegions(i,polarities.at(i));
@@ -491,12 +495,18 @@ void FileWriterTreeDRS4::Configure(){
         std::string name = i.substr(0,found);
         cout<<"\t\""<<name<<"\""<<endl;
 
-        std::pair<int,int> range = (m_config->Get(i,make_pair((int)0,(int)0)));
-        WaveformSignalRegion region = WaveformSignalRegion(range.first,range.second,name);
+        std::pair<int,int> region_def = (m_config->Get(i,make_pair((int)0,(int)0)));
+        TString key = name;
+        key.Append(TString::Format(": %d - %d",region_def.first,region_def.second));
+        macro->AddLine(key);
+        WaveformSignalRegion region = WaveformSignalRegion(region_def.first,region_def.second,name);
         for (auto i: ranges){
             if (i.first.find("PeakIntegral")!=std::string::npos){
                 WaveformIntegral integralDef = WaveformIntegral(i.second->first,i.second->second,i.first);
                 region.AddIntegral(integralDef);
+                key = "* " + i.first;
+                key.Append(TString::Format(": %d - %d",i.second->first,i.second->second,i.first));
+                macro->AddLine(key);
             }
         }
 
@@ -516,6 +526,7 @@ void FileWriterTreeDRS4::Configure(){
     }
     else
         std::cout<<std::endl;
+    macro->Write();
 }
 
 void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
