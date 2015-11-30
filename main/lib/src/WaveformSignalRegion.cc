@@ -55,7 +55,7 @@ void WaveformSignalRegion::SetPeakPostion(Int_t peak_position) {
 }
 
 void WaveformSignalRegion::AddIntegral(WaveformIntegral integralDef) {
-    std::cout<<"ADD Integral "<<integralDef<<std::endl;
+//    std::cout<<"ADD Integral "<<integralDef<<std::endl;
     int count = 0;
     std::string name = integralDef.GetName();
     while (integrals.count(integralDef.GetName())){
@@ -67,6 +67,6 @@ void WaveformSignalRegion::AddIntegral(WaveformIntegral integralDef) {
     name = integralDef.GetName();
     this->integrals[name] = integralDef;
     integral_names.push_back(name);
-    std::cout<<"WaveformSignalRegion \'"<<this->name<<"' added Integral: "<<integralDef<<std::endl;
+//    std::cout<<"WaveformSignalRegion \'"<<this->name<<"' added Integral: "<<integralDef<<std::endl;
 }
 

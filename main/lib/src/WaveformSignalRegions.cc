@@ -16,7 +16,7 @@ WaveformSignalRegions::WaveformSignalRegions(int channel, signed char pol) {
 
 
 void WaveformSignalRegions::AddRegion(WaveformSignalRegion region) {
-    std::cout<<"AddRegion: "<<region<<std::endl;
+//    std::cout<<"AddRegion: "<<region<<std::endl;
     region.SetPolarity(polarity);
     this->regions.push_back(region);
 }
