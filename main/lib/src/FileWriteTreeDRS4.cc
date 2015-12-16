@@ -477,7 +477,9 @@ void FileWriterTreeDRS4::Configure(){
     int active_regions = m_config->Get("active_regions",0);
     cout<<"active_regions: "<<active_regions<<endl;
 
-    macro = new TMacro(m_config->Configuration())
+    macro = new TMacro();
+    macro->SetName("region_information");
+    macro->SetTitle("Region Information");
 
     for (int i = 0; i< 4;i++)
         if ((active_regions & 1<<i) == 1<<i)
@@ -487,6 +489,8 @@ void FileWriterTreeDRS4::Configure(){
         if ((active_regions & 1<<i) == 1<<i){
             (*regions)[int(i)] = new WaveformSignalRegions(i,polarities.at(i));
         }
+    macro->AddLine("");
+    macro->AddLine("Signal Windows");
     for (auto i: m_config->GetKeys()){
         size_t found = i.find("_region");
         if (found ==std::string::npos)
@@ -498,8 +502,9 @@ void FileWriterTreeDRS4::Configure(){
         cout<<"\t\""<<name<<"\""<<endl;
 
         std::pair<int,int> region_def = (m_config->Get(i,make_pair((int)0,(int)0)));
-        TString key = name;
-        key.Append(TString::Format(": %d - %d",region_def.first,region_def.second));
+        TString key = name+":";
+        key.Append(' ',30-key.Length());
+        key.Append(TString::Format(" %4d - %4d",region_def.first,region_def.second));
         macro->AddLine(key);
         WaveformSignalRegion region = WaveformSignalRegion(region_def.first,region_def.second,name);
         for (auto i: ranges){
@@ -517,6 +522,16 @@ void FileWriterTreeDRS4::Configure(){
                 (*regions)[int(i)]->AddRegion(region);
             }
 
+    }
+    macro->AddLine("");
+    macro->AddLine("Signal Definitions:");
+    for (auto i: ranges){
+        if (i.first.find("PeakIntegral")!=std::string::npos){
+                TString key = "* " + i.first+ ":";
+                key.Append(' ',30-key.Length());
+                key.Append(TString::Format(" %6.1f - %6.1f",i.second->first,i.second->second));
+                macro->AddLine(key);
+        }
     }
     std::cout<<"Active WaveformRegions with Integrals: "<<std::endl;
 //    for (auto i: *regions)
