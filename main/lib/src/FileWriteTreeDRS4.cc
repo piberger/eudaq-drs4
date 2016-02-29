@@ -297,228 +297,228 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     v_sig_int       = new std::vector<float>;
     v_sig_time  	= new std::vector<float>;
 
-    v_sensor_name       = new std::vector< std::string >;
-    v_type_name         = new std::vector< std::string >;
-    v_sig_peak          = new std::vector<float>;
-    v_peaktime          = new std::vector<float>;
-    v_sig_spread        = new std::vector<float>;
-    v_sig_spread_short        = new std::vector<float>;
-    v_sig_integral1     = new std::vector<float>;
-    v_sig_integral2     = new std::vector<float>;
-    v_sig_integral3     = new std::vector<float>;
-    v_sig_a1     = new std::vector<float>;
-    v_sig_a2     = new std::vector<float>;
-    v_sig_a3     = new std::vector<float>;
-    v_sig_b1     = new std::vector<float>;
-    v_sig_b2     = new std::vector<float>;
-    v_sig_b3     = new std::vector<float>;
-    v_ped_spread        = new std::vector<float>;
-    v_ped_min_spread        = new std::vector<float>;
-    v_ped_integral1		= new std::vector<float>;
-    v_ped_integral2		= new std::vector<float>;
-    v_ped_integral3		= new std::vector<float>;
-    v_ped_median        = new std::vector<float>;
-    v_ped_median1       = new std::vector<float>;
-    v_ped_median2       = new std::vector<float>;
-    v_ped_min_int       = new std::vector<float>;
-    v_ped_min_integral1       = new std::vector<float>;
-    v_ped_min_integral2       = new std::vector<float>;
-    v_ped_min_integral3       = new std::vector<float>;
-    v_pul_spread        = new std::vector<float>;
+        v_sensor_name       = new std::vector< std::string >;
+        v_type_name         = new std::vector< std::string >;
+        v_sig_peak          = new std::vector<float>;
+        v_peaktime          = new std::vector<float>;
+        v_sig_spread        = new std::vector<float>;
+        v_sig_spread_short        = new std::vector<float>;
+        v_sig_integral1     = new std::vector<float>;
+        v_sig_integral2     = new std::vector<float>;
+        v_sig_integral3     = new std::vector<float>;
+        v_sig_a1     = new std::vector<float>;
+        v_sig_a2     = new std::vector<float>;
+        v_sig_a3     = new std::vector<float>;
+        v_sig_b1     = new std::vector<float>;
+        v_sig_b2     = new std::vector<float>;
+        v_sig_b3     = new std::vector<float>;
+        v_ped_spread        = new std::vector<float>;
+        v_ped_min_spread        = new std::vector<float>;
+        v_ped_integral1		= new std::vector<float>;
+        v_ped_integral2		= new std::vector<float>;
+        v_ped_integral3		= new std::vector<float>;
+        v_ped_median        = new std::vector<float>;
+        v_ped_median1       = new std::vector<float>;
+        v_ped_median2       = new std::vector<float>;
+        v_ped_min_int       = new std::vector<float>;
+        v_ped_min_integral1       = new std::vector<float>;
+        v_ped_min_integral2       = new std::vector<float>;
+        v_ped_min_integral3       = new std::vector<float>;
+        v_pul_spread        = new std::vector<float>;
 
-    v_is_saturated  	= new std::vector<bool>;
-    v_has_spikes        = new std::vector<bool>;
-    v_median       		= new std::vector<float>;
-    v_average           = new std::vector<float>;
+        v_is_saturated  	= new std::vector<bool>;
+        v_has_spikes        = new std::vector<bool>;
+        v_median       		= new std::vector<float>;
+        v_average           = new std::vector<float>;
 
-    f_wf0 = new std::vector<float>;
-    f_wf1 = new std::vector<float>;
-    f_wf2 = new std::vector<float>;
-    f_wf3 = new std::vector<float>;
+        f_wf0 = new std::vector<float>;
+        f_wf1 = new std::vector<float>;
+        f_wf2 = new std::vector<float>;
+        f_wf3 = new std::vector<float>;
 
-    //linear pedestal fit
-    chi2 = new std::vector<float>;
-    par0 = new std::vector<float>;
-    par1 = new std::vector<float>;
-    sigma = new std::vector<float>;
+        //linear pedestal fit
+        chi2 = new std::vector<float>;
+        par0 = new std::vector<float>;
+        par1 = new std::vector<float>;
+        sigma = new std::vector<float>;
 
-    peaks_x.resize(4, new std::vector<float>);
-    peaks_y.resize(4, new std::vector<float>);
-    peaks_no.resize(4, new std::vector<int>);
-    fft_modes.resize(4, new std::vector<float>);
+        peaks_x.resize(4, new std::vector<float>);
+        peaks_y.resize(4, new std::vector<float>);
+        peaks_no.resize(4, new std::vector<int>);
+        fft_modes.resize(4, new std::vector<float>);
 
-    npeaks = new std::vector<float>;
-    fft_values.resize(4, new std::vector<float>);
-    fft_mean = new std::vector<float>;
-    fft_mean_freq = new std::vector<float>;
-    fft_max = new std::vector<float>;
-    fft_max_freq = new std::vector<float>;
-    fft_min = new std::vector<float>;
-    fft_min_freq = new std::vector<float>;
+        npeaks = new std::vector<float>;
+        fft_values.resize(4, new std::vector<float>);
+        fft_mean = new std::vector<float>;
+        fft_mean_freq = new std::vector<float>;
+        fft_max = new std::vector<float>;
+        fft_max_freq = new std::vector<float>;
+        fft_min = new std::vector<float>;
+        fft_min_freq = new std::vector<float>;
 
-    skewness = new std::vector<float>;
-    kurtosis= new std::vector<float>;
+        skewness = new std::vector<float>;
+        kurtosis= new std::vector<float>;
 
-    // telescope
-    f_plane  = new std::vector<int>;
-    f_col    = new std::vector<int>;
-    f_row    = new std::vector<int>;
-    f_adc    = new std::vector<int>;
-    f_charge = new std::vector<int>;
+        // telescope
+        f_plane  = new std::vector<int>;
+        f_col    = new std::vector<int>;
+        f_row    = new std::vector<int>;
+        f_adc    = new std::vector<int>;
+        f_charge = new std::vector<int>;
 
-    // average waveforms of channels
-    avgWF_0 = new TH1F("avgWF_0","avgWF_0", 1024, 0, 1024);
-    avgWF_0_pul = new TH1F("avgWF_0_pul","avgWF_0_pul", 1024, 0, 1024);
-    avgWF_0_sig = new TH1F("avgWF_0_sig","avgWF_0_sig", 1024, 0, 1024);
-    avgWF_1 = new TH1F("avgWF_1","avgWF_1", 1024, 0, 1024);
-    avgWF_2 = new TH1F("avgWF_2","avgWF_2", 1024, 0, 1024);
-    avgWF_3 = new TH1F("avgWF_3","avgWF_3", 1024, 0, 1024);
-    avgWF_3_pul = new TH1F("avgWF_3_pul","avgWF_3_pul", 1024, 0, 1024);
-    avgWF_3_sig = new TH1F("avgWF_3_sig","avgWF_3_sig", 1024, 0, 1024);
+        // average waveforms of channels
+        avgWF_0 = new TH1F("avgWF_0","avgWF_0", 1024, 0, 1024);
+        avgWF_0_pul = new TH1F("avgWF_0_pul","avgWF_0_pul", 1024, 0, 1024);
+        avgWF_0_sig = new TH1F("avgWF_0_sig","avgWF_0_sig", 1024, 0, 1024);
+        avgWF_1 = new TH1F("avgWF_1","avgWF_1", 1024, 0, 1024);
+        avgWF_2 = new TH1F("avgWF_2","avgWF_2", 1024, 0, 1024);
+        avgWF_3 = new TH1F("avgWF_3","avgWF_3", 1024, 0, 1024);
+        avgWF_3_pul = new TH1F("avgWF_3_pul","avgWF_3_pul", 1024, 0, 1024);
+        avgWF_3_sig = new TH1F("avgWF_3_sig","avgWF_3_sig", 1024, 0, 1024);
 
-    fitter = new TLinearFitter();
-    f_pol1 = new TF1("f1", "pol1", 0,1024);
-    fitter->SetFormula(f_pol1);
-    fitter->StoreData(false);
-    for(auto i=0;i<1024;i++)
-        v_x.push_back(i);
+        fitter = new TLinearFitter();
+        f_pol1 = new TF1("f1", "pol1", 0,1024);
+        fitter->SetFormula(f_pol1);
+        fitter->StoreData(false);
+        for(auto i=0;i<1024;i++)
+            v_x.push_back(i);
 
-    spec = new TSpectrum(20,3);
-    fft_own = 0;
-    if(!fft_own){
-        int n = 1024;
-        n_samples = n+1;
-        cout<<"Creating a new VirtualFFT with "<<n_samples<<" Samples"<<endl;
-        re_full = new Double_t[n];
-        im_full = new Double_t[n];
-        in = new Double_t[n];
-        fft_own = TVirtualFFT::FFT(1, &n_samples, "R2C");
+        spec = new TSpectrum(20,3);
+        fft_own = 0;
+        if(!fft_own){
+            int n = 1024;
+            n_samples = n+1;
+            cout<<"Creating a new VirtualFFT with "<<n_samples<<" Samples"<<endl;
+            re_full = new Double_t[n];
+            im_full = new Double_t[n];
+            in = new Double_t[n];
+            fft_own = TVirtualFFT::FFT(1, &n_samples, "R2C");
+        }
     }
-}
 
-void FileWriterTreeDRS4::Configure(){
-    ranges["signal"] =  new pair<float,float>(25,175);
-    ranges["pedestal"] = new pair<float,float>(350,450);
-    ranges["pulser"] = new pair<float,float>(760,860);
-    ranges["pedestalFit"] = new pair<float,float>(250,650);
-    if (!this->m_config){
-        std::cout<<"Configure: abortion [!this->m_config is True]"<<endl;
-        return;
-    }
-    m_config->SetSection("Converter.drs4tree");
-    if (m_config->NSections()==0){
-        std::cout<<"Configure: abortion [m_config->NSections()==0 is True]"<<endl;
-        return;
-    }
-    EUDAQ_INFO("Configuring FileWriterTreeDRS4" );
+    void FileWriterTreeDRS4::Configure(){
+        ranges["signal"] =  new pair<float,float>(25,175);
+        ranges["pedestal"] = new pair<float,float>(350,450);
+        ranges["pulser"] = new pair<float,float>(760,860);
+        ranges["pedestalFit"] = new pair<float,float>(250,650);
+        if (!this->m_config){
+            std::cout<<"Configure: abortion [!this->m_config is True]"<<endl;
+            return;
+        }
+        m_config->SetSection("Converter.drs4tree");
+        if (m_config->NSections()==0){
+            std::cout<<"Configure: abortion [m_config->NSections()==0 is True]"<<endl;
+            return;
+        }
+        EUDAQ_INFO("Configuring FileWriterTreeDRS4" );
 
 
-    spectrum_sigma = m_config->Get("spectrum_sigma",(float)10.);
-    spectrum_threshold = m_config->Get("spectrum_threshold",(float)1.);
-    spectrum_deconIterations = m_config->Get("spectrum_deconIterations",10);
-    spectrum_averageWindow = m_config->Get("spectrum_averageWindow",5);
-    spec->SetDeconIterations(spectrum_deconIterations);
-    spec->SetAverageWindow(spectrum_averageWindow);
-    spectrum_markov = m_config->Get("spectrum_markov",true);
-    spectrum_background_removal= m_config->Get("spectrum_background_removal",true);
-    spectrum_waveforms = (int)m_config->Get("spectrum_waveforms",9);
-    fft_waveforms = (int)m_config->Get("fft_waveforms",9);
-    linear_fitting_waveforms = (int)m_config->Get("linear_fitting_waveforms",9);
-    pulser_threshold = (int)m_config->Get("pulser_drs4_threshold",80);
-    pulser_channel = (int)m_config->Get("pulser_channel",1);
-    trigger_channel = (int)m_config->Get("trigger_channel",2);
-    cout<<"CHANNEL AND PULSER SETTINGS: "<<endl;
-    cout<<"\t\tpulser channel: "<<pulser_channel<<endl;
-    cout<<"\t\ttrigger channel: "<<trigger_channel<<endl;
-    cout<<"\t\tpulser_int threshold: "<<pulser_threshold<<endl;
+        spectrum_sigma = m_config->Get("spectrum_sigma",(float)10.);
+        spectrum_threshold = m_config->Get("spectrum_threshold",(float)1.);
+        spectrum_deconIterations = m_config->Get("spectrum_deconIterations",10);
+        spectrum_averageWindow = m_config->Get("spectrum_averageWindow",5);
+        spec->SetDeconIterations(spectrum_deconIterations);
+        spec->SetAverageWindow(spectrum_averageWindow);
+        spectrum_markov = m_config->Get("spectrum_markov",true);
+        spectrum_background_removal= m_config->Get("spectrum_background_removal",true);
+        spectrum_waveforms = (int)m_config->Get("spectrum_waveforms",9);
+        fft_waveforms = (int)m_config->Get("fft_waveforms",9);
+        linear_fitting_waveforms = (int)m_config->Get("linear_fitting_waveforms",9);
+        pulser_threshold = (int)m_config->Get("pulser_drs4_threshold",80);
+        pulser_channel = (int)m_config->Get("pulser_channel",1);
+        trigger_channel = (int)m_config->Get("trigger_channel",2);
+        cout<<"CHANNEL AND PULSER SETTINGS: "<<endl;
+        cout<<"\t\tpulser channel: "<<pulser_channel<<endl;
+        cout<<"\t\ttrigger channel: "<<trigger_channel<<endl;
+        cout<<"\t\tpulser_int threshold: "<<pulser_threshold<<endl;
 
-    ranges["pulser"] = new pair<float,float>(m_config->Get("pulser_range",make_pair((float)770,(float)860)));
-    ranges["pulserDRS4"] = new pair<float,float>(m_config->Get("pulser_range_drs4",make_pair((float)740,(float)860))); //  august: 740, 860,
-    ranges["pedestal"] =  new pair<float,float>(m_config->Get("pedestal_range",make_pair((float)350,(float)450)));
-    ranges["pedestalFit"] =  new pair<float,float>(m_config->Get("pedestalfit_range",make_pair((float)250,(float)650)));
-    ranges["signal"] =  new pair<float,float>(m_config->Get("signal_range",make_pair((float)25,(float)175)));
-    ranges["PeakIntegral1"] =  new pair<float,float>(m_config->Get("PeakIntegral1_range",make_pair((int)3,(int)9)));
-    ranges["PeakIntegral2"] =  new pair<float,float>(m_config->Get("PeakIntegral2_range",make_pair((int)9,(int)18)));
-    ranges["PeakIntegral3"] =  new pair<float,float>(m_config->Get("PeakIntegral3_range",make_pair((int)18,(int)36)));
-    std::cout<<"Ranges: "<<std::endl;
-    for (auto i: m_config->GetKeys()){
-            size_t found = i.find("_range");
+        ranges["pulser"] = new pair<float,float>(m_config->Get("pulser_range",make_pair((float)770,(float)860)));
+        ranges["pulserDRS4"] = new pair<float,float>(m_config->Get("pulser_range_drs4",make_pair((float)740,(float)860))); //  august: 740, 860,
+        ranges["pedestal"] =  new pair<float,float>(m_config->Get("pedestal_range",make_pair((float)350,(float)450)));
+        ranges["pedestalFit"] =  new pair<float,float>(m_config->Get("pedestalfit_range",make_pair((float)250,(float)650)));
+        ranges["signal"] =  new pair<float,float>(m_config->Get("signal_range",make_pair((float)25,(float)175)));
+        ranges["PeakIntegral1"] =  new pair<float,float>(m_config->Get("PeakIntegral1_range",make_pair((int)3,(int)9)));
+        ranges["PeakIntegral2"] =  new pair<float,float>(m_config->Get("PeakIntegral2_range",make_pair((int)9,(int)18)));
+        ranges["PeakIntegral3"] =  new pair<float,float>(m_config->Get("PeakIntegral3_range",make_pair((int)18,(int)36)));
+        std::cout<<"Ranges: "<<std::endl;
+        for (auto i: m_config->GetKeys()){
+                size_t found = i.find("_range");
+                if (found ==std::string::npos)
+                            continue;
+                if (i.at(0) == '#')
+                    continue;
+                std::string name = i.substr(0,found);
+                cout<<"\t\""<<name<<"\""<<endl;
+                cout << "count names:"<< ranges.count(name) << endl;
+                if (ranges.count(name)==0){
+                    std::pair<float,float>* range = new pair<float,float>(m_config->Get(i,make_pair((int)0,(int)0)));
+                    ranges[name] = range;
+                }
+        }
+        std::cout<<"  - Ranges: "<<ranges.size()<<std::endl;
+        for (auto& it: ranges)
+            cout<<"     * range_"<<it.first<<" "<<to_string(*(it.second))<<endl;
+
+    //    PressEnterToContinue();
+        save_waveforms = (int)m_config->Get("save_waveforms",9);
+        std::cout<<"  - save_waveforms: "+ to_string(save_waveforms)<<std::endl;
+
+        for (int i = 0; i < 4; i++){
+            std::cout<<"\t\t* ch"<<i<<":"<<to_string(((save_waveforms & 1<<i) == 1<<i));
+            std::cout<<std::endl;
+        }
+        polarities = m_config->Get("polarities",polarities);
+        cout<<"POLARITIES: ";
+        for (auto& i:polarities)
+            cout<<" "<<i;
+        cout<<endl;
+        v_polarities = &polarities;
+
+        max_event_number = m_config->Get("max_event_number",0);
+    //    m_config->PrintKeys();
+        cout<<endl;
+        int active_regions = m_config->Get("active_regions",0);
+        cout<<"active_regions: "<<active_regions<<endl;
+
+        macro = new TMacro();
+        macro->SetName("region_information");
+        macro->SetTitle("Region Information");
+
+        for (int i = 0; i< 4;i++)
+            if ((active_regions & 1<<i) == 1<<i)
+                cout<<"CHANNEL: "<<i<<endl;
+        macro->AddLine(TString::Format("active_regions: %d",active_regions));
+        for (int i = 0; i< 4;i++)
+            if ((active_regions & 1<<i) == 1<<i){
+                (*regions)[int(i)] = new WaveformSignalRegions(i,polarities.at(i));
+            }
+        macro->AddLine("");
+        macro->AddLine("Signal Windows");
+        for (auto i: m_config->GetKeys()){
+            size_t found = i.find("_region");
             if (found ==std::string::npos)
-                        continue;
-            if (i.at(0) == '#')
                 continue;
+            if (i.find("active_regions")!=std::string::npos)
+                continue;
+    //        cout<<"FOUND "<<i<<" "<<found<<endl;
             std::string name = i.substr(0,found);
             cout<<"\t\""<<name<<"\""<<endl;
-            cout << "count names:"<< ranges.count(name) << endl;
-            if (ranges.count(name)==0){
-                std::pair<float,float>* range = new pair<float,float>(m_config->Get(i,make_pair((int)0,(int)0)));
-                ranges[name] = range;
-            }
-    }
-    std::cout<<"  - Ranges: "<<ranges.size()<<std::endl;
-    for (auto& it: ranges)
-        cout<<"     * range_"<<it.first<<" "<<to_string(*(it.second))<<endl;
 
-//    PressEnterToContinue();
-    save_waveforms = (int)m_config->Get("save_waveforms",9);
-    std::cout<<"  - save_waveforms: "+ to_string(save_waveforms)<<std::endl;
-
-    for (int i = 0; i < 4; i++){
-        std::cout<<"\t\t* ch"<<i<<":"<<to_string(((save_waveforms & 1<<i) == 1<<i));
-        std::cout<<std::endl;
-    }
-    polarities = m_config->Get("polarities",polarities);
-    cout<<"POLARITIES: ";
-    for (auto& i:polarities)
-        cout<<" "<<i;
-    cout<<endl;
-    v_polarities = &polarities;
-
-    max_event_number = m_config->Get("max_event_number",0);
-//    m_config->PrintKeys();
-    cout<<endl;
-    int active_regions = m_config->Get("active_regions",0);
-    cout<<"active_regions: "<<active_regions<<endl;
-
-    macro = new TMacro();
-    macro->SetName("region_information");
-    macro->SetTitle("Region Information");
-
-    for (int i = 0; i< 4;i++)
-        if ((active_regions & 1<<i) == 1<<i)
-            cout<<"CHANNEL: "<<i<<endl;
-    macro->AddLine(TString::Format("active_regions: %d",active_regions));
-    for (int i = 0; i< 4;i++)
-        if ((active_regions & 1<<i) == 1<<i){
-            (*regions)[int(i)] = new WaveformSignalRegions(i,polarities.at(i));
-        }
-    macro->AddLine("");
-    macro->AddLine("Signal Windows");
-    for (auto i: m_config->GetKeys()){
-        size_t found = i.find("_region");
-        if (found ==std::string::npos)
-            continue;
-        if (i.find("active_regions")!=std::string::npos)
-            continue;
-//        cout<<"FOUND "<<i<<" "<<found<<endl;
-        std::string name = i.substr(0,found);
-        cout<<"\t\""<<name<<"\""<<endl;
-
-        std::pair<int,int> region_def = (m_config->Get(i,make_pair((int)0,(int)0)));
-        TString key = name+":";
-        key.Append(' ',30-key.Length());
-        key.Append(TString::Format(" %4d - %4d",region_def.first,region_def.second));
-        macro->AddLine(key);
-        WaveformSignalRegion region = WaveformSignalRegion(region_def.first,region_def.second,name);
-        for (auto i: ranges){
-            if (i.first.find("PeakIntegral")!=std::string::npos){
-                WaveformIntegral integralDef = WaveformIntegral(i.second->first,i.second->second,i.first);
-                region.AddIntegral(integralDef);
-                key = "* " + i.first +":";
-                key.Append(TString::Format(": %d - %d",i.second->first,i.second->second));
-                macro->AddLine(key);
-            }
-        }
+            std::pair<int,int> region_def = (m_config->Get(i,make_pair((int)0,(int)0)));
+            TString key = name+":";
+            key.Append(' ',30-key.Length());
+            key.Append(TString::Format(" %4d - %4d",region_def.first,region_def.second));
+            macro->AddLine(key);
+            WaveformSignalRegion region = WaveformSignalRegion(region_def.first,region_def.second,name);
+            //for (auto i: ranges){
+            //    if (i.first.find("PeakIntegral")!=std::string::npos){
+            //        WaveformIntegral integralDef = WaveformIntegral(i.second->first,i.second->second,i.first);
+            //        region.AddIntegral(integralDef);
+            //        key = "* " + i.first +":";
+            //        key.Append(TString::Format(": %d - %d",i.second->first,i.second->second));
+            //    macro->AddLine(key);
+            //  }
+            //}
 
         for (int i = 0; i< 4;i++)
             if ((active_regions & 1<<i) == 1<<i){
