@@ -244,6 +244,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         std::vector<std::vector<float>*> peaks_y;
         std::vector<std::vector<int>*> peaks_no;
         std::vector<float>* npeaks;
+        std::vector< std::vector<float>* > fft_values;
         std::vector<float>* fft_mean;
         std::vector<float>* fft_mean_freq;
         std::vector<float>* fft_max;
@@ -347,6 +348,7 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     fft_modes.resize(4, new std::vector<float>);
 
     npeaks = new std::vector<float>;
+    fft_values.resize(4, new std::vector<float>);
     fft_mean = new std::vector<float>;
     fft_mean_freq = new std::vector<float>;
     fft_max = new std::vector<float>;
@@ -435,9 +437,9 @@ void FileWriterTreeDRS4::Configure(){
     ranges["pedestal"] =  new pair<float,float>(m_config->Get("pedestal_range",make_pair((float)350,(float)450)));
     ranges["pedestalFit"] =  new pair<float,float>(m_config->Get("pedestalfit_range",make_pair((float)250,(float)650)));
     ranges["signal"] =  new pair<float,float>(m_config->Get("signal_range",make_pair((float)25,(float)175)));
-    ranges["PeakIntegral1"] =  new pair<float,float>(m_config->Get("peakintegral1_range",make_pair((int)3,(int)9)));
-    ranges["PeakIntegral2"] =  new pair<float,float>(m_config->Get("peakintegral2_range",make_pair((int)9,(int)18)));
-    ranges["PeakIntegral3"] =  new pair<float,float>(m_config->Get("peakintegral3_range",make_pair((int)18,(int)36)));
+    ranges["PeakIntegral1"] =  new pair<float,float>(m_config->Get("PeakIntegral1_range",make_pair((int)3,(int)9)));
+    ranges["PeakIntegral2"] =  new pair<float,float>(m_config->Get("PeakIntegral2_range",make_pair((int)9,(int)18)));
+    ranges["PeakIntegral3"] =  new pair<float,float>(m_config->Get("PeakIntegral3_range",make_pair((int)18,(int)36)));
     std::cout<<"Ranges: "<<std::endl;
     for (auto i: m_config->GetKeys()){
             size_t found = i.find("_range");
@@ -447,6 +449,7 @@ void FileWriterTreeDRS4::Configure(){
                 continue;
             std::string name = i.substr(0,found);
             cout<<"\t\""<<name<<"\""<<endl;
+            cout << "count names:"<< ranges.count(name) << endl;
             if (ranges.count(name)==0){
                 std::pair<float,float>* range = new pair<float,float>(m_config->Get(i,make_pair((int)0,(int)0)));
                 ranges[name] = range;
@@ -648,12 +651,12 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("pul_int", 		&v_pul_int);
 
     /// for tspectrum
-    m_ttree->Branch("npeaks",      &npeaks);
-    m_ttree->Branch("fft_mean", &fft_mean);
-    m_ttree->Branch("fft_mean_freq", &fft_mean_freq);
-    m_ttree->Branch("fft_max", &fft_max);
+    m_ttree->Branch("npeaks",       &npeaks);
+    m_ttree->Branch("fft_mean",     &fft_mean);
+    m_ttree->Branch("fft_mean_freq",&fft_mean_freq);
+    m_ttree->Branch("fft_max",      &fft_max);
     m_ttree->Branch("fft_max_freq", &fft_max_freq);
-    m_ttree->Branch("fft_min", &fft_min);
+    m_ttree->Branch("fft_min",      &fft_min);
     m_ttree->Branch("fft_min_freq", &fft_min_freq);
 
     for (int i=0; i < 4; i++){
@@ -665,6 +668,8 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
         m_ttree->Branch(name,&peaks_no.at(i));
         name = TString::Format("fft_modes%d",i);
         m_ttree->Branch(name,&fft_modes.at(i));
+        name = TString::Format("fft_values%d",i);
+        m_ttree->Branch(name,&fft_values.at(i));
     }
 
     // telescope
@@ -1052,6 +1057,8 @@ inline void FileWriterTreeDRS4::ResizeVectors(unsigned n_channels) {
             p->clear();
     for (auto p: fft_modes)
             p->clear();
+    for (auto p: fft_values)
+            p->clear();
 }
 
 
@@ -1108,6 +1115,7 @@ void FileWriterTreeDRS4::DoFFTAnalysis(int iwf){
         }
         finalVal+= value;
         mean_freq += freq * value;
+//        fft_values.at(iwf)->push_back(value);
         if (j < 10 || j == n/2)
             fft_modes.at(iwf)->push_back(value);
     }
