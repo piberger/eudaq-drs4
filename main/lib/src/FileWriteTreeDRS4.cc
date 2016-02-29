@@ -514,6 +514,9 @@ void FileWriterTreeDRS4::Configure(){
             if (i.first.find("PeakIntegral")!=std::string::npos){
                 WaveformIntegral integralDef = WaveformIntegral(i.second->first,i.second->second,i.first);
                 region.AddIntegral(integralDef);
+                key = "* " + i.first +":";
+                key.Append(TString::Format(": %d - %d",i.second->first,i.second->second));
+                macro->AddLine(key);
             }
         }
 
@@ -1248,6 +1251,9 @@ void FileWriterTreeDRS4::FillRegionIntegrals(int iwf,const StandardWaveform *wf)
             }
             else if (name.find("median")!=name.npos){
                 integral = wf->getMedian(low_border,high_border);
+            }
+            else if (name.find("full")!=name.npos){
+                integral = wf->getIntegral(low_border,high_border);
             }
             else{
                 integral = wf->getIntegral(p->GetIntegralStart(),p->GetIntegralStop());
