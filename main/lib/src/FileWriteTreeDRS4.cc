@@ -510,15 +510,15 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
             key.Append(TString::Format(" %4d - %4d",region_def.first,region_def.second));
             macro->AddLine(key);
             WaveformSignalRegion region = WaveformSignalRegion(region_def.first,region_def.second,name);
-            //for (auto i: ranges){
-            //    if (i.first.find("PeakIntegral")!=std::string::npos){
-            //        WaveformIntegral integralDef = WaveformIntegral(i.second->first,i.second->second,i.first);
-            //        region.AddIntegral(integralDef);
+            for (auto i: ranges){
+                if (i.first.find("PeakIntegral")!=std::string::npos){
+                    WaveformIntegral integralDef = WaveformIntegral(i.second->first,i.second->second,i.first);
+                    region.AddIntegral(integralDef);
             //        key = "* " + i.first +":";
             //        key.Append(TString::Format(": %d - %d",i.second->first,i.second->second));
             //    macro->AddLine(key);
-            //  }
-            //}
+              }
+            }
 
         for (int i = 0; i< 4;i++)
             if ((active_regions & 1<<i) == 1<<i){
