@@ -48,10 +48,10 @@ namespace eudaq {
 
   /** Trims the leading and trainling white space from a string
    */
-  std::string trim(const std::string & s) {
-    static const std::string spaces = " \t\n\r\v";
-    size_t b = s.find_first_not_of(spaces);
-    size_t e = s.find_last_not_of(spaces);
+  std::string trim(const std::string & s, std::string trim_characters) {
+//    static const std::string spaces = " \t\n\r\v";
+    size_t b = s.find_first_not_of(trim_characters);
+    size_t e = s.find_last_not_of(trim_characters);
     if (b == std::string::npos || e == std::string::npos) {
       return "";
     }

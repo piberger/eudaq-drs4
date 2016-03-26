@@ -2,6 +2,7 @@
 #define EUDAQ_INCLUDED_FileWriter
 
 #include "eudaq/DetectorEvent.hh"
+#include "eudaq/Configuration.hh"
 #include <vector>
 #include <string>
 
@@ -9,7 +10,10 @@ namespace eudaq {
 
   class DLLEXPORT FileWriter {
     public:
+      FileWriter(Configuration *config);
       FileWriter();
+      void SetConfig(Configuration *config) {m_config=config;}
+      virtual void Configure();
       virtual void StartRun(unsigned runnumber) = 0;
       virtual void WriteEvent(const DetectorEvent &) = 0;
       virtual uint64_t FileBytes() const = 0;
@@ -17,12 +21,13 @@ namespace eudaq {
       virtual ~FileWriter() {}
     protected:
       std::string m_filepattern;
+      Configuration* m_config;
   };
 
 
   class DLLEXPORT FileWriterFactory {
     public:
-      static FileWriter * Create(const std::string & name, const std::string & params = "");
+      static FileWriter * Create(const std::string & name, Configuration *config, const std::string & params = "");
       template <typename T>
         static void Register(const std::string & name) {
           do_register(name, filewriterfactory<T>);

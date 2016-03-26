@@ -18,10 +18,13 @@ namespace eudaq {
     FileWriterMap()[name] = func;
   }
 
-  FileWriter * FileWriterFactory::Create(const std::string & name, const std::string & params) {
+  FileWriter * FileWriterFactory::Create(const std::string & name,Configuration *config, const std::string & params) {
     map_t::const_iterator it = FileWriterMap().find(name == "" ? "native" : name);
     if (it == FileWriterMap().end()) EUDAQ_THROW("Unknown file writer: " + name);
-    return (it->second)(params);
+    FileWriter *fw = (it->second)(params);
+    fw->SetConfig(config);
+    fw->Configure();
+    return fw;
   }
 
   std::vector<std::string> FileWriterFactory::GetTypes() {
@@ -32,6 +35,7 @@ namespace eudaq {
     return result;
   }
 
-  FileWriter::FileWriter() : m_filepattern(FileNamer::default_pattern) {}
-
+  FileWriter::FileWriter(Configuration* config) : m_filepattern(FileNamer::default_pattern),m_config(config) {}
+  FileWriter::FileWriter() : m_filepattern(FileNamer::default_pattern),m_config(nullptr) {}
+  void FileWriter::Configure() {};
 }

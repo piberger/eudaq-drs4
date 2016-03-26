@@ -50,7 +50,7 @@ namespace eudaq {
   class CMSPixelHelper {
   public:
     std::map<std::string, float >roc_calibrations = {{"psi46v2",65},{"psi46digv21respin",47}};
-    CMSPixelHelper(std::string event_type) : do_conversion(true),m_event_type(event_type) {};
+    CMSPixelHelper(std::string event_type) : do_conversion(false),m_event_type(event_type) {};
     void set_conversion(bool val){do_conversion = val;}
     bool get_conversion(){return do_conversion;}
     std::map< std::string, VCALDict> vcal_vals;
@@ -221,7 +221,7 @@ namespace eudaq {
       pxar::Event* evt ;
       try{
           // Connect the data source and set up the pipe:
-          src = evtSource(0, m_nplanes, m_tbmtype, m_roctype);
+          src = evtSource(0, m_nplanes, 0, m_tbmtype, m_roctype);
           src >> splitter >> decoder >> Eventpump;
 
           // Transform from EUDAQ data, add it to the datasource:

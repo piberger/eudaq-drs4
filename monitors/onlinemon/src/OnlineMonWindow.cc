@@ -34,8 +34,8 @@ using namespace std;
 
 
 // the constructor
-OnlineMonWindow::OnlineMonWindow(const TGWindow* p, UInt_t w, UInt_t h) 
-: TGMainFrame(p,w,h,kVerticalFrame), _eventnum(0), _runnum(0), _analysedEvents(0) {
+OnlineMonWindow::OnlineMonWindow(const TGWindow* p, UInt_t w, UInt_t h)
+: TGMainFrame(p,w,h,kVerticalFrame), _eventnum(0), _runnum(0), _analysedEvents(0), _lastEvent(0) {
 
 	//init snapshot counter
 	snapshot_sequence=0;
@@ -389,7 +389,8 @@ void OnlineMonWindow::autoUpdate() {
 
 	_reduceUpdate++;
 	unsigned int activeHistoSize=_activeHistos.size();
-	if (_reduceUpdate > activeHistoSize) {
+//	cout << "eventnum/last " << _eventnum << "/" << _lastEvent << endl;
+	if (_reduceUpdate > activeHistoSize && _eventnum > _lastEvent) {
 
 		if (activeHistoSize !=0) { //&&_hitmapMap[_activeHisto]!=NULL) {
 			TCanvas *fCanvas = ECvs_right->GetCanvas();
@@ -435,7 +436,7 @@ void OnlineMonWindow::autoUpdate() {
 
 		_reduceUpdate = 0;
 	}
-
+    _lastEvent = _eventnum;
 	//cout << "...updated" << endl;
 }
 

@@ -5,6 +5,8 @@
 //#include "eudaq/StandardWaveform.hh"
 #include <vector>
 #include <string>
+#include <algorithm>
+#include <cmath>
 //#include <TString.h>
 
 namespace eudaq {

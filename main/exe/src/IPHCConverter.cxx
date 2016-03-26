@@ -107,8 +107,9 @@ int main(int, char ** argv) {
         << "StopTime:    " << decodetime(res.StopDate, res.StopTime) << std::endl
         ;
 
-      std::shared_ptr<FileWriter> writer(FileWriterFactory::Create(type.Value()));
+      std::shared_ptr<FileWriter> writer(FileWriterFactory::Create(type.Value(),nullptr));
       writer->SetFilePattern(opat.Value());
+      //writer->Configure();
       writer->StartRun(runnumber);
       {
         DetectorEvent dev(runnumber, 0, NOTIMESTAMP);

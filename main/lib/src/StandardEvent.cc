@@ -1,6 +1,6 @@
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/Exception.hh"
-
+#include <TMath.h>
 namespace eudaq {
 
 EUDAQ_DEFINE_EVENT(StandardEvent, str2id("_STD"));
@@ -473,4 +473,6 @@ StandardWaveform & StandardEvent::AddWaveform(const StandardWaveform & waveform)
 	m_waveforms.push_back(waveform);
 	return m_waveforms.back();
 }
+
 }
+
