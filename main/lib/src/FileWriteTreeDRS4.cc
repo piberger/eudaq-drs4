@@ -106,7 +106,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         int linear_fitting_waveforms;
 
         /** VECTOR BRANCHES */
-        // Integrals
+        // integrals
         std::map<int,WaveformSignalRegions* > *regions;
         std::vector<std::string> *IntegralNames;
         std::map<std::string,Float_t> *IntegralValueMap;
@@ -206,11 +206,11 @@ class FileWriterTreeDRS4 : public FileWriter {
 };
 
 namespace {
-static RegisterFileWriter<FileWriterTreeDRS4> reg("drs4tree");
+    static RegisterFileWriter<FileWriterTreeDRS4> reg("drs4tree");
 }
 
 FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
-: m_tfile(0), m_ttree(0),m_noe(0),chan(4),n_pixels(90*90+60*60), histo(0),spec(0),fft_own(0),runnumber(0),macro(0)
+: m_tfile(0), m_ttree(0), m_noe(0), chan(4), n_pixels(90*90+60*60), histo(0), spec(0), fft_own(0), runnumber(0), macro(0)
 {
     gROOT->ProcessLine("#include <vector>");
     gROOT->ProcessLine(".L ~/lib/root_loader.c+");
@@ -231,6 +231,7 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     f_pulser_int    =  0;
     f_trig_time     =  0;
 
+    // integrals
     regions = new std::map<int,WaveformSignalRegions* >;
     IntegralNames = new std::vector<std::string>;
     IntegralValueMap = new std::map<std::string,Float_t>;
@@ -238,6 +239,7 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     IntegralPeakMap = new std::map<std::string,Int_t>;
     IntegralPeaks = new std::vector<Int_t>;
     v_test = new std::vector< std::vector<Float_t> >;
+
     // dut
     v_sensor_name 	= new std::vector< std::string >;
     v_type_name   	= new std::vector< std::string >;
@@ -246,47 +248,54 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     v_sig_int       = new std::vector<float>;
     v_sig_time  	= new std::vector<float>;
 
-        v_sensor_name       = new std::vector< std::string >;
-        v_type_name         = new std::vector< std::string >;
-        v_sig_peak          = new std::vector<float>;
-        v_peaktime          = new std::vector<float>;
-        v_sig_spread        = new std::vector<float>;
-        v_sig_spread_short        = new std::vector<float>;
-        v_sig_integral1     = new std::vector<float>;
-        v_sig_integral2     = new std::vector<float>;
-        v_sig_integral3     = new std::vector<float>;
-        v_ped_spread        = new std::vector<float>;
-        v_ped_min_spread        = new std::vector<float>;
-        v_ped_median        = new std::vector<float>;
-        v_ped_median1       = new std::vector<float>;
-        v_ped_median2       = new std::vector<float>;
-        v_ped_min_int       = new std::vector<float>;
-        v_ped_min_integral1       = new std::vector<float>;
-        v_ped_min_integral2       = new std::vector<float>;
-        v_ped_min_integral3       = new std::vector<float>;
-        v_pul_spread        = new std::vector<float>;
+    // old stuff
+    v_sensor_name       = new std::vector< std::string >;
+    v_type_name         = new std::vector< std::string >;
+    v_sig_peak          = new std::vector<float>;
+    v_peaktime          = new std::vector<float>;
+    v_sig_spread        = new std::vector<float>;
+    v_sig_spread_short        = new std::vector<float>;
+    v_sig_integral1     = new std::vector<float>;
+    v_sig_integral2     = new std::vector<float>;
+    v_sig_integral3     = new std::vector<float>;
+    v_ped_spread        = new std::vector<float>;
+    v_ped_min_spread        = new std::vector<float>;
+    v_ped_median        = new std::vector<float>;
+    v_ped_median1       = new std::vector<float>;
+    v_ped_median2       = new std::vector<float>;
+    v_ped_min_int       = new std::vector<float>;
+    v_ped_min_integral1       = new std::vector<float>;
+    v_ped_min_integral2       = new std::vector<float>;
+    v_ped_min_integral3       = new std::vector<float>;
+    v_pul_spread        = new std::vector<float>;
 
-        v_is_saturated  	= new std::vector<bool>;
-        v_has_spikes        = new std::vector<bool>;
-        v_median       		= new std::vector<float>;
-        v_average           = new std::vector<float>;
+    // drs4
+    v_trigger_cell = new vector<uint16_t>;
 
-        f_wf0 = new std::vector<float>;
-        f_wf1 = new std::vector<float>;
-        f_wf2 = new std::vector<float>;
-        f_wf3 = new std::vector<float>;
+    // general waveform information
+    v_is_saturated  	= new std::vector<bool>;
+    v_has_spikes        = new std::vector<bool>;
+    v_median       		= new std::vector<float>;
+    v_average           = new std::vector<float>;
 
-        //linear pedestal fit
-        chi2 = new std::vector<float>;
-        par0 = new std::vector<float>;
-        par1 = new std::vector<float>;
-        sigma = new std::vector<float>;
+    // waveforms
+    f_wf0 = new std::vector<float>;
+    f_wf1 = new std::vector<float>;
+    f_wf2 = new std::vector<float>;
+    f_wf3 = new std::vector<float>;
 
-        peaks_x.resize(4, new std::vector<float>);
-        peaks_y.resize(4, new std::vector<float>);
-        peaks_no.resize(4, new std::vector<int>);
-        npeaks = new std::vector<float>;
+    //linear pedestal fit
+    chi2 = new std::vector<float>;
+    par0 = new std::vector<float>;
+    par1 = new std::vector<float>;
+    sigma = new std::vector<float>;
 
+    peaks_x.resize(4, new std::vector<float>);
+    peaks_y.resize(4, new std::vector<float>);
+    peaks_no.resize(4, new std::vector<int>);
+    npeaks = new std::vector<float>;
+
+    // fft analysis
 //        fft_modes.resize(4, new std::vector<float>);
 //        fft_values.resize(4, new std::vector<float>);
 //        fft_mean = new std::vector<float>;
@@ -296,45 +305,45 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
 //        fft_min = new std::vector<float>;
 //        fft_min_freq = new std::vector<float>;
 
-        skewness = new std::vector<float>;
-        kurtosis= new std::vector<float>;
+    skewness = new std::vector<float>;
+    kurtosis= new std::vector<float>;
 
-        // telescope
-        f_plane  = new std::vector<int>;
-        f_col    = new std::vector<int>;
-        f_row    = new std::vector<int>;
-        f_adc    = new std::vector<int>;
-        f_charge = new std::vector<int>;
+    // telescope
+    f_plane  = new std::vector<size_t>;
+    f_col    = new std::vector<int>;
+    f_row    = new std::vector<int>;
+    f_adc    = new std::vector<int>;
+    f_charge = new std::vector<int>;
 
-        // average waveforms of channels
-        avgWF_0 = new TH1F("avgWF_0","avgWF_0", 1024, 0, 1024);
-        avgWF_0_pul = new TH1F("avgWF_0_pul","avgWF_0_pul", 1024, 0, 1024);
-        avgWF_0_sig = new TH1F("avgWF_0_sig","avgWF_0_sig", 1024, 0, 1024);
-        avgWF_1 = new TH1F("avgWF_1","avgWF_1", 1024, 0, 1024);
-        avgWF_2 = new TH1F("avgWF_2","avgWF_2", 1024, 0, 1024);
-        avgWF_3 = new TH1F("avgWF_3","avgWF_3", 1024, 0, 1024);
-        avgWF_3_pul = new TH1F("avgWF_3_pul","avgWF_3_pul", 1024, 0, 1024);
-        avgWF_3_sig = new TH1F("avgWF_3_sig","avgWF_3_sig", 1024, 0, 1024);
+    // average waveforms of channels
+    avgWF_0 = new TH1F("avgWF_0","avgWF_0", 1024, 0, 1024);
+    avgWF_0_pul = new TH1F("avgWF_0_pul","avgWF_0_pul", 1024, 0, 1024);
+    avgWF_0_sig = new TH1F("avgWF_0_sig","avgWF_0_sig", 1024, 0, 1024);
+    avgWF_1 = new TH1F("avgWF_1","avgWF_1", 1024, 0, 1024);
+    avgWF_2 = new TH1F("avgWF_2","avgWF_2", 1024, 0, 1024);
+    avgWF_3 = new TH1F("avgWF_3","avgWF_3", 1024, 0, 1024);
+    avgWF_3_pul = new TH1F("avgWF_3_pul","avgWF_3_pul", 1024, 0, 1024);
+    avgWF_3_sig = new TH1F("avgWF_3_sig","avgWF_3_sig", 1024, 0, 1024);
 
-        fitter = new TLinearFitter();
-        f_pol1 = new TF1("f1", "pol1", 0,1024);
-        fitter->SetFormula(f_pol1);
-        fitter->StoreData(false);
-        for(auto i=0;i<1024;i++)
-            v_x.push_back(i);
+    fitter = new TLinearFitter();
+    f_pol1 = new TF1("f1", "pol1", 0,1024);
+    fitter->SetFormula(f_pol1);
+    fitter->StoreData(false);
+    for(auto i=0;i<1024;i++)
+        v_x.push_back(i);
 
-        spec = new TSpectrum(20,3);
-        fft_own = 0;
-        if(!fft_own){
-            int n = 1024;
-            n_samples = n+1;
-            cout<<"Creating a new VirtualFFT with "<<n_samples<<" Samples"<<endl;
-            re_full = new Double_t[n];
-            im_full = new Double_t[n];
-            in = new Double_t[n];
-            fft_own = TVirtualFFT::FFT(1, &n_samples, "R2C");
-        }
+    spec = new TSpectrum(20,3);
+    fft_own = 0;
+    if(!fft_own){
+        int n = 1024;
+        n_samples = n+1;
+        cout<<"Creating a new VirtualFFT with "<<n_samples<<" Samples"<<endl;
+        re_full = new Double_t[n];
+        im_full = new Double_t[n];
+        in = new Double_t[n];
+        fft_own = TVirtualFFT::FFT(1, &n_samples, "R2C");
     }
+}
 
     void FileWriterTreeDRS4::Configure(){
         ranges["signal"] =  new pair<float,float>(25,175);
@@ -544,8 +553,6 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
         m_ttree->Branch("wf3", &f_wf3);
 
     m_ttree->Branch("IntegralNames",&IntegralNames);
-//    m_ttree->Branch("Integrals",&IntegralValueMap);
-
     m_ttree->Branch("Integrals","map<string,Float_t>",&IntegralValueMap);
     m_ttree->Branch("IntegralValues",&IntegralValues);
     m_ttree->Branch("IntegralPeakMap","map<string,Int_t>",&IntegralPeakMap);
