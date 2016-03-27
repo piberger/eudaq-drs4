@@ -47,7 +47,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         long max_event_number;
         int save_waveforms;
         void ClearVectors();
-        void ResizeVectors(unsigned n_channels);
+        void ResizeVectors(size_t n_channels);
         int IsPulserEvent(const StandardWaveform *wf);
         void FillSignalRange(int iwf,const StandardWaveform *wf, int pol);
         void FillRegionIntegrals(int iwf,const StandardWaveform *wf);
@@ -913,7 +913,7 @@ float FileWriterTreeDRS4::avgWF(float old_avg, float new_value, int n) {
 
 uint64_t FileWriterTreeDRS4::FileBytes() const { return 0; }
 
-inline void FileWriterTreeDRS4::ResizeVectors(unsigned n_channels) {
+inline void FileWriterTreeDRS4::ResizeVectors(size_t n_channels) {
     for (auto r: *regions)
         r.second->Reset();
     v_type_name->resize(n_channels);
