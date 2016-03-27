@@ -160,7 +160,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         std::vector<float> * f_wf3;
 
         // telescope
-        std::vector<size_t> * f_plane;
+        std::vector<uint16_t> * f_plane;
         std::vector<int> * f_col;
         std::vector<int> * f_row;
         std::vector<int> * f_adc;
@@ -316,7 +316,7 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     kurtosis= new std::vector<float>;
 
     // telescope
-    f_plane  = new std::vector<size_t>;
+    f_plane  = new std::vector<uint16_t>;
     f_col    = new std::vector<int>;
     f_row    = new std::vector<int>;
     f_adc    = new std::vector<int>;
@@ -367,7 +367,6 @@ void FileWriterTreeDRS4::Configure(){
         return;
     }
     EUDAQ_INFO("Configuring FileWriterTreeDRS4" );
-
 
     spectrum_sigma = m_config->Get("spectrum_sigma",(float)10.);
     spectrum_threshold = m_config->Get("spectrum_threshold",(float)1.);
@@ -843,7 +842,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
     // ---------- save all info for the telescope ------------------------
     // --------------------------------------------------------------------
 
-    for (size_t iplane = 0; iplane < sev.NumPlanes(); ++iplane) {
+    for (uint8_t iplane = 0; iplane < sev.NumPlanes(); ++iplane) {
         const eudaq::StandardPlane & plane = sev.GetPlane(iplane);
         std::vector<double> cds = plane.GetPixels<double>();
 
