@@ -24,43 +24,8 @@
 #include "TLinearFitter.h"
 #include "TSpectrum.h"
 #include "TPolyMarker.h"
-#include "TVirtualFFT.h"
 
 using namespace std;
-
-
-template <typename T>
-inline T unpack_fh (vector <unsigned char >::iterator &src, T& data){ //unpack from host-byte-order
-    data=0;
-    for(unsigned int i=0;i<sizeof(T);i++){
-        data+=((uint64_t)*src<<(8*i));
-        src++;
-    }
-    return data;
-}
-
-template <typename T>
-inline T unpack_fn(vector<unsigned char>::iterator &src, T& data){            //unpack from network-byte-order
-    data=0;
-    for(unsigned int i=0;i<sizeof(T);i++){
-        data+=((uint64_t)*src<<(8*(sizeof(T)-1-i)));
-        src++;
-    }
-    return data;
-}
-
-template <typename T>
-inline T unpack_b(vector<unsigned char>::iterator &src, T& data, unsigned int nb){            //unpack number of bytes n-b-o only
-    data=0;
-    for(unsigned int i=0;i<nb;i++){
-        data+=(uint64_t(*src)<<(8*(nb-1-i)));
-        src++;
-    }
-    return data;
-}
-
-typedef pair<vector<unsigned char>::iterator,unsigned int> datablock_t;
-
 
 namespace eudaq {
 
