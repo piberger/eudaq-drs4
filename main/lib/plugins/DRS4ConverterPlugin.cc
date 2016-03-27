@@ -72,7 +72,7 @@ public:
 		int id = 0;
 		// Get Trigger cell
 		RawDataEvent::data_t data = in_raw.GetBlock(id++);
-		int trigger_cell = static_cast<int>(data[0]);
+		uint16_t trigger_cell = static_cast<uint16_t>(data[0]);
 		// Get Timestamp
 		data = in_raw.GetBlock(id++);
 		uint64_t timestamp = *((uint64_t*) &data[0]);
@@ -119,6 +119,7 @@ public:
 			wf.SetNSamples(n_samples);
 			wf.SetWaveform((float*) wave_array);
 			wf.SetTimeStamp(timestamp);
+			wf.SetTriggerCell(trigger_cell);
 			sev.AddWaveform(wf);
 //			std::cout<<"CH"<<ch<<": "<<wf<<std::endl;
 			// Indicate that data was successfully converted
