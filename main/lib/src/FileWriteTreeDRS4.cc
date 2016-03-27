@@ -1,5 +1,6 @@
 #ifdef ROOT_FOUND
 
+// eudaq imports
 #include "eudaq/FileNamer.hh"
 #include "eudaq/FileWriter.hh"
 #include "eudaq/PluginManager.hh"
@@ -7,29 +8,15 @@
 #include "eudaq/FileSerializer.hh"
 #include "eudaq/WaveformSignalRegion.hh"
 #include "eudaq/WaveformSignalRegions.hh"
-#include "eudaq/WaveformIntegral.hh"
-
-
 #include "include/SimpleStandardEvent.hh"
-#include <stdlib.h>
-#include <stdio.h>
-#include <cmath>
-#include <time.h>
-#include <numeric>
-#include <string>
-#include <functional>
-#include "TStopwatch.h"
 
-//# include<inttypes.h>
+// ROOT imports
+#include "TStopwatch.h"
 #include "TFile.h"
 #include "TTree.h"
-#include "TRandom.h"
-#include "TString.h"
-#include "TMath.h"
 #include "TH1F.h"
 #include "TSystem.h"
 #include "TInterpreter.h"
-#include "TROOT.h"
 #include "TMacro.h"
 #include "TF1.h"
 #include "TGraph.h"
