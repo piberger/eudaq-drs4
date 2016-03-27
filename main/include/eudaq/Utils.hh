@@ -55,6 +55,18 @@ namespace eudaq {
       s << std::setfill('0') << std::setw(digits) << x;
       return s.str();
     }
+
+    inline std::string to_string(signed char & x) {
+      return std::to_string(x * 1);
+    }
+
+    inline std::string to_string(std::vector<signed char> & x) {
+        std::ostringstream os;
+        for (auto i: x)
+            os << "," << to_string(i);
+        return os.str();
+    }
+
   template <typename T, typename Q>
       inline std::string to_string(const std::pair<T,Q> & x) {
         std::ostringstream s;
@@ -134,6 +146,11 @@ namespace eudaq {
   template<>
     inline std::string DLLEXPORT from_string(const std::string & x, const std::string & def) {
       return x == "" ? def : x;
+    }
+
+  template<>
+    inline signed char DLLEXPORT from_string(const std::string & x, const signed char & def) {
+        return x == "" ? def : static_cast<signed char>(atoi(x.c_str()));
     }
 
   template<>
