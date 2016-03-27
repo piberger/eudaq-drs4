@@ -105,8 +105,8 @@ class FileWriterTreeDRS4 : public FileWriter {
         int trigger_channel;
         int linear_fitting_waveforms;
 
-        // Vector Branches
-        // DUT
+        /** VECTOR BRANCHES */
+        // Integrals
         std::map<int,WaveformSignalRegions* > *regions;
         std::vector<std::string> *IntegralNames;
         std::map<std::string,Float_t> *IntegralValueMap;
@@ -115,6 +115,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         std::vector<Int_t> * IntegralPeaks;
         std::vector< std::vector<Float_t> > *v_test;
 
+        // old stuff: todo: check if still needed or remove!
         std::vector< std::string > * v_sensor_name;
         std::vector< std::string > * v_type_name;
         std::vector<float>  *  v_sig_peak;
@@ -139,17 +140,22 @@ class FileWriterTreeDRS4 : public FileWriter {
         std::vector<float>  *  v_pul_int;
         std::vector<float>  *  v_pul_spread;
 
+        // drs4
+        vector<uint8_t> * v_trigger_cell;
+
+        // general waveform information
         std::vector<bool>  	*  v_is_saturated;
         std::vector<float>  *  v_median;
         std::vector<float>  *  v_average;
         std::vector<bool>   *  v_has_spikes;
 
+        // waveforms
         std::vector<float> * f_wf0;
         std::vector<float> * f_wf1;
         std::vector<float> * f_wf2;
         std::vector<float> * f_wf3;
 
-        // TELESCOPE
+        // telescope
         std::vector<int> * f_plane;
         std::vector<int> * f_col;
         std::vector<int> * f_row;
