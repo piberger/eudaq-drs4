@@ -156,7 +156,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         std::vector<float> * f_wf3;
 
         // telescope
-        std::vector<int> * f_plane;
+        std::vector<size_t> * f_plane;
         std::vector<int> * f_col;
         std::vector<int> * f_row;
         std::vector<int> * f_adc;
@@ -733,9 +733,9 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
 
 
     //use different order of wfs in order to 'know' if its a pulser event or not.
-    vector<int> wf_order = {2,1,0,3};
+    vector<uint16_t > wf_order = {2,1,0,3};
     ResizeVectors(sev.GetNWaveforms());
-    for (auto iwf:wf_order){//unsigned int iwf = 0; iwf < nwfs;iwf++){
+    for (auto iwf:wf_order){
         int pol = polarities.at(iwf);
 
         const eudaq::StandardWaveform & waveform = sev.GetWaveform(iwf);
