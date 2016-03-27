@@ -141,7 +141,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         std::vector<float>  *  v_pul_spread;
 
         // drs4
-        vector<uint8_t> * v_trigger_cell;
+        vector<uint16_t> * v_trigger_cell;
 
         // general waveform information
         std::vector<bool>  	*  v_is_saturated;
@@ -576,6 +576,8 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("sig_integral1", &v_sig_integral1);
     m_ttree->Branch("sig_integral2", &v_sig_integral2);
     m_ttree->Branch("sig_integral3", &v_sig_integral3);
+    // drs4
+    m_ttree->Branch("trigger_cell", &v_trigger_cell);
 
     m_ttree->Branch("ped_spread", 	&v_ped_spread);
     m_ttree->Branch("ped_min_spread", 	&v_ped_min_spread);
@@ -646,6 +648,8 @@ void FileWriterTreeDRS4::ClearVectors(){
     v_ped_min_integral1   ->clear();
     v_ped_min_integral2   ->clear();
     v_ped_min_integral3   ->clear();
+
+    v_trigger_cell->clear();
 
     v_sig_int		->clear();
     v_sig_time		->clear();
@@ -785,6 +789,8 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         FillTotalRange(iwf, &waveform,pol);
         if (verbose > 3)
             cout<<"get Values1.5 "<<iwf<<endl;
+        // drs4 info
+        v_trigger_cell->at(iwf) = waveform.GetTriggerCell();
         // ------------------------------------
         // ---------- LOAD VALUES  ------------
         // ------------------------------------
@@ -948,6 +954,7 @@ inline void FileWriterTreeDRS4::ResizeVectors(size_t n_channels) {
     v_ped_min_integral2->resize(n_channels);
     v_ped_min_integral3->resize(n_channels);
 
+    v_trigger_cell->resize(n_channels);
 
     v_pul_int->resize(n_channels);
     v_pul_spread->resize(n_channels);
