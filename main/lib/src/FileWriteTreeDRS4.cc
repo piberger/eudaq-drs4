@@ -76,9 +76,10 @@ class FileWriterTreeDRS4 : public FileWriter {
         short chan;
         int n_pixels;
         std::map<std::string,std::pair<float,float> *> ranges;
-        std::vector<int> polarities;
+        vector<signed char> polarities;
+        vector<signed char> pulser_polarities;
 
-        vector<int> * v_polarities;
+        vector<signed char> * v_polarities;
 
         // Scalar Branches
         int   f_nwfs;
@@ -218,6 +219,7 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     gROOT->ProcessLine( "gErrorIgnoreLevel = 5001;");
     //Polarities of signals, default is positive signals
     polarities.resize(4, 1);
+    pulser_polarities.resize(4, 1);
 
     //how many events will be analyzed, 0 = all events
     max_event_number = 0;
@@ -416,10 +418,14 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
             std::cout<<"\t\t* ch"<<i<<":"<<to_string(((save_waveforms & 1<<i) == 1<<i));
             std::cout<<std::endl;
         }
-        polarities = m_config->Get("polarities",polarities);
-        cout<<"POLARITIES: ";
-        for (auto& i:polarities)
-            cout<<" "<<i;
+        polarities = m_config->Get("polarities", polarities);
+        pulser_polarities = m_config->Get("pulser_polarities", pulser_polarities);
+        cout<<"SIGNAL POLARITIES: ";
+        for (auto i: polarities)
+            cout << to_string(i) << " ";
+        cout<<"\nPULSER POLARITIES: ";
+        for (auto i: pulser_polarities)
+            cout << to_string(i) << " ";
         cout<<endl;
         v_polarities = &polarities;
 
@@ -437,9 +443,9 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
             if ((active_regions & 1<<i) == 1<<i)
                 cout<<"CHANNEL: "<<i<<endl;
         macro->AddLine(TString::Format("active_regions: %d",active_regions));
-        for (int i = 0; i< 4;i++)
+        for (uint8_t i = 0; i< 4;i++)
             if ((active_regions & 1<<i) == 1<<i){
-                (*regions)[int(i)] = new WaveformSignalRegions(i,polarities.at(i));
+                (*regions)[int(i)] = new WaveformSignalRegions(i, polarities.at(i), pulser_polarities.at(i));
             }
         macro->AddLine("");
         macro->AddLine("Signal Windows");
@@ -876,8 +882,7 @@ FileWriterTreeDRS4::~FileWriterTreeDRS4() {
     avgWF_3->Write();
     avgWF_3_sig->Write();
     avgWF_3_pul->Write();
-    if (macro)
-        macro->Write();
+    if (macro) macro->Write();
     if(m_tfile->IsOpen()) m_tfile->Close();
 }
 
@@ -1146,15 +1151,16 @@ void FileWriterTreeDRS4::FillRegionIntegrals(int iwf,const StandardWaveform *wf)
     WaveformSignalRegions *this_regions = (*regions)[iwf];
     //
     UInt_t nRegions = this_regions->GetNRegions();
-    for (size_t i=0; i < nRegions;i++){
+    for (uint16_t i=0; i < nRegions; i++){
         if(verbose)
             std::cout<<"REGION LOOP"<<std::endl;
-        signed char polarity = this_regions->GetPolarity();
         WaveformSignalRegion* region = this_regions->GetRegion(i);
+        signed char polarity;
+        polarity = (string(region->GetName()).find("pulser") != string::npos) ? this_regions->GetPulserPolarity() : this_regions->GetPolarity();
         Int_t peak_pos;
         int low_border = region->GetLowBoarder();
         int high_border = region->GetHighBoarder();
-        if (polarity>0)
+        if (polarity * 1 > 0)
             peak_pos = wf->getIndexMax(low_border,high_border);
         else
             peak_pos = wf->getIndexMin(low_border,high_border);

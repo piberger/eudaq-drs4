@@ -55,6 +55,18 @@ namespace eudaq {
       s << std::setfill('0') << std::setw(digits) << x;
       return s.str();
     }
+
+    inline std::string to_string(signed char & x) {
+      return std::to_string(x * 1);
+    }
+
+    inline std::string to_string(std::vector<signed char> & x) {
+        std::ostringstream os;
+        for (auto i: x)
+            os << "," << to_string(i);
+        return os.str();
+    }
+
   template <typename T, typename Q>
       inline std::string to_string(const std::pair<T,Q> & x) {
         std::ostringstream s;
@@ -137,6 +149,11 @@ namespace eudaq {
     }
 
   template<>
+    inline signed char DLLEXPORT from_string(const std::string & x, const signed char & def) {
+        return x == "" ? def : static_cast<signed char>(atoi(x.c_str()));
+    }
+
+  template<>
     int64_t DLLEXPORT from_string(const std::string & x, const int64_t & def);
   template<>
     uint64_t DLLEXPORT from_string(const std::string & x, const uint64_t & def);
@@ -160,15 +177,16 @@ namespace eudaq {
   }
 
   template<typename P>
-  std::vector<P> DLLEXPORT from_string(const  std::string & x, const std::vector<P>  & def) {
+  std::vector<P> DLLEXPORT from_string(const  std::string & x, const std::vector<P> & def) {
       std::string trimmed_string = trim(x," \t\n\r\v");
       trimmed_string = trim(trimmed_string,"{}[]()<>");
-      std::vector<std::string> splitted_string = split(trimmed_string,",");
+      std::vector<std::string> split_string = split(trimmed_string,",");
       std::vector<P> vec;
-      if (splitted_string.size() > def.size())
+      if (split_string.size() > def.size())
           return def;
-      for (int i =0; i < splitted_string.size();i++)
-          vec.push_back(from_string(splitted_string.at(i),def.at(i)));
+      for (auto i: split_string) {
+          vec.push_back(from_string(i, def.at(0)));
+      }
       std::cout<<"Converted \""<<x<<"\" to "<<to_string(vec)<<std::endl;
       return vec;
   }
