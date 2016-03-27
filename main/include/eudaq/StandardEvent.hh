@@ -29,7 +29,7 @@ public:
 //	void SetWaveform(float* data);
 	std::vector<float>* GetData() const{return &m_samples;};
 	void SetTriggerCell(unsigned trigger_cell){m_trigger_cell=trigger_cell;}
-	unsigned int GetTriggerCell() const{return m_trigger_cell;}
+	uint16_t GetTriggerCell() const{return m_trigger_cell;}
 	unsigned ID() const;
 	void Print(std::ostream &) const;
 	std::string GetType() const {return m_type;}
@@ -81,7 +81,7 @@ private:
 	mutable std::vector<float> m_samples;
 	unsigned m_id;
 	std::string m_type, m_sensor,m_channelname;
-	unsigned int m_trigger_cell;
+	uint16_t m_trigger_cell;
 
 };
 
