@@ -24,7 +24,8 @@ class WaveformSignalRegion:public TObject {
         void ResetIntegrals();
         void Print() const {Print(std::cout);}
         void Print(std::ostream& out) const;
-        void SetPolarity(unsigned char pol){polarity=pol;}
+        void SetPolarity(signed char pol){polarity=pol;}
+        void SetPulserPolarity(signed char pol){pulserPolarity=pol;}
         void AddIntegral(WaveformIntegral integralDef);
         int GetLowBoarder(){return low_border;}
         int GetHighBoarder(){return high_border;}
@@ -36,6 +37,7 @@ class WaveformSignalRegion:public TObject {
     private:
         std::string name;
         signed char polarity;
+        signed char pulserPolarity;
         int low_border;
         int high_border;
         int peak_pos;

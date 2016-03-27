@@ -7,10 +7,11 @@
 
 #include <eudaq/WaveformSignalRegions.hh>
 
-WaveformSignalRegions::WaveformSignalRegions(int channel, signed char pol) {
+WaveformSignalRegions::WaveformSignalRegions(int channel, signed char pol, signed char pul_pol) {
     std::cout<<"New WaveformSignalRegions "<<channel<<" "<<(int)pol<<std::flush;
     this->channel=channel;
-    polarity=pol;
+    polarity = pol;
+    pulserPolarity = pul_pol;
     std::cout<<"."<<std::endl;
 }
 
@@ -18,6 +19,7 @@ WaveformSignalRegions::WaveformSignalRegions(int channel, signed char pol) {
 void WaveformSignalRegions::AddRegion(WaveformSignalRegion region) {
 //    std::cout<<"AddRegion: "<<region<<std::endl;
     region.SetPolarity(polarity);
+    region.SetPulserPolarity(pulserPolarity);
     this->regions.push_back(region);
 }
 

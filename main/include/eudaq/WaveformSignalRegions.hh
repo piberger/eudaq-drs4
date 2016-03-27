@@ -18,7 +18,7 @@
 
 class WaveformSignalRegions:public TObject{
     public:
-        WaveformSignalRegions(int channel=-1, signed char pol=0);
+        WaveformSignalRegions(int channel=-1, signed char pol=0, signed char pul_pol=0);
         virtual ~WaveformSignalRegions(){};
         void AddRegion(WaveformSignalRegion region);
         void Clear(){channel=-1;regions.clear();polarity=0;}
@@ -27,12 +27,14 @@ class WaveformSignalRegions:public TObject{
 //        void CalculateIntegrals(const StandardWaveform* wf);
         void Reset();
         size_t GetNRegions(){return regions.size();}
-        signed char GetPolarity(){return polarity;}
+        signed char GetPolarity() { return polarity; }
+        signed char GetPulserPolarity() { return pulserPolarity; }
         WaveformSignalRegion* GetRegion(UInt_t i);
     private:
         std::vector<WaveformSignalRegion> regions;
         int channel;
         signed char polarity;
+        signed char pulserPolarity;
 //        ClassDef(WaveformSignalRegions,1);
 };
 inline std::ostream & operator << (std::ostream& os, const WaveformSignalRegions& regions) { regions.Print(os); return os;}
