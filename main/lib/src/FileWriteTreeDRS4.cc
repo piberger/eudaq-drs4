@@ -10,6 +10,8 @@
 #include "eudaq/WaveformSignalRegions.hh"
 #include "include/SimpleStandardEvent.hh"
 
+#include <stdint-gcc.h>
+
 // ROOT imports
 #include "TStopwatch.h"
 #include "TFile.h"
@@ -80,6 +82,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         vector<signed char> pulser_polarities;
 
         vector<signed char> * v_polarities;
+        vector<uint8_t> * v_pulser_polarities;
 
         // Scalar Branches
         int   f_nwfs;
@@ -424,9 +427,11 @@ void FileWriterTreeDRS4::Configure(){
     for (auto i: polarities)
         cout << to_string(i) << " ";
     cout<<"\nPULSER POLARITIES: ";
-    for (auto i: pulser_polarities)
+    for (auto i: pulser_polarities){
         cout << to_string(i) << " ";
-    cout<<endl;
+        v_pulser_polarities->push_back(uint8_t(i * 1));
+    }
+    cout << endl;
     v_polarities = &polarities;
 
     max_event_number = m_config->Get("max_event_number",0);
@@ -565,7 +570,8 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("IntegralPeaks",&IntegralPeaks);
     m_ttree->Branch("test","vector<vector<Float_t> >",&v_test);
     // DUT
-    m_ttree->Branch("polarities",&v_polarities);
+    m_ttree->Branch("polarities", &v_polarities);
+    m_ttree->Branch("pulser_polarities", &v_pulser_polarities);
     m_ttree->Branch("is_saturated", &v_is_saturated);
     m_ttree->Branch("has_spikes", &v_has_spikes);
     m_ttree->Branch("median", 		&v_median);
