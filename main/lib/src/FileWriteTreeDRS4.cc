@@ -39,8 +39,8 @@ class FileWriterTreeDRS4 : public FileWriter {
         virtual void WriteEvent(const DetectorEvent &);
         virtual uint64_t FileBytes() const;
         float Calculate(std::vector<float> * data, int min, int max, bool _abs=false);
-        float CalculatePeak(std::vector<float> * data, int min, int max);
-        std::pair<int, float> FindMaxAndValue(std::vector<float> * data, int min, int max);
+//        float CalculatePeak(std::vector<float> * data, int min, int max);
+//        std::pair<int, float> FindMaxAndValue(std::vector<float> * data, int min, int max);
         float avgWF(float, float, int);
         virtual ~FileWriterTreeDRS4();
     private:
@@ -84,7 +84,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         vector<int16_t> * v_polarities;
         vector<int16_t> * v_pulser_polarities;
 
-        // Scalar Branches
+        /** SCALAR BRANCHES */
         int   f_nwfs;
         int   f_event_number;
         int f_pulser_events;
@@ -180,8 +180,8 @@ class FileWriterTreeDRS4 : public FileWriter {
         TSpectrum *spec;
         TVirtualFFT *fft_own;
         Int_t n_samples;
-        Double_t *re_full;
-        Double_t *im_full;
+//        Double_t *re_full;
+//        Double_t *im_full;
         Double_t *in;
         TMacro * macro;
 
@@ -345,8 +345,8 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
         int n = 1024;
         n_samples = n+1;
         cout<<"Creating a new VirtualFFT with "<<n_samples<<" Samples"<<endl;
-        re_full = new Double_t[n];
-        im_full = new Double_t[n];
+//        re_full = new Double_t[n];
+//        im_full = new Double_t[n];
         in = new Double_t[n];
         fft_own = TVirtualFFT::FFT(1, &n_samples, "R2C");
     }
@@ -907,29 +907,29 @@ float FileWriterTreeDRS4::Calculate(std::vector<float> * data, int min, int max,
     return integral/(float)(i-(int)min);
 }
 
-float FileWriterTreeDRS4::CalculatePeak(std::vector<float> * data, int min, int max) {
-    int mid = (int)( (max + min)/2 );
-    int n = 1;
-    while( (data->at(mid-1)/data->at(mid) -1)*(data->at(mid+1)/data->at(mid) -1) < 0 ){
-        // jump up and down from the center position to find the max or min
-        mid += pow(-1, n)*n;
-        n+=1;
-    }
-    // extremal value is now at mid
-    float integral = Calculate(data, mid-3, mid+6);
-    return integral;
-}
-
-std::pair<int, float> FileWriterTreeDRS4::FindMaxAndValue(std::vector<float> * data, int min, int max) {
-    float maxVal = -999;
-    int imax = min;
-    for (int i = min; i <= int(max+1) && i < data->size() ;i++){
-        if (abs(data->at(i)) > maxVal){ maxVal = abs(data->at(i)); imax = i; }
-    }
-    maxVal = data->at(imax);
-    std::pair<int, float> res = make_pair(imax, maxVal);
-    return res;
-}
+//float FileWriterTreeDRS4::CalculatePeak(std::vector<float> * data, int min, int max) {
+//    int mid = (int)( (max + min)/2 );
+//    int n = 1;
+//    while( (data->at(mid-1)/data->at(mid) -1)*(data->at(mid+1)/data->at(mid) -1) < 0 ){
+//        // jump up and down from the center position to find the max or min
+//        mid += pow(-1, n)*n;
+//        n+=1;
+//    }
+//    // extremal value is now at mid
+//    float integral = Calculate(data, mid-3, mid+6);
+//    return integral;
+//}
+//
+//std::pair<int, float> FileWriterTreeDRS4::FindMaxAndValue(std::vector<float> * data, int min, int max) {
+//    float maxVal = -999;
+//    int imax = min;
+//    for (int i = min; i <= int(max+1) && i < data->size() ;i++){
+//        if (abs(data->at(i)) > maxVal){ maxVal = abs(data->at(i)); imax = i; }
+//    }
+//    maxVal = data->at(imax);
+//    std::pair<int, float> res = make_pair(imax, maxVal);
+//    return res;
+//}
 
 
 float FileWriterTreeDRS4::avgWF(float old_avg, float new_value, int n) {
