@@ -81,8 +81,8 @@ class FileWriterTreeDRS4 : public FileWriter {
         vector<signed char> polarities;
         vector<signed char> pulser_polarities;
 
-        vector<signed char> * v_polarities;
-        vector<uint8_t> * v_pulser_polarities;
+        vector<int16_t> * v_polarities;
+        vector<int16_t> * v_pulser_polarities;
 
         // Scalar Branches
         int   f_nwfs;
@@ -278,10 +278,12 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     v_trigger_cell = new vector<uint16_t>;
 
     // general waveform information
-    v_is_saturated  	= new std::vector<bool>;
-    v_has_spikes        = new std::vector<bool>;
-    v_median       		= new std::vector<float>;
-    v_average           = new std::vector<float>;
+    v_polarities = new vector<int16_t>;
+    v_pulser_polarities = new vector<int16_t>;
+    v_is_saturated = new vector<bool>;
+    v_has_spikes = new vector<bool>;
+    v_median = new vector<float>;
+    v_average = new vector<float>;
 
     // waveforms
     f_wf0 = new std::vector<float>;
@@ -414,25 +416,27 @@ void FileWriterTreeDRS4::Configure(){
         cout<<"     * range_"<<it.first<<" "<<to_string(*(it.second))<<endl;
 
 //    PressEnterToContinue();
-    save_waveforms = (int)m_config->Get("save_waveforms",9);
+    save_waveforms = m_config->Get("save_waveforms", 9);
     std::cout<<"  - save_waveforms: "+ to_string(save_waveforms)<<std::endl;
 
     for (int i = 0; i < 4; i++){
         std::cout<<"\t\t* ch"<<i<<":"<<to_string(((save_waveforms & 1<<i) == 1<<i));
         std::cout<<std::endl;
     }
+    // polarities
     polarities = m_config->Get("polarities", polarities);
     pulser_polarities = m_config->Get("pulser_polarities", pulser_polarities);
     cout<<"SIGNAL POLARITIES: ";
-    for (auto i: polarities)
+    for (auto i: polarities){
         cout << to_string(i) << " ";
+        v_polarities->push_back(i * 1);
+    }
     cout<<"\nPULSER POLARITIES: ";
     for (auto i: pulser_polarities){
         cout << to_string(i) << " ";
-        v_pulser_polarities->push_back(uint8_t(i * 1));
+        v_pulser_polarities->push_back(i * 1);
     }
     cout << endl;
-    v_polarities = &polarities;
 
     max_event_number = m_config->Get("max_event_number",0);
 //    m_config->PrintKeys();
