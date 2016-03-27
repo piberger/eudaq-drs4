@@ -226,10 +226,10 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     f_event_number  = -1;
     f_pulser_events = 0;
     f_signal_events = 0;
-    f_time          = -1.;
+    f_time          = -1;
     f_pulser        = -1;
-    f_pulser_int    =  0.;
-    f_trig_time     =  0.;
+    f_pulser_int    =  0;
+    f_trig_time     =  0;
 
     regions = new std::map<int,WaveformSignalRegions* >;
     IntegralNames = new std::vector<std::string>;
