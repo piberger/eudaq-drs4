@@ -51,6 +51,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         void ClearVectors();
         void ResizeVectors(size_t n_channels);
         int IsPulserEvent(const StandardWaveform *wf);
+        void ExtractForcTiming(vector<float>*);
         void FillSignalRange(int iwf,const StandardWaveform *wf, int pol);
         void FillRegionIntegrals(int iwf,const StandardWaveform *wf);
         void FillRegionVectors();
@@ -93,7 +94,7 @@ class FileWriterTreeDRS4 : public FileWriter {
 
         int   f_pulser;
         float f_pulser_int;
-        int   f_trig_time;
+        uint16_t f_forc_time;
 
         float spectrum_sigma;
         float spectrum_threshold;
@@ -227,14 +228,14 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     //how many events will be analyzed, 0 = all events
     max_event_number = 0;
 
-    f_nwfs          =  0;
-    f_event_number  = -1;
+    f_nwfs = 0;
+    f_event_number = -1;
     f_pulser_events = 0;
     f_signal_events = 0;
-    f_time          = -1;
-    f_pulser        = -1;
-    f_pulser_int    =  0;
-    f_trig_time     =  0;
+    f_time = -1;
+    f_pulser = -1;
+    f_pulser_int = 0;
+    f_forc_time = 0;
 
     // integrals
     regions = new std::map<int,WaveformSignalRegions* >;
@@ -512,6 +513,9 @@ void FileWriterTreeDRS4::Configure(){
     macro->Write();
 }
 
+/** =====================================================================
+    START RUN
+    =====================================================================*/
 void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     this->runnumber = runnumber;
     EUDAQ_INFO("Converting the input file into a DRS4 TTree " );
@@ -537,7 +541,7 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("time"          ,&f_time         , "time/F");
     m_ttree->Branch("pulser"        ,&f_pulser       , "pulser/I");
     m_ttree->Branch("pulser_int"    ,&f_pulser_int   , "pulser_int/F");
-    m_ttree->Branch("trig_time"     ,&f_trig_time    , "trig_time/I");
+    m_ttree->Branch("forc_time"     ,&f_forc_time, "forc_time/I");
     m_ttree->Branch("nwfs"          ,&f_nwfs        , "n_waveforms/I");
 
     //regions
@@ -813,22 +817,16 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         v_type_name		->at(iwf) = (type_name);				// Type Name
         v_sensor_name	->at(iwf) = (sensor_name);			// Sensor Name
 
-        if (verbose > 3)
-            cout<<"get trigger wf "<<iwf<<endl;
-        if(iwf == trigger_channel){ // trigger WF august: 2, may: 1
-            for (int j=0; j<data->size(); j++){
-                if( abs(data->at(j)) > 90. ) {f_trig_time = j; break;}
-            }
-        }
+        // determine FORC timing: trigger WF august: 2, may: 1
+        if (verbose > 3) cout << "get trigger wf " << iwf << endl;
+        if (iwf == trigger_channel) ExtractForcTiming(data);
 
-        if (verbose > 3)
-            cout<<"get pulser wf "<<iwf<<endl;
-        if(iwf == pulser_channel){ // pulser WF august: 1, may: 2
+        // determine pulser events: pulser WF august: 1, may: 2
+        if (verbose > 3) cout<<"get pulser wf "<<iwf<<endl;
+        if (iwf == pulser_channel){
             f_pulser = this->IsPulserEvent(&waveform);
-            if (f_pulser)
-                f_pulser_events++;
-            else
-                f_signal_events++;
+            if (f_pulser) f_pulser_events++;
+            else f_signal_events++;
         }
         if (verbose > 3)
             cout<<"fill wf "<<iwf<<endl;
@@ -1465,6 +1463,18 @@ int FileWriterTreeDRS4::IsPulserEvent(const StandardWaveform *wf){
     f_pulser_int = wf->getIntegral(ranges["pulserDRS4"]->first, ranges["pulserDRS4"]->second, true);//740, 860, true);
     return f_pulser_int > pulser_threshold;
 } //end IsPulserEvent
+
+void FileWriterTreeDRS4::ExtractForcTiming(vector<float> * data) {
+    bool found_timing = false;
+    for (uint16_t j=0; j<data->size(); j++){
+        if( abs(data->at(j)) > 90 ) {
+            f_forc_time = j;
+            found_timing = true;
+            break;
+        }
+    }
+    if (!found_timing) f_forc_time = 0;
+} //end ExtractForcTiming
 
 } //end namespace eudaq
 #endif // ROOT_FOUND
