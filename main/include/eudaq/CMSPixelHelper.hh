@@ -409,9 +409,9 @@ namespace eudaq {
 
       int i = 0;
       while(i < size-1) {
-	uint16_t temp = ((uint16_t)block.data()[i+1] << 8) | block.data()[i];
-	rawData.push_back(temp);
-	i+=2;
+        uint16_t temp = ((uint16_t)block.data()[i+1] << 8) | block.data()[i];
+        rawData.push_back(temp);
+        i+=2;
       }
       return rawData;
     }

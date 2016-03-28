@@ -66,7 +66,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         TStopwatch w_spectrum;
         TStopwatch w_fft;
         TStopwatch w_total;
-        TFile * m_tfile; // book the pointer to a file (to store the otuput)
+        TFile * m_tfile; // book the pointer to a file (to store the output)
         TTree * m_ttree; // book the tree (to store the needed event info)
         int verbose;
         std::vector<float> * data;
@@ -85,8 +85,8 @@ class FileWriterTreeDRS4 : public FileWriter {
         vector<int16_t> * v_pulser_polarities;
 
         /** SCALAR BRANCHES */
-        int   f_nwfs;
-        int   f_event_number;
+        int f_nwfs;
+        int f_event_number;
         int f_pulser_events;
         int f_signal_events;
         float f_time;
@@ -514,9 +514,9 @@ void FileWriterTreeDRS4::Configure(){
 
 void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     this->runnumber = runnumber;
-    EUDAQ_INFO("Converting the inputfile into a DRS4 TTree " );
+    EUDAQ_INFO("Converting the input file into a DRS4 TTree " );
     std::string foutput(FileNamer(m_filepattern).Set('X', ".root").Set('R', runnumber));
-    EUDAQ_INFO("Preparing the outputfile: " + foutput);
+    EUDAQ_INFO("Preparing the output file: " + foutput);
 
     c1 = new TCanvas();
     c1->Draw();
@@ -631,11 +631,11 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     }
 
     // telescope
-    m_ttree->Branch("plane", 	&f_plane);
-    m_ttree->Branch("col", 		&f_col);
-    m_ttree->Branch("row", 		&f_row);
-    m_ttree->Branch("adc", 		&f_adc);
-    m_ttree->Branch("charge", 	&f_charge);
+    m_ttree->Branch("plane", &f_plane);
+    m_ttree->Branch("col", &f_col);
+    m_ttree->Branch("row", &f_row);
+    m_ttree->Branch("adc", &f_adc);
+    m_ttree->Branch("charge", &f_charge);
     verbose = 0;
     std::cout<<"Done with creating Branches. Press key and enter to proceed."<<std::flush;
 //    PressEnterToContinue();
@@ -676,16 +676,16 @@ void FileWriterTreeDRS4::ClearVectors(){
     v_sig_integral2->clear();
     v_sig_integral3->clear();
 
-    f_wf0			->clear();
-    f_wf1			->clear();
-    f_wf2			->clear();
-    f_wf3			->clear();
+    f_wf0->clear();
+    f_wf1->clear();
+    f_wf2->clear();
+    f_wf3->clear();
 
-    f_plane			->clear();
-    f_col			->clear();
-    f_row			->clear();
-    f_adc			->clear();
-    f_charge		->clear();
+    f_plane->clear();
+    f_col->clear();
+    f_row->clear();
+    f_adc->clear();
+    f_charge->clear();
 
     par0->clear();
     par1->clear();
