@@ -161,10 +161,10 @@ class FileWriterTreeDRS4 : public FileWriter {
 
         // telescope
         std::vector<uint16_t> * f_plane;
-        std::vector<int> * f_col;
-        std::vector<int> * f_row;
-        std::vector<int> * f_adc;
-        std::vector<int> * f_charge;
+        std::vector<uint16_t> * f_col;
+        std::vector<uint16_t> * f_row;
+        std::vector<int16_t> * f_adc;
+        std::vector<uint32_t> * f_charge;
 
         // average waveforms of channels
         TH1F * avgWF_0;
@@ -317,10 +317,10 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
 
     // telescope
     f_plane  = new std::vector<uint16_t>;
-    f_col    = new std::vector<int>;
-    f_row    = new std::vector<int>;
-    f_adc    = new std::vector<int>;
-    f_charge = new std::vector<int>;
+    f_col    = new std::vector<uint16_t>;
+    f_row    = new std::vector<uint16_t>;
+    f_adc    = new std::vector<int16_t>;
+    f_charge = new std::vector<uint32_t>;
 
     // average waveforms of channels
     avgWF_0 = new TH1F("avgWF_0","avgWF_0", 1024, 0, 1024);
@@ -839,21 +839,21 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
     FillRegionVectors();
 
     // --------------------------------------------------------------------
-    // ---------- save all info for the telescope ------------------------
+    // ---------- save all info for the telescope -------------------------
     // --------------------------------------------------------------------
-
     for (uint8_t iplane = 0; iplane < sev.NumPlanes(); ++iplane) {
         const eudaq::StandardPlane & plane = sev.GetPlane(iplane);
         std::vector<double> cds = plane.GetPixels<double>();
 
-        for (size_t ipix = 0; ipix < cds.size(); ++ipix) {
-            f_plane		->push_back(iplane);
-            f_col		->push_back(plane.GetX(ipix));
-            f_row		->push_back(plane.GetY(ipix));
-            f_adc		->push_back((int)plane.GetPixel(ipix));
-            f_charge	->push_back(42);						// <-------------------------------------------------------------- !
+        for (uint16_t ipix = 0; ipix < cds.size(); ++ipix) {
+            f_plane->push_back(iplane);
+            f_col->push_back(uint16_t(plane.GetX(ipix)));
+            f_row->push_back(uint16_t(plane.GetY(ipix)));
+            f_adc->push_back(int16_t(plane.GetPixel(ipix)));
+            f_charge->push_back(42);						// todo: do charge conversion here!
         }
     }
+
     m_ttree->Fill();
     if (f_event_number %1000 == 0)
         cout<<runnumber<<" "<<std::setw(7)<<f_event_number<<"\tSpectrum: "<<w_spectrum.RealTime()/w_spectrum.Counter()<<"\t"
