@@ -67,7 +67,7 @@ int main(int, char ** argv) {
 				  std::cout<<"\rProcessing event "<< event_nr<<"   "<<std::flush;
 			  }
 			}
-      } while (reader.NextEvent());
+      } while (reader.NextEvent() && (writer->GetMaxEventNumber() <= 0 || event_nr <= writer->GetMaxEventNumber()));// Added " && (writer->GetMaxEventNumber() <= 0 || event_nr <= writer->GetMaxEventNumber())" to prevent looping over all events when desired: DA
       if(dbg>0)std::cout<< "no more events to read" << std::endl;
     
   } catch (...) {

@@ -18,6 +18,8 @@ namespace eudaq {
       virtual void WriteEvent(const DetectorEvent &) = 0;
       virtual uint64_t FileBytes() const = 0;
       void SetFilePattern(const std::string & p) { m_filepattern = p; }
+      // method to get max event number: DA
+      virtual long GetMaxEventNumber();
       virtual ~FileWriter() {}
     protected:
       std::string m_filepattern;

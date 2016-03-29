@@ -53,9 +53,12 @@ namespace eudaq {
   public:
     FileWriterTreeTelescope(const std::string &);
     virtual void StartRun(unsigned);
+    virtual void Configure();
     virtual void WriteEvent(const DetectorEvent &);
     virtual uint64_t FileBytes() const;
     virtual ~FileWriterTreeTelescope();
+    // Add to get maximum number of events: DA
+    virtual long GetMaxEventNumber();
   private:
     TFile * m_tfile; // book the pointer to a file (to store the otuput)
     TTree * m_ttree; // book the tree (to store the needed event info)
@@ -63,6 +66,8 @@ namespace eudaq {
     unsigned m_noe;
     short chan;
     int n_pixels;
+    // for Configuration file
+    long max_event_number;
 
     // Scalar Branches
     int f_event_number;
@@ -86,6 +91,9 @@ namespace eudaq {
   FileWriterTreeTelescope::FileWriterTreeTelescope(const std::string & /*param*/)
     : m_tfile(0), m_ttree(0),m_noe(0),chan(4),n_pixels(90*90+60*60)
   {
+    //Initialize for configuration file:
+    //how many events will be analyzed, 0 = all events
+    max_event_number = 0;
 
     f_plane  = new std::vector<int>;
     f_col    = new std::vector<int>;
@@ -95,6 +103,23 @@ namespace eudaq {
 //    f_waveforms = new std::vector< std::vector<float> >;
 
 
+  }
+  // Configure : DA
+  void FileWriterTreeTelescope::Configure() {
+    if(!this->m_config){
+      std::cout<<"Configure: abortion [!this->m_config is True]"<<endl;
+      return;
+    }
+    m_config->SetSection("Converter.telescopetree");
+    if(m_config->NSections()==0){
+      std::cout<<"Configure: abortion [m_config->NSections()==0 is True]"<<endl;
+      return;
+    }
+    EUDAQ_INFO("Configuring FileWriteTree");
+
+    max_event_number = m_config->Get("max_event_number",0);
+    std::cout<<"Max events; "<<max_event_number<<std::endl;
+    std::cout<<"End of Configure.";
   }
 
   void FileWriterTreeTelescope::StartRun(unsigned runnumber) {
@@ -122,10 +147,15 @@ namespace eudaq {
     if (ev.IsBORE()) {
       eudaq::PluginManager::Initialize(ev);
       //firstEvent =true;
+      cout << "loading the first event...." << endl;
       return;
     } else if (ev.IsEORE()) {
+      cout << "loading the last event...." << endl;
       return;
     }
+    // Condition to evaluate only certain number of events defined in configuration file  : DA
+    if(max_event_number>0 && f_event_number>max_event_number)
+      return;
 
     StandardEvent sev = eudaq::PluginManager::ConvertToStandard(ev);
 
@@ -155,6 +185,10 @@ namespace eudaq {
 
     m_ttree->Fill();
 
+  }
+  // Get max event number: DA
+  long FileWriterTreeTelescope::GetMaxEventNumber(){
+    return max_event_number;
   }
 
 

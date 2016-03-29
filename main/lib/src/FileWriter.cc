@@ -38,4 +38,6 @@ namespace eudaq {
   FileWriter::FileWriter(Configuration* config) : m_filepattern(FileNamer::default_pattern),m_config(config) {}
   FileWriter::FileWriter() : m_filepattern(FileNamer::default_pattern),m_config(nullptr) {}
   void FileWriter::Configure() {};
+  // Used to get the max event number to evaluate: DA
+  long FileWriter::GetMaxEventNumber() {return 0; };
 }
