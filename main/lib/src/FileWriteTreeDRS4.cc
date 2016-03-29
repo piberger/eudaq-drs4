@@ -43,6 +43,8 @@ class FileWriterTreeDRS4 : public FileWriter {
 //        std::pair<int, float> FindMaxAndValue(std::vector<float> * data, int min, int max);
         float avgWF(float, float, int);
         virtual ~FileWriterTreeDRS4();
+        // Add to get maximum number of events: DA
+        virtual long GetMaxEventNumber();
     private:
         unsigned runnumber;
         TH1F* histo;
@@ -1475,6 +1477,11 @@ void FileWriterTreeDRS4::ExtractForcTiming(vector<float> * data) {
     }
     if (!found_timing) f_forc_time = 0;
 } //end ExtractForcTiming
+
+// Get max event number: DA
+long FileWriterTreeDRS4::GetMaxEventNumber(){
+    return max_event_number;
+}
 
 } //end namespace eudaq
 #endif // ROOT_FOUND
