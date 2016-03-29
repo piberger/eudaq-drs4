@@ -69,10 +69,10 @@ public:
 		// If the event type is used for different sensors
 		// they can be differentiated here
 		// Create a StandardPlane representing one sensor plane
-		int id = 0;
+		uint8_t id = 0;
 		// Get Trigger cell
 		RawDataEvent::data_t data = in_raw.GetBlock(id++);
-		uint16_t trigger_cell = static_cast<uint16_t>(data[0]);
+		uint16_t trigger_cell = static_cast<uint16_t>(*((int*) &data[0]));
 		// Get Timestamp
 		data = in_raw.GetBlock(id++);
 		uint64_t timestamp = *((uint64_t*) &data[0]);
