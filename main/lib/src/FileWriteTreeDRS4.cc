@@ -10,7 +10,7 @@
 #include "eudaq/WaveformSignalRegions.hh"
 #include "include/SimpleStandardEvent.hh"
 
-#include <stdint-gcc.h>
+#include <stdint.h>
 
 // ROOT imports
 #include "TStopwatch.h"
