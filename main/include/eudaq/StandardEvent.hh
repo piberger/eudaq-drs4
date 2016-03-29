@@ -28,7 +28,7 @@ public:
 	} //todo: FIx issue with template
 //	void SetWaveform(float* data);
 	std::vector<float>* GetData() const{return &m_samples;};
-	void SetTriggerCell(uint16_t trigger_cell){m_trigger_cell=trigger_cell;}
+	void SetTriggerCell(uint16_t trigger_cell) {m_trigger_cell=trigger_cell;}
 	uint16_t GetTriggerCell() const{return m_trigger_cell;}
 	unsigned ID() const;
 	void Print(std::ostream &) const;
