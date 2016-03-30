@@ -353,6 +353,9 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     }
 }
 
+/** =====================================================================
+    --------------------------CONFIGURE----------------------------------
+    =====================================================================*/
 void FileWriterTreeDRS4::Configure(){
     ranges["signal"] =  new pair<float,float>(25,175);
     ranges["pedestal"] = new pair<float,float>(350,450);
@@ -514,7 +517,7 @@ void FileWriterTreeDRS4::Configure(){
 }
 
 /** =====================================================================
-    START RUN
+    --------------------------START RUN----------------------------------
     =====================================================================*/
 void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     this->runnumber = runnumber;
@@ -703,6 +706,9 @@ void FileWriterTreeDRS4::ClearVectors(){
         peak->clear();
 }
 
+/** =====================================================================
+    -------------------------WRITE EVENT---------------------------------
+    =====================================================================*/
 void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
     if (ev.IsBORE()) {
         eudaq::PluginManager::Initialize(ev);
@@ -853,10 +859,10 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
     }
 
     m_ttree->Fill();
-    if (f_event_number %1000 == 0)
-        cout<<runnumber<<" "<<std::setw(7)<<f_event_number<<"\tSpectrum: "<<w_spectrum.RealTime()/w_spectrum.Counter()<<"\t"
-        <<"LinearFitting: "<<w_linear_fitting.RealTime()/w_linear_fitting.Counter()<<"\t"<<
-        w_spectrum.Counter()<<"/"<<w_linear_fitting.Counter()<<"\t"<<flush;
+    if (f_event_number % 1000 == 0)
+        cout << "of run " << runnumber << flush;
+//        <<" "<<std::setw(7)<<f_event_number<<"\tSpectrum: "<<w_spectrum.RealTime()/w_spectrum.Counter()<<"\t" <<"LinearFitting: "
+//        <<w_linear_fitting.RealTime()/w_linear_fitting.Counter()<<"\t"<< w_spectrum.Counter()<<"/"<<w_linear_fitting.Counter()<<"\t"<<flush;
     w_total.Stop();
 }
 
