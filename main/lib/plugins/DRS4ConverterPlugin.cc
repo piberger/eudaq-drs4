@@ -29,8 +29,7 @@ public:
 	// This is called once at the beginning of each run.
 	// You may extract information from the BORE and/or configuration
 	// and store it in member variables to use during the decoding later.
-	virtual void Initialize(const Event & bore,
-			const Configuration & cnf) {
+	virtual void Initialize(Event & bore, const Configuration & cnf) {
 		std::cout<<"Read DRS4 Bore Event"<<std::endl;
 #ifndef WIN32  //some linux Stuff //$$change
 		(void)cnf; // just to suppress a warning about unused parameter cnf
@@ -50,8 +49,25 @@ public:
 					m_channel_names[ch] = bore.GetTag(tag,tag);
 					std::cout<<"    "<<tag<<": "<<m_channel_names[ch]<<std::endl;
 				}
+		const RawDataEvent & in_bore = dynamic_cast<const RawDataEvent &>(bore);
+		std::map<uint8_t, std::vector<float> > m_tcal;
+		for (uint8_t id = 0; id < in_bore.NumBlocks();){
+			RawDataEvent::data_t data = in_bore.GetBlock(id++);
+			char buffer [5];
+			std::memcpy(&buffer,&(data[0]), 4);
+			buffer[4]='\0';
+			int ch = atoi(&buffer[1])-1;
+			data = in_bore.GetBlock(id++);
+			size_t wave_size = data.size();
+			int n_samples = int(wave_size / sizeof(unsigned short));
+			unsigned short * raw_tcal_array = (unsigned short*) &data[0];
+			float wave_array[n_samples];
+			for (int i = 0; i < n_samples; i++)
+				m_tcal[ch].push_back(float((raw_tcal_array[i] / 65536. + range/1000.0 - 0.5)*1000.));
+			bore.SetTimeCalibration(m_tcal);
+		}
 		//todo set range
-	}
+	} // end Initialize
 
 	// Here, the data from the RawDataEvent is extracted into a StandardEvent.
 	// The return value indicates whether the conversion was successful.
