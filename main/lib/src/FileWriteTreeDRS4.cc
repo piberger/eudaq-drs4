@@ -255,8 +255,6 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     v_sig_time  	= new std::vector<float>;
 
     // old stuff
-    v_sensor_name       = new std::vector< std::string >;
-    v_type_name         = new std::vector< std::string >;
     v_sig_peak          = new std::vector<float>;
     v_peaktime          = new std::vector<float>;
     v_sig_spread        = new std::vector<float>;
@@ -737,8 +735,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
             cout << "----------------------------------------" << endl;
         }
     }
-    if(verbose > 3)
-        cout<<"ClearVectors"<<endl;
+    if(verbose > 3) cout<<"ClearVectors"<<endl;
     ClearVectors();
 
     // --------------------------------------------------------------------
@@ -816,8 +813,8 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         // ---------- LOAD VALUES  ------------
         // ------------------------------------
         // save the values in the event
-        v_type_name		->at(iwf) = (type_name);				// Type Name
-        v_sensor_name	->at(iwf) = (sensor_name);			// Sensor Name
+        v_type_name		->at(iwf) = (type_name);				// Type Name todo: save that in the TMacro file
+        v_sensor_name	->at(iwf) = (sensor_name);			// Sensor Name todo: save that in the TMacro file
 
         // determine FORC timing: trigger WF august: 2, may: 1
         if (verbose > 3) cout << "get trigger wf " << iwf << endl;
@@ -853,7 +850,6 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
             f_charge->push_back(42);						// todo: do charge conversion here!
         }
     }
-
     m_ttree->Fill();
     if (f_event_number % 1000 == 0)
         cout << "of run " << runnumber << flush;
