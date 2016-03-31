@@ -84,7 +84,7 @@ class FileWriterTreeDRS4 : public FileWriter {
 
         vector<int16_t> * v_polarities;
         vector<int16_t> * v_pulser_polarities;
-        vector<float> tcal;
+        std::map<uint8_t, std::vector<float> > tcal;
 
         /** SCALAR BRANCHES */
         int f_nwfs;
@@ -708,8 +708,12 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
     if (ev.IsBORE()) {
         eudaq::PluginManager::Initialize(ev);
         cout << "loading the first event...." << endl;
-        StandardEvent bla = PluginManager::ConvertToStandard(ev);
-        tcal = bla.GetTimeCalibration(2);
+//        StandardEvent bla = PluginManager::ConvertToStandard(ev);
+        tcal = ev.GetTag("TimeCalibration", tcal);
+        cout << "tcal size: " << tcal.size() << endl;
+        for (std::map<uint8_t, std::vector<float> >::const_iterator it = tcal.begin(); it != tcal.end(); it++)
+            cout << "This is tcal: " << it->first << " " << it->second.at(0) << endl;
+        exit(0);
         return;
     }
     else if (ev.IsEORE()) {
