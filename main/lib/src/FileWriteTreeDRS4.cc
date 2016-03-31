@@ -817,7 +817,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         // ------------------------------------
         // save the values in the event
         v_type_name		->at(iwf) = (type_name);				// Type Name todo: save that in the TMacro file
-        v_sensor_name	->at(iwf) = (sensor_name);			// Sensor Name todo: save that in the TMacro file
+        v_sensor_name	->at(iwf) = (sensor_name);			    // Sensor Name todo: save that in the TMacro file
 
         // determine FORC timing: trigger WF august: 2, may: 1
         if (verbose > 3) cout << "get trigger wf " << iwf << endl;

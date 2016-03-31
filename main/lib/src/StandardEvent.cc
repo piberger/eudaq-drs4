@@ -474,5 +474,5 @@ StandardWaveform & StandardEvent::AddWaveform(const StandardWaveform & waveform)
 	return m_waveforms.back();
 }
 
-}
+} // end namespace eudaq
 
