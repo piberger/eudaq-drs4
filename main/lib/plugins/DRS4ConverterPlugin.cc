@@ -1,8 +1,4 @@
 #include "eudaq/DataConverterPlugin.hh"
-#include "eudaq/StandardEvent.hh"
-#include "eudaq/Utils.hh"
-#include <string.h>
-#include <stdio.h>
 
 // All LCIO-specific parts are put in conditional compilation blocks
 // so that the other parts may still be used if LCIO is not available.
