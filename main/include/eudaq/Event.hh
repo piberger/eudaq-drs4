@@ -82,12 +82,16 @@ namespace eudaq {
 	  void setTimeStamp(uint64_t timeStamp){m_timestamp=timeStamp; }
       void ClearFlags(unsigned f = FLAG_ALL) { m_flags &= ~f; }
       virtual unsigned get_id() const = 0;
+      void SetTimeCalibration(std::map<uint8_t, std::vector<float> > cal) { m_tcal = cal; }
+      std::vector<float> GetTimeCalibration(uint8_t channel) { return m_tcal[channel]; }
     protected:
       typedef std::map<std::string, std::string> map_t;
 
       unsigned m_flags, m_runnumber, m_eventnumber;
       uint64_t m_timestamp;
       map_t m_tags; ///< Metadata tags in (name=value) pairs of strings
+    private:
+      std::map<uint8_t, std::vector<float> > m_tcal;
   };
 
   DLLEXPORT std::ostream &  operator << (std::ostream &, const Event &);
