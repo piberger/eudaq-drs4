@@ -92,6 +92,9 @@ class FileWriterTreeDRS4 : public FileWriter {
         int f_signal_events;
         float f_time;
 
+        //drs4
+        uint16_t f_trigger_cell;
+
         int   f_pulser;
         float f_pulser_int;
         uint16_t f_forc_time;
@@ -144,9 +147,6 @@ class FileWriterTreeDRS4 : public FileWriter {
         std::vector<float>  *  v_ped_min_integral3;
         std::vector<float>  *  v_pul_int;
         std::vector<float>  *  v_pul_spread;
-
-        // drs4
-        vector<uint16_t> * v_trigger_cell;
 
         // general waveform information
         std::vector<bool>  	*  v_is_saturated;
@@ -274,9 +274,6 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     v_ped_min_integral2       = new std::vector<float>;
     v_ped_min_integral3       = new std::vector<float>;
     v_pul_spread        = new std::vector<float>;
-
-    // drs4
-    v_trigger_cell = new vector<uint16_t>;
 
     // general waveform information
     v_polarities = new vector<int16_t>;
@@ -540,12 +537,15 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     gInterpreter->GenerateDictionary("map<string,Float_t>;vector<map<string,Float_t> >,vector<vector<Float_t> >","vector;string;map");
 
     // Set Branch Addresses
-    m_ttree->Branch("event_number"  ,&f_event_number , "event_number/I");
-    m_ttree->Branch("time"          ,&f_time         , "time/F");
-    m_ttree->Branch("pulser"        ,&f_pulser       , "pulser/I");
-    m_ttree->Branch("pulser_int"    ,&f_pulser_int   , "pulser_int/F");
-    m_ttree->Branch("forc_time"     ,&f_forc_time, "forc_time/I");
-    m_ttree->Branch("nwfs"          ,&f_nwfs        , "n_waveforms/I");
+    m_ttree->Branch("event_number", &f_event_number, "event_number/I");
+    m_ttree->Branch("time",& f_time, "time/F");
+    m_ttree->Branch("pulser",& f_pulser, "pulser/I");
+    m_ttree->Branch("pulser_int", &f_pulser_int, "pulser_int/F");
+    m_ttree->Branch("forc_time", &f_forc_time, "shit/s");
+    m_ttree->Branch("nwfs", &f_nwfs, "n_waveforms/I");
+
+    // drs4
+    m_ttree->Branch("trigger_cell", &f_trigger_cell, "trigger_cell/s");
 
     //regions
     m_ttree->Branch("integral_regions",&regions);
@@ -598,8 +598,6 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("sig_integral1", &v_sig_integral1);
     m_ttree->Branch("sig_integral2", &v_sig_integral2);
     m_ttree->Branch("sig_integral3", &v_sig_integral3);
-    // drs4
-    m_ttree->Branch("trigger_cell", &v_trigger_cell);
 
     m_ttree->Branch("ped_spread", 	&v_ped_spread);
     m_ttree->Branch("ped_min_spread", 	&v_ped_min_spread);
@@ -670,8 +668,6 @@ void FileWriterTreeDRS4::ClearVectors(){
     v_ped_min_integral1   ->clear();
     v_ped_min_integral2   ->clear();
     v_ped_min_integral3   ->clear();
-
-    v_trigger_cell->clear();
 
     v_sig_int		->clear();
     v_sig_time		->clear();
@@ -815,7 +811,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         if (verbose > 3)
             cout<<"get Values1.5 "<<iwf<<endl;
         // drs4 info
-        v_trigger_cell->at(iwf) = waveform.GetTriggerCell();
+        if (iwf == 0) f_trigger_cell = waveform.GetTriggerCell(); // same for every waveform
         // ------------------------------------
         // ---------- LOAD VALUES  ------------
         // ------------------------------------
@@ -971,8 +967,6 @@ inline void FileWriterTreeDRS4::ResizeVectors(size_t n_channels) {
     v_ped_min_integral1->resize(n_channels);
     v_ped_min_integral2->resize(n_channels);
     v_ped_min_integral3->resize(n_channels);
-
-    v_trigger_cell->resize(n_channels);
 
     v_pul_int->resize(n_channels);
     v_pul_spread->resize(n_channels);
