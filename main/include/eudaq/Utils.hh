@@ -15,6 +15,7 @@
 #include <fstream>
 #include <sys/types.h>
 #include "eudaq/Platform.hh"
+#include <map>
 
 #if ((defined WIN32) && (defined __CINT__))
 typedef unsigned long long uint64_t
@@ -89,12 +90,24 @@ namespace eudaq {
       return to_string(x, ",", digits);
     }
 
+  template <typename T, typename Q>
+    inline std::string to_string(const std::map<Q, std::vector<T> > & x, const std::string & sep1 = "; ", const std::string & sep2 = "/ ", int digits = 0) {
+        if (sep1 == ", " || sep2 == ", " || sep1 == sep2) throw "wrong separator";
+        std::ostringstream os;
+        if (x.size()) os << to_string(x.begin()->first) << sep2 << to_string(x.at(0), digits);
+        typename std::map<Q, std::vector<T> >::const_iterator it = x.begin();
+        it++;
+        for (it; it != x.end(); it++) os << sep1 << to_string(it->first, digits) << sep2 << to_string(it->second, digits);
+        return os.str();
+    }
+
   inline std::string to_string(const std::string & x, int /*digits*/ = 0) {
     return x;
   }
   inline std::string to_string(const char * x, int /*digits*/ = 0) {
     return x;
   }
+
 
   /** Converts any type that has an ostream streamer to a string in hexadecimal.
    * \param x The value to be converted.
@@ -189,6 +202,19 @@ namespace eudaq {
       }
       std::cout<<"Converted \""<<x<<"\" to "<<to_string(vec)<<std::endl;
       return vec;
+  }
+
+  template<typename T, typename Q>
+  std::map<Q, std::vector<T> > DLLEXPORT from_string(const std::string & x, const std::map<Q, std::vector<T> > & def) {
+      std::string trimmed_string = trim(x, " \t\n\r\v");
+      trimmed_string = trim(trimmed_string, "{}[]()<>");
+      std::vector<std::string> split_string1 = split(trimmed_string, ";");
+      std::map<Q, std::vector<T> > ret_val;
+      for (uint8_t i = 0; i < split_string1.size(); i++) {
+          std::vector<std::string> split_string2 = split(split_string1.at(i), "/");
+          ret_val[from_string(split_string2.at(0), def.begin()->first)] = from_string(split_string2.at(1), def.begin()->second);
+      }
+      return ret_val;
   }
 
   template <typename T>
