@@ -107,8 +107,8 @@ public:
 
 			//Get Waveform
 			data = in_raw.GetBlock(id++);
-			int wave_size = data.size();
-			int n_samples =  wave_size/sizeof(unsigned short);
+			size_t wave_size = data.size();
+			int n_samples = int(wave_size / sizeof(unsigned short));
 //			std::cout<<"CH: "<<ch<<" with "
 //					<<data.size()<<" -> "<<n_samples<<"  .";//<<std::endl;
 //			std::cout<<"Trigger cell "<<trigger_cell<<", ";
