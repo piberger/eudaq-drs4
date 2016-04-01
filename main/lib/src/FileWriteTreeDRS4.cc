@@ -707,13 +707,19 @@ void FileWriterTreeDRS4::ClearVectors(){
 void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
     if (ev.IsBORE()) {
         eudaq::PluginManager::Initialize(ev);
-        cout << PluginManager::GetBla(ev) << endl;
-//        tcal = PluginManager::GetTimeCalibration(ev);
-//        cout << "loading the first event...." << endl;
-//        cout << "tcal size: " << tcal.size() << endl;
-//        for (std::map<uint8_t, std::vector<float> >::const_iterator it = tcal.begin(); it != tcal.end(); it++)
-//            cout << "This is tcal: " << it->first << " " << it->second.at(0) << endl;
-        exit(0);
+        tcal = PluginManager::GetTimeCalibration(ev);
+//        for (std::map<uint8_t, std::vector<float> >::const_iterator it = tcal.begin(); it != tcal.end(); it++) {
+//            cout << "This is tcal: " << int(it->first) << " " <<  it->second.at(0) << " " <<  it->second.size() << endl;
+//            for (int i = 512; i < 522; i++) cout << it->second.at(i) << " ";
+//            cout << endl;
+//            for (int i = 1024; i < 1044; i++) cout << it->second.at(i) << " ";
+//            cout << endl;
+//            for (int i = 1024; i < 1044; i+=2) cout << (it->second.at(i) + it->second.at(i + 1)) / 2 << " ";
+//            cout << endl;
+//        }
+
+        cout << "loading the first event...." << endl;
+//        exit(0);
         return;
     }
     else if (ev.IsEORE()) {

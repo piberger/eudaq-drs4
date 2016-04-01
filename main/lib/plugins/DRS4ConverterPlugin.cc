@@ -52,37 +52,25 @@ public:
 					m_channel_names[ch] = bore.GetTag(tag,tag);
 					std::cout<<"    "<<tag<<": "<<m_channel_names[ch]<<std::endl;
 				}
+		// extracting the timing calibration
+		const RawDataEvent & in_bore = dynamic_cast<const RawDataEvent &>(bore);
+		for (uint8_t id = 0; id < in_bore.NumBlocks();){
+			RawDataEvent::data_t data = in_bore.GetBlock(id++);
+			char buffer [5];
+			std::memcpy(&buffer,&(data[0]), 4);
+			buffer[4]='\0';
+			int ch = atoi(&buffer[1])-1;
+			data = in_bore.GetBlock(id++);
+			int n_samples = int(data.size() / sizeof(unsigned short));
+			float * raw_tcal_array = (float*) &data[0];
+			for (int i = 0; i < n_samples; i++)
+				m_tcal[ch].push_back(raw_tcal_array[i]); }
 		//todo set range
 	} // end Initialize
 
 	 virtual map<uint8_t, vector<float> > GetTimeCalibration(const Event & bore) {
-		 cout << "====================Im getting here!" << endl;
-		 const RawDataEvent & in_bore = dynamic_cast<const RawDataEvent &>(bore);
-//		 for (uint8_t id = 0; id < in_bore.NumBlocks();){
-//			 RawDataEvent::data_t data = in_bore.GetBlock(id++);
-//			 char buffer [5];
-//			 std::memcpy(&buffer,&(data[0]), 4);
-//			 buffer[4]='\0';
-//			 int ch = atoi(&buffer[1])-1;
-//			 data = in_bore.GetBlock(id++);
-//			 size_t wave_size = data.size();
-//			 int n_samples = int(wave_size / sizeof(unsigned short));
-//			 unsigned short * raw_tcal_array = (unsigned short*) &data[0];
-//			 float wave_array[n_samples];
-//			 for (int i = 0; i < n_samples; i++)
-//				 m_tcal[ch].push_back(float((raw_tcal_array[i] / 65536. + range / 1000.0 - 0.5) * 1000.));
-//		 }
-//		 cout << "====================Im getting here!" << endl;
-//		 std::cout << "tcal size: " << m_tcal.size() << std::endl;
-//		 for (std::map<uint8_t, std::vector<float> >::const_iterator it = m_tcal.begin(); it != m_tcal.end(); it++)
-//			 std::cout << "This is tcal: " << int(it->first) << " " << it->second.at(0) << " " << it->second.size() << std::endl;
-//		 cout << "====================Im getting here!" << endl;
-		 vector<float> bla {2,3,5};
-		 m_tcal[5] = bla;
-		 return m_tcal;
+		 return this->m_tcal;
 	 } // end GetTimeCalibration
-
-	virtual int GetBla(const Event & bore) { return 5;}
 
 	// Here, the data from the RawDataEvent is extracted into a StandardEvent.
 	// The return value indicates whether the conversion was successful.

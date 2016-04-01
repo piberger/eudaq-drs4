@@ -31,12 +31,10 @@ namespace eudaq {
     return (unsigned)-1;
   }
 
-  std::map<uint8_t, std::vector<float> > DataConverterPlugin::GetTimeCalibration(const Event &bore) {
-    std::cout << "**************************This should not be executed!" << std::endl;
-    std::map<uint8_t, std::vector<float> > placeholder;
-    std::vector<float> vec {-1};
-    placeholder[-1] = vec;
-    return placeholder;
+  std::map<uint8_t, std::vector<float> > DataConverterPlugin::GetTimeCalibration(const Event & bore) {
+    std::map<uint8_t, std::vector<float> > ret;
+    ret.at(99).push_back(-1);
+    return ret;
   }
 
   DataConverterPlugin::DataConverterPlugin(std::string subtype)
