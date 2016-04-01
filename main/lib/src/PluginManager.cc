@@ -91,6 +91,16 @@ namespace eudaq {
     }
   }
 
+  std::map<uint8_t, std::vector<float> > PluginManager::GetTimeCalibration(const DetectorEvent & dev) {
+    const eudaq::Event & subev = *dev.GetEvent(0);
+    GetInstance().GetPlugin(subev).GetTimeCalibration(subev);
+  }
+
+  int PluginManager::GetBla(const DetectorEvent &dev) {
+    const eudaq::Event & subev = *dev.GetEvent(0);
+    GetInstance().GetPlugin(subev).GetBla(subev);
+  }
+
   unsigned PluginManager::GetTriggerID(const Event & ev) {
     return GetInstance().GetPlugin(ev).GetTriggerID(ev);
   }

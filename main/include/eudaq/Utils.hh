@@ -200,7 +200,7 @@ namespace eudaq {
       for (auto i: split_string) {
           vec.push_back(from_string(i, def.at(0)));
       }
-      std::cout<<"Converted \""<<x<<"\" to "<<to_string(vec)<<std::endl;
+//      std::cout<<"Converted \""<<x<<"\" to "<<to_string(vec)<<std::endl;
       return vec;
   }
 

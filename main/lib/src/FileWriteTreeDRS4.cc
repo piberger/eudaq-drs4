@@ -707,12 +707,12 @@ void FileWriterTreeDRS4::ClearVectors(){
 void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
     if (ev.IsBORE()) {
         eudaq::PluginManager::Initialize(ev);
-        cout << "loading the first event...." << endl;
-//        StandardEvent bla = PluginManager::ConvertToStandard(ev);
-        tcal = ev.GetTag("TimeCalibration", tcal);
-        cout << "tcal size: " << tcal.size() << endl;
-        for (std::map<uint8_t, std::vector<float> >::const_iterator it = tcal.begin(); it != tcal.end(); it++)
-            cout << "This is tcal: " << it->first << " " << it->second.at(0) << endl;
+        cout << PluginManager::GetBla(ev) << endl;
+//        tcal = PluginManager::GetTimeCalibration(ev);
+//        cout << "loading the first event...." << endl;
+//        cout << "tcal size: " << tcal.size() << endl;
+//        for (std::map<uint8_t, std::vector<float> >::const_iterator it = tcal.begin(); it != tcal.end(); it++)
+//            cout << "This is tcal: " << it->first << " " << it->second.at(0) << endl;
         exit(0);
         return;
     }

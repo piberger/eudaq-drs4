@@ -38,6 +38,8 @@ namespace eudaq {
 
 	  static void setCurrentTLUEvent(eudaq::Event & ev,eudaq::TLUEvent const & tlu);
       static void Initialize(const DetectorEvent &);
+      static std::map<uint8_t, std::vector<float> > GetTimeCalibration(const DetectorEvent & dev);
+      static int GetBla(const DetectorEvent & dev);
       static lcio::LCRunHeader * GetLCRunHeader(const DetectorEvent &);
       static StandardEvent ConvertToStandard(const DetectorEvent &);
       static lcio::LCEvent * ConvertToLCIO(const DetectorEvent &);
