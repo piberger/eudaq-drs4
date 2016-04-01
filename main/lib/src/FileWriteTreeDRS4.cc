@@ -84,7 +84,11 @@ class FileWriterTreeDRS4 : public FileWriter {
 
         vector<int16_t> * v_polarities;
         vector<int16_t> * v_pulser_polarities;
-        std::map<uint8_t, std::vector<float> > tcal;
+        // drs4 timing calibration
+        map<uint8_t, vector<float> > tcal;
+        map<uint16_t, vector<float> > time_bins;
+        void FillTimeBins();
+        vector<float> GetTimeBins(uint16_t trigger_cell) const { return time_bins.at(trigger_cell); }
 
         /** SCALAR BRANCHES */
         int f_nwfs;
@@ -1488,6 +1492,10 @@ void FileWriterTreeDRS4::ExtractForcTiming(vector<float> * data) {
 // Get max event number: DA
 long FileWriterTreeDRS4::GetMaxEventNumber(){
     return max_event_number;
+}
+
+void FileWriterTreeDRS4::FillTimeBins() {
+    time_bins[0] = {1};
 }
 
 } //end namespace eudaq
