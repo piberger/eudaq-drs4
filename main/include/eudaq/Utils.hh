@@ -39,6 +39,7 @@ namespace eudaq {
 
  void DLLEXPORT bool2uchar(const bool* inBegin, const bool* inEnd, std::vector<unsigned char>& out);
  void DLLEXPORT uchar2bool(const unsigned char* inBegin, const unsigned char* inEnd, std::vector<bool>& out);
+ void DLLEXPORT print_banner(std::string message, const char seperator = '=', uint16_t max_lenght = 100);
 
   /** Sleep for a specified number of milliseconds.
    * \param ms The number of milliseconds
