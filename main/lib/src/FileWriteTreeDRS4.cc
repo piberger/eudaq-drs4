@@ -272,159 +272,127 @@ void FileWriterTreeDRS4::Configure(){
 
     // do some assertions
     if (!this->m_config){
-        std::cout<<"Configure: abortion [!this->m_config is True]"<<endl;
+        EUDAQ_WARN("Configuration class instance m_config does not exist!");
         return;
     }
     m_config->SetSection("Converter.drs4tree");
     if (m_config->NSections()==0){
-        std::cout<<"Configure: abortion [m_config->NSections()==0 is True]"<<endl;
+        EUDAQ_WARN("Config file has no sections!");
         return;
     }
-    EUDAQ_INFO("Configuring FileWriterTreeDRS4" );
+    cout << endl;
+    EUDAQ_INFO("Configuring FileWriterTreeDRS4");
 
-    spectrum_sigma = m_config->Get("spectrum_sigma",(float)10.);
-    spectrum_threshold = m_config->Get("spectrum_threshold",(float)1.);
-    spectrum_deconIterations = m_config->Get("spectrum_deconIterations",10);
-    spectrum_averageWindow = m_config->Get("spectrum_averageWindow",5);
+    max_event_number = m_config->Get("max_event_number", 0);
+
+    // spectrum and fft
+    spectrum_sigma = m_config->Get("spectrum_sigma", 10);
+    spectrum_threshold = m_config->Get("spectrum_threshold", 10);
+    spectrum_deconIterations = m_config->Get("spectrum_deconIterations", 10);
+    spectrum_averageWindow = m_config->Get("spectrum_averageWindow", 5);
     spec->SetDeconIterations(spectrum_deconIterations);
     spec->SetAverageWindow(spectrum_averageWindow);
-    spectrum_markov = m_config->Get("spectrum_markov",true);
-    spectrum_background_removal= m_config->Get("spectrum_background_removal",true);
-    spectrum_waveforms = (int)m_config->Get("spectrum_waveforms",9);
-    fft_waveforms = (int)m_config->Get("fft_waveforms",9);
-    linear_fitting_waveforms = (int)m_config->Get("linear_fitting_waveforms",9);
-    pulser_threshold = (int)m_config->Get("pulser_drs4_threshold",80);
-    pulser_channel = (int)m_config->Get("pulser_channel",1);
-    trigger_channel = (int)m_config->Get("trigger_channel",2);
-    cout<<"CHANNEL AND PULSER SETTINGS: "<<endl;
-    cout<<"\t\tpulser channel: "<<pulser_channel<<endl;
-    cout<<"\t\ttrigger channel: "<<trigger_channel<<endl;
-    cout<<"\t\tpulser_int threshold: "<<pulser_threshold<<endl;
+    spectrum_markov = m_config->Get("spectrum_markov", true);
+    spectrum_background_removal= m_config->Get("spectrum_background_removal", true);
+    spectrum_waveforms = m_config->Get("spectrum_waveforms", uint16_t(0));
+    fft_waveforms = m_config->Get("fft_waveforms", uint16_t(0));
 
-    ranges["pulser"] = new pair<float,float>(m_config->Get("pulser_range",make_pair((float)770,(float)860)));
-    ranges["pulserDRS4"] = new pair<float,float>(m_config->Get("pulser_range_drs4",make_pair((float)740,(float)860))); //  august: 740, 860,
-    ranges["pedestal"] =  new pair<float,float>(m_config->Get("pedestal_range",make_pair((float)350,(float)450)));
-    ranges["pedestalFit"] =  new pair<float,float>(m_config->Get("pedestalfit_range",make_pair((float)250,(float)650)));
-    ranges["signal"] =  new pair<float,float>(m_config->Get("signal_range",make_pair((float)25,(float)175)));
-    ranges["PeakIntegral1"] =  new pair<float,float>(m_config->Get("PeakIntegral1_range",make_pair((int)3,(int)9)));
-    ranges["PeakIntegral2"] =  new pair<float,float>(m_config->Get("PeakIntegral2_range",make_pair((int)9,(int)18)));
-    ranges["PeakIntegral3"] =  new pair<float,float>(m_config->Get("PeakIntegral3_range",make_pair((int)18,(int)36)));
-    std::cout<<"Ranges: "<<std::endl;
-    for (auto i: m_config->GetKeys()){
-            size_t found = i.find("_range");
-            if (found ==std::string::npos)
-                        continue;
-            if (i.at(0) == '#')
-                continue;
-            std::string name = i.substr(0,found);
-            cout<<"\t\""<<name<<"\""<<endl;
-            cout << "count names:"<< ranges.count(name) << endl;
-            if (ranges.count(name)==0){
-                std::pair<float,float>* range = new pair<float,float>(m_config->Get(i,make_pair((int)0,(int)0)));
-                ranges[name] = range;
-            }
+    // channels
+    pulser_threshold = m_config->Get("pulser_drs4_threshold", 80);
+    pulser_channel = m_config->Get("pulser_channel", 1);
+    trigger_channel = m_config->Get("trigger_channel", 2);
+
+    // default ranges
+    ranges["pulserDRS4"] = new pair<float, float>(m_config->Get("pulser_range_drs4", make_pair(800, 1000)));
+    ranges["pedestal"] = new pair<float, float>(m_config->Get("pedestal_range", make_pair(350, 450)));
+    ranges["signal"] = new pair<float, float>(m_config->Get("signal_range", make_pair(25, 175)));
+    ranges["PeakIntegral1"] = new pair<float, float>(m_config->Get("PeakIntegral1_range", make_pair(0, 1)));
+    ranges["PeakIntegral2"] = new pair<float, float>(m_config->Get("PeakIntegral2_range", make_pair(8, 12)));
+    // additional ranges from the config file
+    for (auto i_key: m_config->GetKeys()){
+        size_t found = i_key.find("_range");
+        if (found == string::npos) continue;
+        if (i_key.at(0) == '#') continue;
+        string name = i_key.substr(0, found);
+        if (ranges.count(name)==0)
+            ranges[name] = new pair<float, float>(m_config->Get(i_key, make_pair(0, 0)));
     }
-    std::cout<<"  - Ranges: "<<ranges.size()<<std::endl;
-    for (auto& it: ranges)
-        cout<<"     * range_"<<it.first<<" "<<to_string(*(it.second))<<endl;
 
-//    PressEnterToContinue();
-    save_waveforms = m_config->Get("save_waveforms", 9);
-    std::cout<<"  - save_waveforms: "+ to_string(save_waveforms)<<std::endl;
+    // saved waveforms
+    save_waveforms = m_config->Get("save_waveforms", uint16_t(9));
 
-    for (int i = 0; i < 4; i++){
-        std::cout<<"\t\t* ch"<<i<<":"<<to_string(((save_waveforms & 1<<i) == 1<<i));
-        std::cout<<std::endl;
-    }
     // polarities
     polarities = m_config->Get("polarities", polarities);
     pulser_polarities = m_config->Get("pulser_polarities", pulser_polarities);
-    cout<<"SIGNAL POLARITIES: ";
-    for (auto i: polarities){
-        cout << to_string(i) << " ";
-        v_polarities->push_back(i * 1);
-    }
-    cout<<"\nPULSER POLARITIES: ";
-    for (auto i: pulser_polarities){
-        cout << to_string(i) << " ";
-        v_pulser_polarities->push_back(i * 1);
-    }
-    cout << endl;
+    for (auto i: polarities)  v_polarities->push_back(uint16_t(i * 1));
+    for (auto i: pulser_polarities) v_pulser_polarities->push_back(uint16_t(i * 1));
 
-    max_event_number = m_config->Get("max_event_number",0);
-//    m_config->PrintKeys();
-    cout<<endl;
-    int active_regions = m_config->Get("active_regions",0);
-    cout<<"active_regions: "<<active_regions<<endl;
-
-    macro = new TMacro();
-    macro->SetName("region_information");
-    macro->SetTitle("Region Information");
-
-    for (int i = 0; i< 4;i++)
-        if ((active_regions & 1<<i) == 1<<i)
-            cout<<"CHANNEL: "<<i<<endl;
-    macro->AddLine(TString::Format("active_regions: %d",active_regions));
-    for (uint8_t i = 0; i< 4;i++)
-        if ((active_regions & 1<<i) == 1<<i){
-            (*regions)[int(i)] = new WaveformSignalRegions(i, polarities.at(i), pulser_polarities.at(i));
-        }
+    // regions
+    uint16_t active_regions = m_config->Get("active_regions", uint16_t(0));
+    macro->AddLine(TString::Format("active_regions: %d", active_regions));
+    for (uint8_t i = 0; i < 4; i++)
+        if (UseWaveForm(active_regions, i)) (*regions)[i] = new WaveformSignalRegions(i, polarities.at(i), pulser_polarities.at(i));
     macro->AddLine("");
     macro->AddLine("Signal Windows");
-    for (auto i: m_config->GetKeys()){
-        size_t found = i.find("_region");
-        if (found ==std::string::npos)
-            continue;
-        if (i.find("active_regions")!=std::string::npos)
-            continue;
-//        cout<<"FOUND "<<i<<" "<<found<<endl;
-        std::string name = i.substr(0,found);
-        cout<<"\t\""<<name<<"\""<<endl;
-
-        std::pair<int,int> region_def = (m_config->Get(i,make_pair((int)0,(int)0)));
-        TString key = name+":";
-        key.Append(' ',30-key.Length());
-        key.Append(TString::Format(" %4d - %4d",region_def.first,region_def.second));
+    stringstream ss_ped, ss_sig, ss_pul;
+    ss_ped << "  Pedestal:\n"; ss_sig << "  Signal:\n"; ss_pul << "  Pulser:\n";
+    for (auto i_key: m_config->GetKeys()){
+        size_t found = i_key.find("_region");
+        if (found == string::npos) continue;
+        if (i_key.find("active_regions") != string::npos) continue;
+        pair<int, int> region_def = m_config->Get(i_key, make_pair(0, 0));
+        string name = i_key.substr(0, found);
+        string reg = (split(name, "_").size() > 1) ? split(name, "_").at(1) : "";
+        if (name.find("pedestal_") != string::npos) ss_ped << "    region_" << reg << ":" << string(5 - reg.size(), ' ') << to_string(region_def) << "\n";
+        if (name.find("signal_") != string::npos) ss_sig << "    region_" << reg << ":" << string(5 - reg.size(), ' ') << to_string(region_def) << "\n";
+        if (name.find("pulser_") != string::npos) ss_pul << "    region_" << reg << ":" << string(5 - reg.size(), ' ') << to_string(region_def) << "\n";
+        TString key = name + ":" + string(20 - name.size(), ' ') + TString::Format("%4d - %4d", region_def.first, region_def.second);
         macro->AddLine(key);
-        WaveformSignalRegion region = WaveformSignalRegion(region_def.first,region_def.second,name);
-        for (auto i: ranges){
-            if (i.first.find("PeakIntegral")!=std::string::npos){
-                WaveformIntegral integralDef = WaveformIntegral(i.second->first,i.second->second,i.first);
+        WaveformSignalRegion region = WaveformSignalRegion(region_def.first, region_def.second, name);
+        // add all PeakIntegral ranges for the region
+        for (auto i_rg: ranges){
+            if (i_rg.first.find("PeakIntegral") != std::string::npos){
+                WaveformIntegral integralDef = WaveformIntegral(int(i_rg.second->first), int(i_rg.second->second), i_rg.first);
                 region.AddIntegral(integralDef);
-        //        key = "* " + i.first +":";
-        //        key.Append(TString::Format(": %d - %d",i.second->first,i.second->second));
-        //    macro->AddLine(key);
-          }
+            }
         }
-
-    for (int i = 0; i< 4;i++)
-        if ((active_regions & 1<<i) == 1<<i){
-            (*regions)[int(i)]->AddRegion(region);
-        }
-
+        for (uint8_t i = 0; i< 4;i++)
+            if ((active_regions & 1<<i) == 1<<i)
+                regions->at(i)->AddRegion(region);
     }
     macro->AddLine("");
     macro->AddLine("Signal Definitions:");
     for (auto i: ranges){
-        if (i.first.find("PeakIntegral")!=std::string::npos){
-                TString key = "* " + i.first+ ":";
-                key.Append(' ',30-key.Length());
-                key.Append(TString::Format(" %6.1f - %6.1f",i.second->first,i.second->second));
+        if (i.first.find("PeakIntegral") != std::string::npos){
+                TString key = "* " + i.first + ":";
+                key += string(abs(20 - key.Length()), ' ') + TString::Format("%4d - %4d", int(i.second->first), int(i.second->second));
                 macro->AddLine(key);
         }
     }
-    std::cout<<"Active WaveformRegions with Integrals: "<<std::endl;
-//    for (auto i: *regions)
-//        i.second->Print();
-    std::cout<<"Max events; "<<max_event_number<<std::endl;
-    std::cout<<"End of Configure.";
-    if (false){
-        PressEnterToContinue();
-    }
-    else
-        std::cout<<std::endl;
+
+    // output
+    cout << "CHANNEL AND PULSER SETTINGS:" << endl;
+    cout << append_spaces(24, "  pulser channel:") << pulser_channel << endl;
+    cout << append_spaces(24, "  trigger channel:") << trigger_channel << endl;
+    cout << append_spaces(24, "  pulser_int threshold:") << pulser_threshold << endl;
+    cout << append_spaces(24, "  save waveforms:") << save_waveforms << ":  " << GetBitMask(save_waveforms) << endl;
+    cout << append_spaces(24, "  fft waveforms:") << fft_waveforms << ":  " << GetBitMask(fft_waveforms) << endl;
+    cout << append_spaces(24, "  spectrum waveforms:") << spectrum_waveforms << ":  " << GetBitMask(spectrum_waveforms) << endl;
+    cout << append_spaces(24, "  active regions:") << active_regions << ":  " << GetBitMask(active_regions) << endl;
+    cout << append_spaces(27, "  polarities:") << GetPolarities(polarities) << endl;
+    cout << append_spaces(27, "  pulser polarites:") << GetPolarities(pulser_polarities) << endl;
+
+    cout<<"RANGES: " << ranges.size() << endl;
+    for (auto& it: ranges) cout << append_spaces(25, "  range_" + it.first + ":") << to_string(*(it.second)) << endl;
+
+    cout << "SIGNAL WINDOWS (REGIONS):" << endl;
+    cout << "  " << trim(ss_ped.str(), " ,") << "  " << trim(ss_sig.str(), " ,") << "  " << trim(ss_pul.str(), " ,") << flush;
+
+    cout << "\nMAXIMUM NUMBER OF EVENTS:  " << max_event_number << endl;
+    EUDAQ_INFO("End of Configure!");
+    cout << endl;
     macro->Write();
-}
+} // end Configure()
 
 /** =====================================================================
     --------------------------START RUN----------------------------------
