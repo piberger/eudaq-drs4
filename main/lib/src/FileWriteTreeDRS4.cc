@@ -715,22 +715,27 @@ inline void FileWriterTreeDRS4::ResizeVectors(size_t n_channels) {
     fft_min->resize(n_channels, 0);
     fft_max->resize(n_channels, 0);
 
-/** void FileWriterTreeDRS4::DoFFTAnalysis(int iwf){
-    bool b_fft = (fft_waveforms & 1<<iwf) == 1<<iwf;
+    fft_mean_freq->resize(n_channels, 0);
+    fft_min_freq->resize(n_channels, 0);
+    fft_max_freq->resize(n_channels, 0);
+    for (auto p: fft_modes) p->clear();
+    for (auto p: fft_values) p->clear();
+}
+
+void FileWriterTreeDRS4::DoFFTAnalysis(uint8_t iwf){
+    if (!UseWaveForm(fft_waveforms, iwf)) return;
     fft_mean->at(iwf) = 0;
     fft_max->at(iwf) = 0;
     fft_min->at(iwf) = 1e9;
     fft_mean_freq->at(iwf) = -1;
     fft_max_freq->at(iwf) = -1;
     fft_min_freq->at(iwf) = -1;
-    if (!b_fft)
-        return;
     w_fft.Start(false);
-    int n = data->size();
+    uint32_t n = uint32_t(data->size());
     float sample_rate = 2e6;
     if(fft_own->GetN()[0] != n+1){
         n_samples = n+1;
-        cout<<"RECreating a new VirtualFFT with "<<n_samples<<" Samples, before "<<fft_own->GetN()<<endl;
+        cout << "RECreating a new VirtualFFT with " << n_samples << " Samples, before " << fft_own->GetN() << endl;
         delete fft_own;
         delete in;
         delete re_full;
