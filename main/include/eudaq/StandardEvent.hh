@@ -68,7 +68,7 @@ public:
         int index = getIndexAbsMax(min,max);
         return std::make_pair(index,m_samples.at(index));
     }
-    float getMedian(int min, int max) const;
+    float getMedian(uint32_t min, uint32_t max) const;
 
     float getSpreadInRange(int min, int max) const{return (getMaxInRange(min,max)-getMinInRange(min,max));};
     float getPeakToPeak(int min, int max) const{return getSpreadInRange(min,max);}
