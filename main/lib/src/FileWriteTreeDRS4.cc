@@ -811,50 +811,17 @@ void FileWriterTreeDRS4::DoSpectrumFitting(uint8_t iwf){ // todo revise if going
     w_spectrum.Stop();
 } // end DoSpectrumFitting()
 
-void FileWriterTreeDRS4::DoLinearFitting(int iwf){
-    bool b_linear_fit = (linear_fitting_waveforms & 1<<iwf) == 1<<iwf;
-    bool b_spectrum = (spectrum_waveforms & 1<<iwf) == 1<<iwf;
-    bool b_fft = (fft_waveforms & 1<<iwf) == 1<<iwf;
-//    cout<<"iwf: "<<iwf<<"lin "<<linear_fitting_waveforms<<" "<< 1<<iwf<<" "<<(linear_fitting_waveforms & 1<<iwf)<<" "<<b_linear_fit<<"\t";
-//    cout<<"iwf: "<<iwf<<"spec "<<spectrum_waveforms<<" "<< 1<<iwf<<" "<<(spectrum_waveforms & 1<<iwf)<<" "<<b_spectrum<<"\t"<<endl;;
-    if(b_spectrum || b_linear_fit || b_fft){
+void FileWriterTreeDRS4::FillSpectrumData(uint8_t iwf){
+    bool b_spectrum = UseWaveForm(spectrum_waveforms, iwf);
+    bool b_fft = UseWaveForm(fft_waveforms, iwf);
+    if(b_spectrum || b_fft){
         v_y.resize(data->size());
         v1.resize(data->size());
         int pol = polarities.at(iwf);
         for (unsigned i = 0; i < data->size(); i++){
-            v_y.at(i) =  pol*data->at(i);
-            v1.at(i) =  pol*data->at(i);
+            v_y.at(i) = pol * data->at(i);
+            v1.at(i) = pol * data->at(i);
         }
-    }
-    if (b_linear_fit){
-        w_linear_fitting.Start(false);
-        int n_start = ranges["pedestalFit"]->first;
-        int n_end = ranges["pedestalFit"]->second;
-
-        fitter->ClearPoints();
-        fitter->AssignData(n_end-n_start, 1, &v_x[n_start],&v_y[n_start]);
-        fitter->Eval();
-        //        cout<<fitter->GetParameter(0)<<"/"<<fitter->GetParameter(1)<<" "<<v_y.size()<<" "<<fitter->GetNpoints()<<" "<<fitter->GetNumberFreeParameters() <<std::endl;//<<fitter->GetNDF()<<std::endl;
-        chi2->at(iwf) = f_pol1->GetChisquare()/f_pol1->GetNDF();
-        par0->at(iwf) = f_pol1->Eval(((float)n_end-(float)n_end)/2.);//f_pol1->GetParameter(0);
-        par1->at(iwf) = f_pol1->GetParameter(1);
-        float sigma = 0;
-        float skewness = 0;
-        float kurtosis = 0;
-        //        float sigma = 0;
-        for (unsigned i = n_start; i< n_end && i<v_y.size();i++){
-            float delta = data->at(i)-f_pol1->Eval(i);
-            sigma += TMath::Power(delta,2);
-            kurtosis += TMath::Power(delta,3);
-            skewness += TMath::Power(delta,4);
-        }
-        sigma = TMath::Sqrt(sigma);
-        kurtosis = cbrt(kurtosis);
-        skewness = TMath::Power(skewness,1./4.);
-        this->sigma->at(iwf) = sigma;
-        this->kurtosis->at(iwf) = kurtosis;
-        this->skewness->at(iwf) = skewness;
-        w_linear_fitting.Stop();
     }
 }
 
