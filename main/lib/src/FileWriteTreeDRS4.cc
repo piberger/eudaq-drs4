@@ -746,9 +746,7 @@ void FileWriterTreeDRS4::DoFFTAnalysis(uint8_t iwf){
         im_full = new Double_t[n];
         fft_own = TVirtualFFT::FFT(1, &n_samples, "R2C");
     }
-    for (int j = 0; j < n; ++j) {
-        in[j] = data->at(j);
-    }
+    for (uint32_t j = 0; j < n; ++j) in[j] = data->at(j);
     fft_own->SetPoints(in);
     fft_own->Transform();
     fft_own->GetPointsComplex(re_full,im_full);
@@ -756,13 +754,13 @@ void FileWriterTreeDRS4::DoFFTAnalysis(uint8_t iwf){
     float max = -1;
     float min = 1e10;
     float freq;
-    float mean_freq;
+    float mean_freq = 0;
     float min_freq = -1;
     float max_freq  = -1;
     float value;
     for (int j = 0; j < (n/2+1); ++j) {
         freq = j * sample_rate/n;
-        value =  TMath::Sqrt(re_full[j]*re_full[j] + im_full[j]*im_full[j]);
+        value = float(TMath::Sqrt(re_full[j]*re_full[j] + im_full[j]*im_full[j]));
         if (value>max){
             max = value;
             max_freq = freq;
@@ -788,7 +786,7 @@ void FileWriterTreeDRS4::DoFFTAnalysis(uint8_t iwf){
     w_fft.Stop();
     if (verbose>0 && f_event_number < 1000)
         cout<<runnumber<<" "<<std::setw(3)<<f_event_number<<" "<<iwf<<" "<<finalVal<<" "<<max<<" "<<min<<endl;
-}*/
+} // end DoFFTAnalysis()
 
 void FileWriterTreeDRS4::DoSpectrumFitting(int iwf){
     bool b_spectrum = (spectrum_waveforms & 1<<iwf) == 1<<iwf;
