@@ -398,7 +398,7 @@ void FileWriterTreeDRS4::Configure(){
 void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     this->runnumber = runnumber;
     EUDAQ_INFO("Converting the input file into a DRS4 TTree " );
-    std::string foutput(FileNamer(m_filepattern).Set('X', ".root").Set('R', runnumber));
+    string foutput(FileNamer(m_filepattern).Set('X', ".root").Set('R', runnumber));
     EUDAQ_INFO("Preparing the output file: " + foutput);
 
     c1 = new TCanvas();
@@ -422,6 +422,7 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
         if ((save_waveforms & 1 << i_wf) == 1 << i_wf)
             m_ttree->Branch(TString::Format("wf%i", i_wf), &f_wf.at(i_wf));
 
+    // integrals
     m_ttree->Branch("IntegralNames",&IntegralNames);
     m_ttree->Branch("IntegralValues",&IntegralValues);
     m_ttree->Branch("IntegralPeaks",&IntegralPeaks);
@@ -474,31 +475,24 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
     if (ev.IsBORE()) {
         eudaq::PluginManager::Initialize(ev);
         tcal = PluginManager::GetTimeCalibration(ev);
-//        for (std::map<uint8_t, std::vector<float> >::const_iterator it = tcal.begin(); it != tcal.end(); it++) {
-//            cout << "This is tcal: " << int(it->first) << " " <<  it->second.at(0) << " " <<  it->second.size() << endl;
-//            for (int i = 512; i < 522; i++) cout << it->second.at(i) << " ";
-//            cout << endl;
-//            for (int i = 1024; i < 1044; i++) cout << it->second.at(i) << " ";
-//            cout << endl;
-//            for (int i = 1024; i < 1044; i+=2) cout << (it->second.at(i) + it->second.at(i + 1)) / 2 << " ";
-//            cout << endl;
-//        }
+        FillTimeBins();
+        cout << "Time bins of trigger cell 50: " << endl;
+//        for (uint8_t i = 0; i < 10; i++) cout << GetTimeBins(0, 50).at(i) << endl;
 
         cout << "loading the first event...." << endl;
-//        exit(0);
         return;
     }
     else if (ev.IsEORE()) {
         cout << "loading the last event...." << endl;
         return;
     }
-    if(max_event_number >0 &&f_event_number> max_event_number)
-        return;
+    if (max_event_number > 0 && f_event_number > max_event_number) return;
+
     w_total.Start(false);
     StandardEvent sev = eudaq::PluginManager::ConvertToStandard(ev);
 
     f_event_number = sev.GetEventNumber();
-    f_time = sev.GetTimestamp() / 384066.;
+    f_time = sev.GetTimestamp() / float(384066.);
     // --------------------------------------------------------------------
     // ---------- get the number of waveforms -----------------------------
     // --------------------------------------------------------------------
@@ -514,15 +508,15 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
             cout << "----------------------------------------" << endl;
         }
     }
-    if(verbose > 3) cout<<"ClearVectors"<<endl;
+    if (verbose > 3) cout << "ClearVectors" << endl;
     ClearVectors();
 
     // --------------------------------------------------------------------
     // ---------- verbosity level and some printouts ----------------------
     // --------------------------------------------------------------------
 
-    if(verbose > 3) cout << "event number " << f_event_number << endl;
-    if(verbose > 3) cout << "number of waveforms " << nwfs << endl;
+    if (verbose > 3) cout << "event number " << f_event_number << endl;
+    if (verbose > 3) cout << "number of waveforms " << nwfs << endl;
 
     // --------------------------------------------------------------------
     // ---------- get and save all info for all waveforms -----------------
@@ -530,7 +524,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
 
 
     //use different order of wfs in order to 'know' if its a pulser event or not.
-    vector<uint16_t > wf_order = {2,1,0,3};
+    vector<uint8_t > wf_order = {2,1,0,3};
     ResizeVectors(sev.GetNWaveforms());
     for (auto iwf:wf_order){
 
@@ -542,7 +536,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         }
 
         int n_samples = waveform.GetNSamples();
-        if (verbose > 3) std::cout << "number of samples in my wf " << n_samples << std::endl;
+        if (verbose > 3) cout << "number of samples in my wf " << n_samples << std::endl;
         // load the waveforms into the vector
         data = waveform.GetData();
 
@@ -554,8 +548,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
 
         // calculate the signal and so on
         // float sig = CalculatePeak(data, 1075, 1150);
-        if (verbose > 3)
-            cout<<"get Values1.0 "<<iwf<<endl;
+        if (verbose > 3) cout<<"get Values1.0 "<<iwf<<endl;
         FillRegionIntegrals(iwf,&waveform);
 
         if (verbose > 3) cout<<"get Values1.1 "<<iwf<<endl;
@@ -575,12 +568,14 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
             if (f_pulser) f_pulser_events++;
             else f_signal_events++;
         }
-        if (verbose > 3)
-            cout<<"fill wf "<<iwf<<endl;
-        UpdateWaveforms(iwf, &waveform);
+
+        // fill waveform vectors
+        if (verbose > 3) cout << "fill wf " << iwf << endl;
+        UpdateWaveforms(iwf);
 
         data->clear();
-    }// end iwf waveform loop
+    } // end iwf waveform loop
+
     FillRegionVectors();
 
     // --------------------------------------------------------------------
