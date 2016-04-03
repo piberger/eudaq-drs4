@@ -26,8 +26,7 @@
 #include "TPolyMarker.h"
 
 using namespace std;
-
-namespace eudaq {
+using namespace eudaq;
 
 class FileWriterTreeDRS4 : public FileWriter {
     public:
