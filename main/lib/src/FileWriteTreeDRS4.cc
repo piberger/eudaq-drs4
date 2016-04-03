@@ -956,13 +956,32 @@ void FileWriterTreeDRS4::ExtractForcTiming(vector<float> * data) {
     if (!found_timing) f_forc_time = 0;
 } //end ExtractForcTiming
 
-// Get max event number: DA
-long FileWriterTreeDRS4::GetMaxEventNumber(){
-    return max_event_number;
+void FileWriterTreeDRS4::FillTimeBins() {
+
+    uint16_t n_waveform_samples = uint16_t(tcal.at(0).size() / 2);  // tcal vec is two times to big atm, todo: fix that!
+    for (uint8_t i_ch = 0; i_ch < tcal.size(); i_ch++){
+        for (uint16_t i_tc = 0; i_tc < 1024; i_tc++){
+            float t = 0;
+            for (uint16_t i_sp = 0; i_sp < n_waveform_samples; i_sp++)
+                t += tcal.at(i_ch).at(uint64_t((i_sp + i_tc) % 1024));
+                time_bins[i_ch][i_tc].push_back(t);
+        }
+    }
 }
 
-void FileWriterTreeDRS4::FillTimeBins() {
-    time_bins[0] = {1};
+string FileWriterTreeDRS4::GetBitMask(uint16_t bitmask){
+    stringstream ss;
+    for (uint8_t i = 0; i < 4; i++) {
+        string bit = to_string(UseWaveForm(bitmask, i));
+        ss << string(3 - bit.size(), ' ') << bit;
+    }
+    return trim(ss.str(), " ");
+}
+
+string FileWriterTreeDRS4::GetPolarities(vector<signed char> pol) {
+    stringstream ss;
+    for (auto i_pol:pol) ss << string(3 - to_string(i_pol).size(), ' ') << to_string(i_pol);
+    return trim(ss.str(), " ");
 }
 
 #endif // ROOT_FOUND
