@@ -830,7 +830,7 @@ void FileWriterTreeDRS4::FillRegionIntegrals(int iwf,const StandardWaveform *wf)
         return;
     WaveformSignalRegions *this_regions = (*regions)[iwf];
     //
-    UInt_t nRegions = this_regions->GetNRegions();
+    UInt_t nRegions = UInt_t(this_regions->GetNRegions());
     for (uint16_t i=0; i < nRegions; i++){
         if(verbose)
             std::cout<<"REGION LOOP"<<std::endl;
@@ -838,8 +838,8 @@ void FileWriterTreeDRS4::FillRegionIntegrals(int iwf,const StandardWaveform *wf)
         signed char polarity;
         polarity = (string(region->GetName()).find("pulser") != string::npos) ? this_regions->GetPulserPolarity() : this_regions->GetPolarity();
         Int_t peak_pos;
-        int low_border = region->GetLowBoarder();
-        int high_border = region->GetHighBoarder();
+        uint32_t low_border = region->GetLowBoarder();
+        uint32_t high_border = region->GetHighBoarder();
         if (polarity * 1 > 0)
             peak_pos = wf->getIndexMax(low_border,high_border);
         else
@@ -905,51 +905,43 @@ void FileWriterTreeDRS4::FillRegionVectors(){
 
 void FileWriterTreeDRS4::FillTotalRange(uint8_t iwf, const StandardWaveform *wf){
 
-    float pulser   = wf->getSpreadInRange( ranges["pulser"]->first,   ranges["pulser"]->second);
-    float pulser_integral   = pol*wf->getIntegral( ranges["pulser"]->first,   ranges["pulser"]->second);
-
-    v_pul_int       ->at(iwf) = (pulser_integral);       // Pulser: Integral over Pulserrange
-    v_pul_spread    ->at(iwf) = (pulser);                // Pulser: Spread in Pulserrange
+    signed char pol = polarities.at(iwf);
+    v_is_saturated->at(iwf) = wf->getAbsMaxInRange(0, 1023) > 498; // indicator if saturation is reached in sampling region (1-1024)
+    v_median->at(iwf) = pol * wf->getMedian(0, 1023); // Median over whole sampling region
+    v_average->at(iwf) = pol * wf->getIntegral(0, 1023);
 }
 
+void FileWriterTreeDRS4::UpdateWaveforms(int iwf){
 
-void FileWriterTreeDRS4::UpdateWaveforms(int iwf, const StandardWaveform *wf){
-    data = wf->GetData();
-    for (int j=0; j<data->size(); j++){
+    for (uint16_t j = 0; j < data->size(); j++) {
+        if ((save_waveforms & 1 << iwf) == 1 << iwf)
+            f_wf.at(uint8_t(iwf))->push_back(data->at(j));
         if     (iwf == 0) {
             if (f_pulser)
-                avgWF_0_pul->SetBinContent(j+1, avgWF(avgWF_0_pul->GetBinContent(j+1),data->at(j),f_pulser_events));
+                avgWF_0_pul->SetBinContent(j+1, avgWF(float(avgWF_0_pul->GetBinContent(j+1)),data->at(j),f_pulser_events));
             else
-                avgWF_0_sig->SetBinContent(j+1, avgWF(avgWF_0_sig->GetBinContent(j+1),data->at(j),f_signal_events));
-            avgWF_0->SetBinContent(j+1, avgWF(avgWF_0->GetBinContent(j+1),data->at(j),f_event_number+1));
-            if ((save_waveforms & 1<<0) == 1<<0)
-                f_wf0->push_back(data->at(j));
+                avgWF_0_sig->SetBinContent(j+1, avgWF(float(avgWF_0_sig->GetBinContent(j+1)),data->at(j),f_signal_events));
+            avgWF_0->SetBinContent(j+1, avgWF(float(avgWF_0->GetBinContent(j+1)),data->at(j),f_event_number+1));
         }
         else if(iwf == 1) {
-            avgWF_1->SetBinContent(j+1, avgWF(avgWF_1->GetBinContent(j+1),data->at(j),f_event_number+1));
-            if ((save_waveforms & 1<<1) == 1<<1)
-                f_wf1->push_back(data->at(j));
+            avgWF_1->SetBinContent(j+1, avgWF(float(avgWF_1->GetBinContent(j+1)),data->at(j),f_event_number+1));
         }
         else if(iwf == 2) {
-            avgWF_2->SetBinContent(j+1, avgWF(avgWF_2->GetBinContent(j+1),data->at(j),f_event_number+1));
-            if ((save_waveforms & 1<<2) == 1<<2)
-                f_wf2->push_back(data->at(j));
+            avgWF_2->SetBinContent(j+1, avgWF(float(avgWF_2->GetBinContent(j+1)),data->at(j),f_event_number+1));
         }
         else if(iwf == 3) {
             if (f_pulser)
-                avgWF_3_pul->SetBinContent(j+1, avgWF(avgWF_3_pul->GetBinContent(j+1),data->at(j),f_pulser_events));
+                avgWF_3_pul->SetBinContent(j+1, avgWF(float(avgWF_3_pul->GetBinContent(j+1)),data->at(j),f_pulser_events));
             else
-                avgWF_3_sig->SetBinContent(j+1, avgWF(avgWF_3_sig->GetBinContent(j+1),data->at(j),f_signal_events));
-            avgWF_3->SetBinContent(j+1, avgWF(avgWF_3->GetBinContent(j+1),data->at(j),f_event_number+1));
-            if ((save_waveforms & 1<<3) == 1<<3)
-                f_wf3->push_back(data->at(j));
+                avgWF_3_sig->SetBinContent(j+1, avgWF(float(avgWF_3_sig->GetBinContent(j+1)),data->at(j),f_signal_events));
+            avgWF_3->SetBinContent(j+1, avgWF(float(avgWF_3->GetBinContent(j+1)),data->at(j),f_event_number+1));
         }
-    }//data loop
-}
+    } // data loop
+} // end UpdateWaveforms()
 
 int FileWriterTreeDRS4::IsPulserEvent(const StandardWaveform *wf){
-    f_pulser_int = wf->getIntegral(ranges["pulserDRS4"]->first, ranges["pulserDRS4"]->second, true);//740, 860, true);
-    return f_pulser_int > pulser_threshold;
+    float pulser_int = wf->getIntegral(int(ranges["pulserDRS4"]->first), int(ranges["pulserDRS4"]->second), true);
+    return pulser_int > pulser_threshold;
 } //end IsPulserEvent
 
 void FileWriterTreeDRS4::ExtractForcTiming(vector<float> * data) {
