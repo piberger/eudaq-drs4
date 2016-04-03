@@ -39,13 +39,12 @@ class FileWriterTreeDRS4 : public FileWriter {
 //        std::pair<int, float> FindMaxAndValue(std::vector<float> * data, int min, int max);
         float avgWF(float, float, int);
         virtual ~FileWriterTreeDRS4();
-        // Add to get maximum number of events: DA
-        virtual long GetMaxEventNumber();
+        virtual long GetMaxEventNumber() { return max_event_number; }
     private:
         unsigned runnumber;
         TH1F* histo;
         long max_event_number;
-        int save_waveforms;
+        uint16_t save_waveforms;
         void ClearVectors();
         void ResizeVectors(size_t n_channels);
         int IsPulserEvent(const StandardWaveform *wf);
@@ -68,6 +67,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         TTree * m_ttree; // book the tree (to store the needed event info)
         int verbose;
         std::vector<float> * data;
+        vector<string> sensor_name;
 
         std::vector<float> v1;
         std::vector<float> v_yy;
@@ -75,7 +75,7 @@ class FileWriterTreeDRS4 : public FileWriter {
         unsigned m_noe;
         short chan;
         int n_pixels;
-        std::map<std::string,std::pair<float,float> *> ranges;
+        map<string, pair<float,float> *> ranges;
         vector<signed char> polarities;
         vector<signed char> pulser_polarities;
 
@@ -83,9 +83,9 @@ class FileWriterTreeDRS4 : public FileWriter {
         vector<int16_t> * v_pulser_polarities;
         // drs4 timing calibration
         map<uint8_t, vector<float> > tcal;
-        map<uint16_t, vector<float> > time_bins;
+        map<uint8_t, map<uint16_t, vector<float> > > time_bins;
         void FillTimeBins();
-        vector<float> GetTimeBins(uint16_t trigger_cell) const { return time_bins.at(trigger_cell); }
+        vector<float> GetTimeBins(uint8_t channel, uint16_t trigger_cell) const { return time_bins.at(channel).at(trigger_cell); }
 
         /** SCALAR BRANCHES */
         int f_nwfs;
@@ -107,8 +107,8 @@ class FileWriterTreeDRS4 : public FileWriter {
         bool spectrum_markov;
         bool spectrum_background_removal;
 
-        int spectrum_waveforms;
-        int fft_waveforms;
+        uint16_t spectrum_waveforms;
+        uint16_t fft_waveforms;
         int pulser_threshold;
         int pulser_channel;
         int trigger_channel;
@@ -129,11 +129,11 @@ class FileWriterTreeDRS4 : public FileWriter {
         map<uint8_t, vector<float> *> f_wf;
 
         // telescope
-        std::vector<uint16_t> * f_plane;
-        std::vector<uint16_t> * f_col;
-        std::vector<uint16_t> * f_row;
-        std::vector<int16_t> * f_adc;
-        std::vector<uint32_t> * f_charge;
+        vector<uint16_t> * f_plane;
+        vector<uint16_t> * f_col;
+        vector<uint16_t> * f_row;
+        vector<int16_t> * f_adc;
+        vector<uint32_t> * f_charge;
 
         // average waveforms of channels
         TH1F * avgWF_0;
@@ -147,8 +147,8 @@ class FileWriterTreeDRS4 : public FileWriter {
         TSpectrum *spec;
         TVirtualFFT *fft_own;
         Int_t n_samples;
-//        Double_t *re_full;
-//        Double_t *im_full;
+        Double_t *re_full;
+        Double_t *im_full;
         Double_t *in;
         TMacro * macro;
 
