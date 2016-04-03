@@ -62,20 +62,11 @@ float StandardWaveform::getIntegral(int min, int max, bool _abs) const {
 }
 
 
-float StandardWaveform::getMedian(int min, int max) const
+float StandardWaveform::getMedian(uint32_t min, uint32_t max) const
 {
     float median;
-    int n = max - min + 1;
-//    float* cropDataArray = new float[n];
-//    int i = 0;
-//    for (vector<float,allocator<float>>::iterator iterator = this->m_samples->begin()+min; iterator != m_samples->begin()+max+1; iterator++) {
-//        cropDataArray[i] = *iterator;
-//        i++;
-//    }
-//    median = (float)TMath::Median(n, cropDataArray);
+    int n = abs(max - min + 1);
     median = (float)TMath::Median(n, &m_samples.at(min));
-
-//    delete[] cropDataArray;
     return median;
 }
 
