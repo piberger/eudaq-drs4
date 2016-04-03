@@ -171,23 +171,29 @@ class FileWriterTreeDRS4 : public FileWriter {
 
 };
 
-namespace {
-    static RegisterFileWriter<FileWriterTreeDRS4> reg("drs4tree");
-}
+namespace { static RegisterFileWriter<FileWriterTreeDRS4> reg("drs4tree"); }
 
+/** =====================================================================
+    --------------------------CONSTRUCTOR--------------------------------
+    =====================================================================*/
 FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
-: m_tfile(0), m_ttree(0), m_noe(0), chan(4), n_pixels(90*90+60*60), histo(0), spec(0), fft_own(0), runnumber(0), macro(0)
-{
+: m_tfile(0), m_ttree(0), m_noe(0), chan(4), n_pixels(90*90+60*60), histo(0), spec(0), fft_own(0), runnumber(0) {
+
     gROOT->ProcessLine("#include <vector>");
-    gROOT->ProcessLine(".L ~/lib/root_loader.c+");
-    gROOT->ProcessLine(".L loader.C+");
+//    gROOT->ProcessLine(".L ~/lib/root_loader.c+"); // what is that for? MR
+//    gROOT->ProcessLine(".L loader.C+");
     gROOT->ProcessLine( "gErrorIgnoreLevel = 5001;");
+    gROOT->ProcessLine("#include <pair>");
+    gROOT->ProcessLine("#include <map>");
+    gInterpreter->GenerateDictionary("map<string,Float_t>;vector<map<string,Float_t> >,vector<vector<Float_t> >","vector;string;map");
     //Polarities of signals, default is positive signals
     polarities.resize(4, 1);
     pulser_polarities.resize(4, 1);
 
     //how many events will be analyzed, 0 = all events
     max_event_number = 0;
+    macro = new TMacro();
+    macro->SetNameTitle("region_information", "Region Information");
 
     f_nwfs = 0;
     f_event_number = -1;
@@ -213,6 +219,7 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     // waveforms
     for (uint8_t i = 0; i < 4; i++) f_wf[i] = new vector<float>;
 
+    // spectrum vectors
     peaks_x.resize(4, new std::vector<float>);
     peaks_y.resize(4, new std::vector<float>);
     peaks_no.resize(4, new std::vector<int>);
@@ -249,14 +256,14 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     fft_own = 0;
     if(!fft_own){
         int n = 1024;
-        n_samples = n+1;
-        cout<<"Creating a new VirtualFFT with "<<n_samples<<" Samples"<<endl;
-//        re_full = new Double_t[n];
-//        im_full = new Double_t[n];
+        n_samples = n + 1;
+        cout << "Creating a new VirtualFFT with " << n_samples << " Samples" << endl;
+        re_full = new Double_t[n];
+        im_full = new Double_t[n];
         in = new Double_t[n];
         fft_own = TVirtualFFT::FFT(1, &n_samples, "R2C");
     }
-}
+} // end Constructor
 
 /** =====================================================================
     --------------------------CONFIGURE----------------------------------
