@@ -346,6 +346,14 @@ namespace eudaq {
       WriteStringToFile(fname, to_string(val));
     }
 
+  template <typename T>
+    std::string DLLEXPORT append_spaces(const uint16_t max, const T str, const bool app_str = true) {
+      std::string ret = app_str ? to_string(str) : "";
+      size_t spaces = (int(max) - int(to_string(str).size())) > 0 ? max - to_string(str).size() : 0;
+      return ret + std::string(spaces, ' ');
+    }
+
+
 }
 
 #endif // EUDAQ_INCLUDED_Utils
