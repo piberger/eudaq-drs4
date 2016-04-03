@@ -788,37 +788,28 @@ void FileWriterTreeDRS4::DoFFTAnalysis(uint8_t iwf){
         cout<<runnumber<<" "<<std::setw(3)<<f_event_number<<" "<<iwf<<" "<<finalVal<<" "<<max<<" "<<min<<endl;
 } // end DoFFTAnalysis()
 
-void FileWriterTreeDRS4::DoSpectrumFitting(int iwf){
-    bool b_spectrum = (spectrum_waveforms & 1<<iwf) == 1<<iwf;
-    peaks_x.at(iwf)->clear();
-    peaks_y.at(iwf)->clear();
-    peaks_no.at(iwf)->clear();
+void FileWriterTreeDRS4::DoSpectrumFitting(uint8_t iwf){ // todo revise if going to use
+    bool do_spectrum = (spectrum_waveforms & 1 << iwf) == 1 << iwf;
+    if (!do_spectrum) return;
     npeaks->at(iwf) = 0;
-    if (!b_spectrum)
-        return;
 
     w_spectrum.Start(false);
     v_yy.resize(v_y.size());
-    int peaks = spec->SearchHighRes(&v1[0],&(v_yy[0]),v1.size(),spectrum_sigma,spectrum_threshold,
+    int peaks = spec->SearchHighRes(&v1[0], &(v_yy[0]), int(v1.size()), spectrum_sigma, spectrum_threshold,
             spectrum_background_removal, spectrum_deconIterations,spectrum_markov, spectrum_averageWindow);
     npeaks->at(iwf) = peaks;
-//        std::cout <<iwf<<": "<<peaks<<"   ";
     for(UInt_t i=0; i< peaks; i++){
-//            std::cout<<i<<": ";
         float xval = spec->GetPositionX()[i];
-//            std::cout<<xval<<"/";
-        int bin = (int)(xval+.5);
-        int min_bin = bin-5>=0?bin-5:0;
-        int max_bin = bin+5<v_y.size()?bin+5:v_y.size()-1;
-        float max = *std::max_element(&v1.at(min_bin),&v1.at(min_bin));
-//            std::cout<<max<<"   ";
+        uint32_t bin = uint32_t(xval + .5);
+        uint32_t min_bin = bin - 5 >= 0 ? bin-5 : 0;
+        uint32_t max_bin = bin + 5 < v_y.size() ? bin + 5 : uint32_t(v_y.size()) - 1;
+        float max = *std::max_element(&v1.at(min_bin),&v1.at(max_bin));
         peaks_x.at(iwf)->push_back(xval);
         peaks_y.at(iwf)->push_back(max);
         peaks_no.at(iwf)->push_back(i);
     }
-//        std::cout<<peaks_x.at(iwf)->size()<<"/"<<peaks_y.at(iwf)->size()<<"/"<<peaks_no.at(iwf)->size()<<std::endl;
     w_spectrum.Stop();
-}
+} // end DoSpectrumFitting()
 
 void FileWriterTreeDRS4::DoLinearFitting(int iwf){
     bool b_linear_fit = (linear_fitting_waveforms & 1<<iwf) == 1<<iwf;
