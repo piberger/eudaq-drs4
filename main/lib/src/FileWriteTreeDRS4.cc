@@ -594,33 +594,36 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         }
     }
     m_ttree->Fill();
-    if (f_event_number % 1000 == 0)
-        cout << "of run " << runnumber << flush;
+    if (f_event_number + 1 % 1000 == 0) cout << "of run " << runnumber << flush;
 //        <<" "<<std::setw(7)<<f_event_number<<"\tSpectrum: "<<w_spectrum.RealTime()/w_spectrum.Counter()<<"\t" <<"LinearFitting: "
 //        <<w_linear_fitting.RealTime()/w_linear_fitting.Counter()<<"\t"<< w_spectrum.Counter()<<"/"<<w_linear_fitting.Counter()<<"\t"<<flush;
     w_total.Stop();
-}
+} // end WriteEvent()
 
 
+/** =====================================================================
+    -------------------------DECONSTRUCTOR-------------------------------
+    =====================================================================*/
 FileWriterTreeDRS4::~FileWriterTreeDRS4() {
-    std::cout<<"\n****************************************************"<<std::endl;
-    std::cout<<"Summary of RUN "<<runnumber<<std::endl;
-    std::cout<<"Tree has " << m_ttree->GetEntries() << " entries" << std::endl;
-    cout<<f_event_number<<"\tSpectrum: "<<w_spectrum.RealTime()/w_spectrum.Counter()<<"\t"
-    <<"LinearFitting: "<<w_linear_fitting.RealTime()/w_linear_fitting.Counter()<<"\t"<<
-    w_spectrum.Counter()<<"/"<<w_linear_fitting.Counter()<<endl;
-    cout<<f_event_number<<"\tSpectrum: "<<w_spectrum.RealTime()<<"\t"
-    <<"LinearFitting: "<<w_linear_fitting.RealTime()<<endl;
-    cout<<"\nSpectrum:"<<endl;
-    w_spectrum.Print();
-    cout<<"\nLinearFit:"<<endl;
-    w_linear_fitting.Print();
-    cout<<"\nFFT:"<<endl;
-    w_fft.Print();
-
-    cout<<"\n Total time: "<<w_total.RealTime()<<endl;
-    std::cout<<"****************************************************\n"<<std::endl;
-    w_total.Print();
+    macro->AddLine("\nSensor Names:");
+    macro->AddLine(("  " + to_string(sensor_name)).c_str());
+    stringstream ss;
+    ss << "Summary of RUN " << runnumber << "\n";
+    ss << "Tree has " << m_ttree->GetEntries() << " entries\n";
+//    cout<<f_event_number<<"\tSpectrum: "<<w_spectrum.RealTime()/w_spectrum.Counter()<<"\t"
+//    <<"LinearFitting: "<<w_linear_fitting.RealTime()/w_linear_fitting.Counter()<<"\t"<<
+//    w_spectrum.Counter()<<"/"<<w_linear_fitting.Counter()<<endl;
+//    cout<<f_event_number<<"\tSpectrum: "<<w_spectrum.RealTime()<<"\t"
+//    <<"LinearFitting: "<<w_linear_fitting.RealTime()<<endl;
+//    cout<<"\nSpectrum:"<<endl;
+//    w_spectrum.Print();
+//    cout<<"\nLinearFit:"<<endl;
+//    w_linear_fitting.Print();
+//    cout<<"\nFFT:"<<endl;
+//    w_fft.Print();
+    ss << "\nTotal time: " << setprecision(1) << float(w_total.RealTime()) << " seconds";
+    print_banner(ss.str(), '*');
+//    w_total.Print();
     m_ttree->Write();
     avgWF_0->Write();
     avgWF_0_pul->Write();
