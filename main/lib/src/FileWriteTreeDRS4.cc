@@ -634,43 +634,42 @@ FileWriterTreeDRS4::~FileWriterTreeDRS4() {
     avgWF_3_sig->Write();
     avgWF_3_pul->Write();
     if (macro) macro->Write();
-    if(m_tfile->IsOpen()) m_tfile->Close();
+    if (m_tfile->IsOpen()) m_tfile->Close();
 }
 
 float FileWriterTreeDRS4::Calculate(std::vector<float> * data, int min, int max, bool _abs) {
     float integral = 0;
-    int i;
-    for (i = min; i <= int(max+1) && i < data->size() ;i++){
+    uint16_t i;
+    for (i = uint16_t(min) ; i <= (max + 1) && i < data->size() ; i++){
         if(!_abs) integral += data->at(i);
         else integral += abs(data->at(i));
     }
-    return integral/(float)(i-(int)min);
+    return integral / float(i - min);
 }
 
-//float FileWriterTreeDRS4::CalculatePeak(std::vector<float> * data, int min, int max) {
-//    int mid = (int)( (max + min)/2 );
-//    int n = 1;
-//    while( (data->at(mid-1)/data->at(mid) -1)*(data->at(mid+1)/data->at(mid) -1) < 0 ){
-//        // jump up and down from the center position to find the max or min
-//        mid += pow(-1, n)*n;
-//        n+=1;
-//    }
-//    // extremal value is now at mid
-//    float integral = Calculate(data, mid-3, mid+6);
-//    return integral;
-//}
-//
-//std::pair<int, float> FileWriterTreeDRS4::FindMaxAndValue(std::vector<float> * data, int min, int max) {
-//    float maxVal = -999;
-//    int imax = min;
-//    for (int i = min; i <= int(max+1) && i < data->size() ;i++){
-//        if (abs(data->at(i)) > maxVal){ maxVal = abs(data->at(i)); imax = i; }
-//    }
-//    maxVal = data->at(imax);
-//    std::pair<int, float> res = make_pair(imax, maxVal);
-//    return res;
-//}
+/*float FileWriterTreeDRS4::CalculatePeak(std::vector<float> * data, int min, int max) {
+    int mid = (int)( (max + min)/2 );
+    int n = 1;
+    while( (data->at(mid-1)/data->at(mid) -1)*(data->at(mid+1)/data->at(mid) -1) < 0 ){
+        // jump up and down from the center position to find the max or min
+        mid += pow(-1, n)*n;
+        n+=1;
+    }
+    // extremal value is now at mid
+    float integral = Calculate(data, mid-3, mid+6);
+    return integral;
+}
 
+std::pair<int, float> FileWriterTreeDRS4::FindMaxAndValue(std::vector<float> * data, int min, int max) {
+    float maxVal = -999;
+    int imax = min;
+    for (int i = min; i <= int(max+1) && i < data->size() ;i++){
+        if (abs(data->at(i)) > maxVal){ maxVal = abs(data->at(i)); imax = i; }
+    }
+    maxVal = data->at(imax);
+    std::pair<int, float> res = make_pair(imax, maxVal);
+    return res;
+}*/
 
 float FileWriterTreeDRS4::avgWF(float old_avg, float new_value, int n) {
     float avg = old_avg;
