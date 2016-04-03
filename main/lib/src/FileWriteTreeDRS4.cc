@@ -304,8 +304,6 @@ void FileWriterTreeDRS4::Configure(){
 
     // default ranges
     ranges["pulserDRS4"] = new pair<float, float>(m_config->Get("pulser_range_drs4", make_pair(800, 1000)));
-    ranges["pedestal"] = new pair<float, float>(m_config->Get("pedestal_range", make_pair(350, 450)));
-    ranges["signal"] = new pair<float, float>(m_config->Get("signal_range", make_pair(25, 175)));
     ranges["PeakIntegral1"] = new pair<float, float>(m_config->Get("PeakIntegral1_range", make_pair(0, 1)));
     ranges["PeakIntegral2"] = new pair<float, float>(m_config->Get("PeakIntegral2_range", make_pair(8, 12)));
     // additional ranges from the config file
@@ -327,7 +325,7 @@ void FileWriterTreeDRS4::Configure(){
     for (auto i: polarities)  v_polarities->push_back(uint16_t(i * 1));
     for (auto i: pulser_polarities) v_pulser_polarities->push_back(uint16_t(i * 1));
 
-    // regions
+    // regions todo: add default range
     uint16_t active_regions = m_config->Get("active_regions", uint16_t(0));
     macro->AddLine(TString::Format("active_regions: %d", active_regions));
     for (uint8_t i = 0; i < 4; i++)
