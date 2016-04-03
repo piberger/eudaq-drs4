@@ -680,6 +680,25 @@ float FileWriterTreeDRS4::avgWF(float old_avg, float new_value, int n) {
 
 uint64_t FileWriterTreeDRS4::FileBytes() const { return 0; }
 
+void FileWriterTreeDRS4::ClearVectors(){
+
+    v_is_saturated->clear();
+    v_median->clear();
+    v_average->clear();
+
+    for (auto v_wf:f_wf) v_wf.second->clear();
+
+    f_plane->clear();
+    f_col->clear();
+    f_row->clear();
+    f_adc->clear();
+    f_charge->clear();
+
+    for (auto peak: peaks_x) peak->clear();
+    for (auto peak: peaks_y) peak->clear();
+    for (auto peak: peaks_no) peak->clear();
+}
+
 inline void FileWriterTreeDRS4::ResizeVectors(size_t n_channels) {
     for (auto r: *regions) r.second->Reset();
 
