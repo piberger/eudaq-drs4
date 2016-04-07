@@ -42,6 +42,7 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     regions = new std::map<int,WaveformSignalRegions* >;
     IntegralNames = new std::vector<std::string>;
     IntegralValues = new std::vector<float>;
+    TimeIntegralValues = new vector<float>;
     IntegralPeaks = new std::vector<Int_t>;
     IntegralPeakTime = new std::vector<float>;
     IntegralLength  = new std::vector<float>;
@@ -263,6 +264,7 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     // integrals
     m_ttree->Branch("IntegralNames",&IntegralNames);
     m_ttree->Branch("IntegralValues",&IntegralValues);
+    m_ttree->Branch("TimeIntegralValues",&TimeIntegralValues);
     m_ttree->Branch("IntegralPeaks",&IntegralPeaks);
     m_ttree->Branch("IntegralPeakTime",&IntegralPeakTime);
     m_ttree->Branch("IntegralLength",&IntegralLength);
@@ -682,12 +684,11 @@ void FileWriterTreeDRS4::FillRegionIntegrals(int iwf,const StandardWaveform *wf)
                 std::cout<<"Invalid Integral Pointer. Continue."<<std::endl;
                 continue;
             }
-            if(verbose)
-            std::cout<<"GET INTEGRAL "<<k<< " "<<peak_pos<<" "<<std::endl;
+            if (verbose) cout << "GET INTEGRAL " << k << " " << peak_pos << " " << endl;
             std::string name = p->GetName();
             std::transform(name.begin(), name.end(), name.begin(), ::tolower);
             p->SetPeakPosition(peak_pos,wf->GetNSamples());
-            float integral;
+            float integral, time_integral(0);
             if (name.find("peaktopeak")!=std::string::npos){
                 integral = wf->getPeakToPeak(low_border,high_border);
             }
@@ -698,9 +699,12 @@ void FileWriterTreeDRS4::FillRegionIntegrals(int iwf,const StandardWaveform *wf)
                 integral = wf->getIntegral(low_border,high_border);
             }
             else{
-                integral = wf->getIntegral(p->GetIntegralStart(),p->GetIntegralStop());
+                integral = wf->getIntegral(p->GetIntegralStart(), p->GetIntegralStop());
+                vector<float> time_deltas = GetTimeDeltas(iwf, p->GetIntegralStart(), p->GetIntegralStop());
+                time_integral = wf->getIntegral(p->GetIntegralStart(), p->GetIntegralStop(), time_deltas);
             }
             p->SetIntegral(integral);
+            p->SetTimeIntegral(time_integral);
         }
     }
 } // end FillRegionIntegrals()
@@ -708,6 +712,7 @@ void FileWriterTreeDRS4::FillRegionIntegrals(int iwf,const StandardWaveform *wf)
 void FileWriterTreeDRS4::FillRegionVectors(){
     IntegralNames->clear();
     IntegralValues->clear();
+    TimeIntegralValues->clear();
     IntegralPeaks->clear();
     IntegralPeakTime->clear();
     IntegralLength->clear();
@@ -729,6 +734,7 @@ void FileWriterTreeDRS4::FillRegionVectors(){
                 final_name += p->GetName();
                 IntegralNames->push_back(final_name);
                 IntegralValues->push_back(integral);
+                TimeIntegralValues->push_back(p->GetTimeIntegral());
                 IntegralPeaks->push_back(peak_pos);
                 IntegralPeakTime->push_back(getTriggerTime(iwf, f_trigger_cell, peak_pos));
                 uint16_t bin_low = p->GetIntegralStart();
