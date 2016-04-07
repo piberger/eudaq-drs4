@@ -439,7 +439,6 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
     w_total.Stop();
 } // end WriteEvent()
 
-
 /** =====================================================================
     -------------------------DECONSTRUCTOR-------------------------------
     =====================================================================*/
@@ -451,7 +450,7 @@ FileWriterTreeDRS4::~FileWriterTreeDRS4() {
     long entries = m_ttree->GetEntries();
     ss << "Tree has " << entries << " entries\n";
     double t = w_total.RealTime();
-    ss << "\nTotal time: " <<  setw(2) << setfill('0') << int(t / 60) << ":" << setw(2) << setfill('0') << int(t - int(t / 60));
+    ss << "\nTotal time: " <<  setw(2) << setfill('0') << int(t / 60) << ":" << setw(2) << setfill('0') << int(t - int(t / 60) * 60);
     if (entries > 1000) ss << "\nTime/1000 events: " << int(t / entries * 1000 * 1000) << " ms";
     print_banner(ss.str(), '*');
     m_ttree->Write();
@@ -529,7 +528,7 @@ inline void FileWriterTreeDRS4::ClearVectors(){
     for (auto peak: peaks_x) peak->clear();
     for (auto peak: peaks_y) peak->clear();
     for (auto peak: peaks_no) peak->clear();
-}
+} // end ClearVectors()
 
 inline void FileWriterTreeDRS4::ResizeVectors(size_t n_channels) {
     for (auto r: *regions) r.second->Reset();
@@ -552,7 +551,7 @@ inline void FileWriterTreeDRS4::ResizeVectors(size_t n_channels) {
     fft_max_freq->resize(n_channels, 0);
     for (auto p: fft_modes) p->clear();
     for (auto p: fft_values) p->clear();
-}
+} // end ResizeVectors()
 
 void FileWriterTreeDRS4::DoFFTAnalysis(uint8_t iwf){
     if (!UseWaveForm(fft_waveforms, iwf)) return;
@@ -655,23 +654,20 @@ void FileWriterTreeDRS4::FillSpectrumData(uint8_t iwf){
             v1.at(i) = pol * data->at(i);
         }
     }
-}
+} // end FillSpectrumData()
 
-void FileWriterTreeDRS4::FillRegionIntegrals(int iwf,const StandardWaveform *wf){
-    if (regions->count(iwf)==0)
-        return;
-    WaveformSignalRegions *this_regions = (*regions)[iwf];
-    //
+void FileWriterTreeDRS4::FillRegionIntegrals(uint8_t iwf, const StandardWaveform *wf){
+    if (regions->count(iwf) == 0) return;
+    WaveformSignalRegions * this_regions = (*regions)[iwf];
     UInt_t nRegions = UInt_t(this_regions->GetNRegions());
     for (uint16_t i=0; i < nRegions; i++){
-        if(verbose)
-            std::cout<<"REGION LOOP"<<std::endl;
-        WaveformSignalRegion* region = this_regions->GetRegion(i);
+        if(verbose) cout << "REGION LOOP" << endl;
+        WaveformSignalRegion * region = this_regions->GetRegion(i);
         signed char polarity;
         polarity = (string(region->GetName()).find("pulser") != string::npos) ? this_regions->GetPulserPolarity() : this_regions->GetPolarity();
         Int_t peak_pos;
-        uint32_t low_border = region->GetLowBoarder();
-        uint32_t high_border = region->GetHighBoarder();
+        uint16_t low_border = region->GetLowBoarder();
+        uint16_t high_border = region->GetHighBoarder();
         if (polarity * 1 > 0)
             peak_pos = wf->getIndexMax(low_border,high_border);
         else
@@ -782,7 +778,7 @@ void FileWriterTreeDRS4::UpdateWaveforms(uint8_t iwf){
 } // end UpdateWaveforms()
 
 inline int FileWriterTreeDRS4::IsPulserEvent(const StandardWaveform *wf){
-    float pulser_int = wf->getIntegral(int(ranges["pulserDRS4"]->first), int(ranges["pulserDRS4"]->second), true);
+    float pulser_int = wf->getIntegral(uint16_t(ranges["pulserDRS4"]->first), uint16_t(ranges["pulserDRS4"]->second), true);
     return pulser_int > pulser_threshold;
 } //end IsPulserEvent
 
