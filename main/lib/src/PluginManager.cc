@@ -91,9 +91,17 @@ namespace eudaq {
     }
   }
 
-    std::map<uint8_t, std::vector<float> > PluginManager::GetTimeCalibration(const DetectorEvent & dev) {
-    const eudaq::Event & subev = *dev.GetEvent(0);
-    return GetInstance().GetPlugin(subev).GetTimeCalibration(subev);
+  std::map<uint8_t, std::vector<float> > PluginManager::GetTimeCalibration(const DetectorEvent & dev) {
+
+    for (size_t i_ev = 0; i_ev < dev.NumEvents(); ++i_ev) {
+      const eudaq::Event &subev = *dev.GetEvent(i_ev);
+      if (subev.GetSubType() == "DRS4")
+        return GetInstance().GetPlugin(subev).GetTimeCalibration(subev);
+    }
+    // if there is no sub-event DRS4
+    std::map<uint8_t, std::vector<float> > ret_val;
+    ret_val[0] = {-1};
+    return ret_val;
   }
 
   unsigned PluginManager::GetTriggerID(const Event & ev) {
