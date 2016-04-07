@@ -22,7 +22,9 @@ class WaveformIntegral:public TObject{
         uint16_t GetIntegralStart() const {return integral_start;}
         uint16_t GetIntegralStop() const {return integral_stop;}
         void SetIntegral(float integral);
+        void SetTimeIntegral(float integral) { time_integral = integral; }
         float GetIntegral(){ return !calculated ? std::numeric_limits<float>::quiet_NaN() : integral; }
+        float GetTimeIntegral(){ return time_integral; }
         virtual ~WaveformIntegral();
         void Reset();
         void Print() const {Print(std::cout,true);}
@@ -36,6 +38,7 @@ class WaveformIntegral:public TObject{
         uint16_t integral_start;
         uint16_t integral_stop;
         float integral;
+        float time_integral;
         std::string name;
 };
 
