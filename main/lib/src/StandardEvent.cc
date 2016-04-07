@@ -46,13 +46,11 @@ unsigned StandardWaveform::ID() const {
 }
 
 
-float StandardWaveform::getIntegral(int min, int max, bool _abs) const {
-    if ( max  > this->GetNSamples() - 1)
-        max = this->GetNSamples() -1;
-    if (min < 0)
-        min = 0;
+float StandardWaveform::getIntegral(uint16_t min, uint16_t max, bool _abs) const {
+    if (max > this->GetNSamples() - 1) max = uint16_t(this->GetNSamples() - 1);
+    if (min < 0) min = 0;
     float integral = 0;
-    for (unsigned i = min; i <= max; i++){
+    for (uint16_t i = min; i <= max; i++){
         if(!_abs)
             integral += m_samples.at(i);
         else
@@ -61,6 +59,17 @@ float StandardWaveform::getIntegral(int min, int max, bool _abs) const {
     return integral/(float)(max-(int)min);
 }
 
+float StandardWaveform::getIntegral(uint16_t low_bin, uint16_t high_bin, std::vector<float> tcal, bool _abs) const {
+	if (high_bin > this->GetNSamples() - 1) high_bin = uint16_t(this->GetNSamples() - 1);
+	float integral = 0;
+	for (uint16_t i = low_bin; i <= high_bin; i++){
+		float value = (!_abs) ? m_samples.at(i) : abs(m_samples.at(i));
+		integral += value * tcal.at(i - low_bin);
+	}
+	float integral_length = 0;
+	for (auto i:tcal) integral_length += i;
+	return integral / integral_length;
+}
 
 float StandardWaveform::getMedian(uint32_t min, uint32_t max) const
 {

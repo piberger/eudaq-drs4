@@ -72,7 +72,8 @@ public:
 
     float getSpreadInRange(int min, int max) const{return (getMaxInRange(min,max)-getMinInRange(min,max));};
     float getPeakToPeak(int min, int max) const{return getSpreadInRange(min,max);}
-    float getIntegral(int min, int max,bool _abs=false) const;
+    float getIntegral(uint16_t min, uint16_t max, bool _abs=false) const;
+    float getIntegral(uint16_t low_bin, uint16_t high_bin, std::vector<float> tcal, bool _abs=false) const;
 
 private:
 	uint64_t m_timestamp;
