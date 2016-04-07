@@ -81,11 +81,13 @@ class FileWriterTreeDRS4 : public FileWriter {
 
         vector<int16_t> * v_polarities;
         vector<int16_t> * v_pulser_polarities;
+
         // drs4 timing calibration
         map<uint8_t, vector<float> > tcal;
-        map<uint8_t, map<uint16_t, vector<float> > > time_bins;
-        void FillTimeBins();
-        vector<float> GetTimeBins(uint8_t channel, uint16_t trigger_cell) const { return time_bins.at(channel).at(trigger_cell); }
+        map<uint8_t, vector<float> > full_time;
+        inline float getTriggerTime(const uint8_t & ch, const uint16_t & tcell, const uint16_t & bin);
+        float getTimeDifference(uint8_t ch, uint16_t tcell, uint16_t bin_low, uint16_t bin_up);
+        void FillFullTime();
 
         /** SCALAR BRANCHES */
         int f_nwfs;
@@ -475,10 +477,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
     if (ev.IsBORE()) {
         eudaq::PluginManager::Initialize(ev);
         tcal = PluginManager::GetTimeCalibration(ev);
-        FillTimeBins();
-        cout << "Time bins of trigger cell 50: " << endl;
-//        for (uint8_t i = 0; i < 10; i++) cout << GetTimeBins(0, 50).at(i) << endl;
-
+        FillFullTime();
         cout << "loading the first event...." << endl;
         return;
     }
@@ -951,15 +950,26 @@ inline void FileWriterTreeDRS4::ExtractForcTiming(vector<float> * data) {
 
 void FileWriterTreeDRS4::FillTimeBins() {
 
+void FileWriterTreeDRS4::FillFullTime(){
     uint16_t n_waveform_samples = uint16_t(tcal.at(0).size() / 2);  // tcal vec is two times to big atm, todo: fix that!
-    for (uint8_t i_ch = 0; i_ch < tcal.size(); i_ch++){
-        for (uint16_t i_tc = 0; i_tc < 1024; i_tc++){
-            float t = 0;
-            for (uint16_t i_sp = 0; i_sp < n_waveform_samples; i_sp++)
-                t += tcal.at(i_ch).at(uint64_t((i_sp + i_tc) % 1024));
-                time_bins[i_ch][i_tc].push_back(t);
+    for (auto i_ch:tcal){
+        i_ch.second.resize(n_waveform_samples);
+        float sum = 0;
+        full_time[i_ch.first] = vector<float>();
+        full_time.at(i_ch.first).push_back(sum);
+        for (uint16_t j = 0; j < i_ch.second.size() - 1; j++){
+            sum += i_ch.second.at(uint16_t(j % 1024));
+            full_time.at(i_ch.first).push_back(sum);
         }
     }
+}
+
+inline float FileWriterTreeDRS4::getTriggerTime(const uint8_t & ch, const uint16_t & tcell, const uint16_t & bin) {
+    return full_time.at(ch).at(uint16_t((bin + tcell) % 1024)) - full_time.at(ch).at(tcell);
+}
+
+float FileWriterTreeDRS4::getTimeDifference(uint8_t ch, uint16_t tcell, uint16_t bin_low, uint16_t bin_up) {
+    return full_time.at(ch).at(uint16_t((bin_low + tcell) % 1024)) - full_time.at(ch).at(uint16_t((bin_up + tcell) % 1024));
 }
 
 string FileWriterTreeDRS4::GetBitMask(uint16_t bitmask){
