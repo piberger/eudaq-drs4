@@ -819,6 +819,13 @@ float FileWriterTreeDRS4::getTimeDifference(uint8_t ch, uint16_t tcell, uint16_t
     return full_time.at(ch).at(bin_low + tcell) - full_time.at(ch).at(uint16_t(bin_up + tcell));
 }
 
+vector<float> FileWriterTreeDRS4::GetTimeDeltas(uint8_t ch, uint16_t low_bin, uint16_t high_bin) const {
+    vector<float> time_deltas;
+    for (uint16_t i_bin = low_bin; i_bin <= high_bin; i_bin++)
+        time_deltas.push_back(tcal.at(ch).at(uint16_t((f_trigger_cell + i_bin) % 1024)));
+    return time_deltas;
+}
+
 string FileWriterTreeDRS4::GetBitMask(uint16_t bitmask){
     stringstream ss;
     for (uint8_t i = 0; i < 4; i++) {
