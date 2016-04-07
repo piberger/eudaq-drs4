@@ -973,7 +973,7 @@ void FileWriterTreeDRS4::FillFullTime(){
         float sum = 0;
         full_time[i_ch.first] = vector<float>();
         full_time.at(i_ch.first).push_back(sum);
-        for (uint16_t j = 0; j < i_ch.second.size() - 1; j++){
+        for (uint16_t j = 0; j < i_ch.second.size() * 2 - 1; j++){
             sum += i_ch.second.at(uint16_t(j % 1024));
             full_time.at(i_ch.first).push_back(sum);
         }
@@ -981,11 +981,11 @@ void FileWriterTreeDRS4::FillFullTime(){
 }
 
 inline float FileWriterTreeDRS4::getTriggerTime(const uint8_t & ch, const uint16_t & tcell, const uint16_t & bin) {
-    return full_time.at(ch).at(uint16_t((bin + tcell) % 1024)) - full_time.at(ch).at(tcell);
+    return full_time.at(ch).at(bin + tcell) - full_time.at(ch).at(tcell);
 }
 
 float FileWriterTreeDRS4::getTimeDifference(uint8_t ch, uint16_t tcell, uint16_t bin_low, uint16_t bin_up) {
-    return full_time.at(ch).at(uint16_t((bin_low + tcell) % 1024)) - full_time.at(ch).at(uint16_t((bin_up + tcell) % 1024));
+    return full_time.at(ch).at(bin_low + tcell) - full_time.at(ch).at(uint16_t(bin_up + tcell));
 }
 
 string FileWriterTreeDRS4::GetBitMask(uint16_t bitmask){
