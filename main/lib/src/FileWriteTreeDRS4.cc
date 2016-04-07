@@ -122,6 +122,8 @@ class FileWriterTreeDRS4 : public FileWriter {
         vector<string> * IntegralNames;
         vector<float> * IntegralValues;
         vector<Int_t> * IntegralPeaks;
+        vector<float> * IntegralPeakTime;
+        vector<float> * IntegralLength;
 
         // general waveform information
         vector<bool> 	* v_is_saturated;
@@ -212,6 +214,8 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     IntegralNames = new std::vector<std::string>;
     IntegralValues = new std::vector<float>;
     IntegralPeaks = new std::vector<Int_t>;
+    IntegralPeakTime = new std::vector<float>;
+    IntegralLength  = new std::vector<float>;
 
     // general waveform information
     v_polarities = new vector<int16_t>;
@@ -431,6 +435,8 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("IntegralNames",&IntegralNames);
     m_ttree->Branch("IntegralValues",&IntegralValues);
     m_ttree->Branch("IntegralPeaks",&IntegralPeaks);
+    m_ttree->Branch("IntegralPeakTime",&IntegralPeakTime);
+    m_ttree->Branch("IntegralLength",&IntegralLength);
 
     // DUT
     m_ttree->Branch("polarities", &v_polarities);
@@ -895,6 +901,10 @@ void FileWriterTreeDRS4::FillRegionVectors(){
                 IntegralNames->push_back(final_name);
                 IntegralValues->push_back(integral);
                 IntegralPeaks->push_back(peak_pos);
+                IntegralPeakTime->push_back(getTriggerTime(iwf, f_trigger_cell, peak_pos));
+                uint16_t bin_low = p->GetIntegralStart();
+                uint16_t bin_up = p->GetIntegralStop();
+                IntegralLength->push_back(getTimeDifference(iwf,f_trigger_cell,bin_low,bin_up));
             }
         }
     }
