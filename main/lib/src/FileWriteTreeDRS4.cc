@@ -100,7 +100,8 @@ class FileWriterTreeDRS4 : public FileWriter {
         uint16_t f_trigger_cell;
 
         int f_pulser;
-        uint16_t f_forc_time;
+        vector<uint16_t> * v_forc_pos;
+        vector<float> * v_forc_time;
 
         float spectrum_sigma;
         float spectrum_threshold;
@@ -203,7 +204,8 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     f_signal_events = 0;
     f_time = -1;
     f_pulser = -1;
-    f_forc_time = 0;
+    v_forc_pos = new vector<uint16_t>;
+    v_forc_time = new vector<float>;
 
     // integrals
     regions = new std::map<int,WaveformSignalRegions* >;
@@ -413,8 +415,9 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("event_number", &f_event_number, "event_number/I");
     m_ttree->Branch("time",& f_time, "time/F");
     m_ttree->Branch("pulser",& f_pulser, "pulser/I");
-    m_ttree->Branch("forc_time", &f_forc_time, "forc_time/s");
     m_ttree->Branch("nwfs", &f_nwfs, "n_waveforms/I");
+    m_ttree->Branch("forc_pos", &v_forc_pos);
+    m_ttree->Branch("forc_time", &v_forc_time);
 
     // drs4
     m_ttree->Branch("trigger_cell", &f_trigger_cell, "trigger_cell/s");
@@ -554,7 +557,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         FillTotalRange(iwf, &waveform);
 
         // drs4 info
-        if (iwf == 0) f_trigger_cell = waveform.GetTriggerCell(); // same for every waveform
+        if (iwf == wf_order.at(0)) f_trigger_cell = waveform.GetTriggerCell(); // same for every waveform
 
         // determine FORC timing: trigger WF august: 2, may: 1
         if (verbose > 3) cout << "get trigger wf " << iwf << endl;
@@ -670,11 +673,13 @@ float FileWriterTreeDRS4::avgWF(float old_avg, float new_value, int n) {
 
 uint64_t FileWriterTreeDRS4::FileBytes() const { return 0; }
 
-void FileWriterTreeDRS4::ClearVectors(){
+inline void FileWriterTreeDRS4::ClearVectors(){
 
     v_is_saturated->clear();
     v_median->clear();
     v_average->clear();
+    v_forc_pos->clear();
+    v_forc_time->clear();
 
     for (auto v_wf:f_wf) v_wf.second->clear();
 
@@ -938,17 +943,18 @@ inline int FileWriterTreeDRS4::IsPulserEvent(const StandardWaveform *wf){
 
 inline void FileWriterTreeDRS4::ExtractForcTiming(vector<float> * data) {
     bool found_timing = false;
-    for (uint16_t j=0; j<data->size(); j++){
-        if( abs(data->at(j)) > 90 ) {
-            f_forc_time = j;
+    for (uint16_t j=1; j<data->size(); j++){
+        if( abs(data->at(j)) > 200 && abs(data->at(uint16_t(j - 1))) < 200) {
+            v_forc_pos->push_back(j);
+            v_forc_time->push_back(getTriggerTime(trigger_channel, f_trigger_cell, j));
             found_timing = true;
-            break;
         }
     }
-    if (!found_timing) f_forc_time = 0;
-} //end ExtractForcTiming
-
-void FileWriterTreeDRS4::FillTimeBins() {
+    if (!found_timing) {
+        v_forc_pos->push_back(0);
+        v_forc_time->push_back(-999);
+    }
+} //end ExtractForcTiming()
 
 void FileWriterTreeDRS4::FillFullTime(){
     uint16_t n_waveform_samples = uint16_t(tcal.at(0).size() / 2);  // tcal vec is two times to big atm, todo: fix that!
