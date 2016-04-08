@@ -20,7 +20,7 @@ namespace eudaq {
   } // anonymous namespace
 
   DataCollector::DataCollector(const std::string & name, const std::string & runcontrol, const std::string & listenaddress, const std::string & runnumberfile) :
-    CommandReceiver("DataCollector", name, runcontrol, false), m_runnumberfile(runnumberfile), m_done(false), m_listening(true), m_dataserver(TransportFactory::CreateServer(listenaddress)), m_thread(), m_numwaiting(0), m_itlu((size_t) -1), m_runnumber(
+    CommandReceiver("DataCollector", name, runcontrol, false), m_runnumberfile(runnumberfile), m_done(false), m_listening(true), m_dataserver(TransportFactory::CreateServer(listenaddress)), m_thread(), m_numwaiting(0), m_itu((size_t) -1), m_runnumber(
      ReadFromFile(runnumberfile, 0U)), m_eventnumber(0), m_runstart(0) {
       m_dataserver->SetCallback(TransportCallback(this, &DataCollector::DataHandler));
       EUDAQ_DEBUG("Instantiated datacollector with name: " + name);
@@ -49,18 +49,18 @@ namespace eudaq {
     Info info;
     info.id = std::shared_ptr<ConnectionInfo>(id.Clone());
     m_buffer.push_back(info);
-    if (id.GetType() == "Producer" && id.GetName() == "TLU") {
-      m_itlu = m_buffer.size() - 1;
+    if (id.GetType() == "Producer" && id.GetName() == "TU") {
+      m_itu = m_buffer.size() - 1;
     }
   }
 
   void DataCollector::OnDisconnect(const ConnectionInfo & id) {
     EUDAQ_INFO("Disconnected: " + to_string(id));
     size_t i = GetInfo(id);
-    if (i == m_itlu) {
-      m_itlu = (size_t) -1;
-    } else if (i < m_itlu) {
-      --m_itlu;
+    if (i == m_itu) {
+      m_itu = (size_t) -1;
+    } else if (i < m_itu) {
+      --m_itu;
     }
     m_buffer.erase(m_buffer.begin() + i);
     // if (during run) THROW
@@ -68,7 +68,7 @@ namespace eudaq {
 
   void DataCollector::OnConfigure(const Configuration & param) {
     m_config = param;
-    m_writer =  std::shared_ptr<eudaq::FileWriter>(FileWriterFactory::Create(m_config.Get("FileType", ""), &m_config) );
+    m_writer =  std::shared_ptr<eudaq::FileWriter>(FileWriterFactory::Create(m_config.Get("FileType", "")));
     m_writer->SetFilePattern(m_config.Get("FilePattern", ""));
   }
 
@@ -135,12 +135,12 @@ namespace eudaq {
   void DataCollector::OnStatus() {
     std::string evt;
     if (m_eventnumber > 0)
-      evt = to_string(m_eventnumber );
+      evt = to_string(m_eventnumber);
     m_status.SetTag("EVENT", evt);
     m_status.SetTag("RUN", to_string(m_runnumber));
     if (m_writer.get())
       m_status.SetTag("FILEBYTES", to_string(m_writer->FileBytes()));
-  }
+    }
 
   void DataCollector::OnCompleteEvent() {
     bool more = true;
@@ -152,21 +152,25 @@ namespace eudaq {
       }
       unsigned n_run = m_runnumber, n_ev = m_eventnumber;
       uint64_t n_ts = (uint64_t) -1;
-      if (m_itlu != (size_t) -1) {
-        TLUEvent * ev = static_cast<TLUEvent *>(m_buffer[m_itlu].events.front().get());
+      if (m_itu != (size_t) -1) {
+        TUEvent * ev = static_cast<TUEvent*>(m_buffer[m_itu].events.front().get());
         n_run = ev->GetRunNumber();
-        n_ev = ev->GetEventNumber();
+        n_ev = ev->GetEventNumber(); //m_eventnumber gets
         n_ts = ev->GetTimestamp();
       }
+
+
       DetectorEvent ev(n_run, n_ev, n_ts);
-      unsigned tluev = 0;
+      
+      //start for loop
       for (size_t i = 0; i < m_buffer.size(); ++i) {
         if (m_buffer[i].events.front()->GetRunNumber() != m_runnumber) {
           EUDAQ_ERROR("Run number mismatch in event " + to_string(ev.GetEventNumber()));
         }
+        std::cout << "buffere event nr: " << m_buffer[i].events.front()->GetEventNumber() << " m_ev nr: " << m_eventnumber << std::endl;
         if ((m_buffer[i].events.front()->GetEventNumber() != m_eventnumber) && (m_buffer[i].events.front()->GetEventNumber() != m_eventnumber - 1)) {
           if (ev.GetEventNumber() % 1000 == 0) {
-            // dhaas: added if-statement to filter out TLU event number 0, in case of bad clocking out
+            // dhaas: added if-statement to filter out TU event number 0, in case of bad clocking out
             if (m_buffer[i].events.front()->GetEventNumber() != 0)
               EUDAQ_WARN("Event number mismatch > 2 in event " + to_string(ev.GetEventNumber()) + " " + to_string(m_buffer[i].events.front()->GetEventNumber()) + " " + to_string(m_eventnumber));
             if (m_buffer[i].events.front()->GetEventNumber() == 0)
@@ -179,35 +183,46 @@ namespace eudaq {
           m_numwaiting--;
           more = false;
         }
-      }
+      }//end for
+
+
       if (ev.IsBORE()) {
         ev.SetTag("STARTTIME", m_runstart.Formatted());
         ev.SetTag("CONFIG", to_string(m_config));
-	found_bore = true;
+	      found_bore = true;
       }
+
+
+
       if (ev.IsEORE()) {
         ev.SetTag("STOPTIME", Time::Current().Formatted());
         EUDAQ_INFO("Run " + to_string(ev.GetRunNumber()) + ", EORE = " + to_string(ev.GetEventNumber()));
       }
+
+
+
       if (m_writer.get()) {
-	try{
-	  m_writer->WriteEvent(ev);
-	}
-	catch(const Exception & e){
-	  std::string msg = "Exception writing to file: "; msg+= e.what();
-	  EUDAQ_ERROR(msg);
-	  SetStatus(Status::LVL_ERROR, msg);
-	}
-      } else {
+	      try{
+	        m_writer->WriteEvent(ev);
+	      }catch(const Exception & e){
+	       std::string msg = "Exception writing to file: "; msg+= e.what();
+	       EUDAQ_ERROR(msg);
+	       SetStatus(Status::LVL_ERROR, msg);
+	      }
+      }else{
         EUDAQ_ERROR("Event received before start of run");
       }
 
       // Only increase the internal event counter for non-BORE events.
       // This is required since all producers start sending data with event ID 0
       // but the data collector would already be at 1, since BORE was 0.
+
       if(!found_bore) ++m_eventnumber;
+      if(found_bore) std::cout << "got bore event at m_eventnumber " <<m_eventnumber << std::endl;
     }
   }
+
+
 
   size_t DataCollector::GetInfo(const ConnectionInfo & id) {
     for (size_t i = 0; i < m_buffer.size(); ++i) {
@@ -217,6 +232,8 @@ namespace eudaq {
     }
     EUDAQ_THROW("Unrecognised connection id");
   }
+
+
 
   void DataCollector::DataHandler(TransportEvent & ev) {
     //std::cout << "Event: ";
