@@ -387,10 +387,10 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
 
         // calculate the signal and so on
         // float sig = CalculatePeak(data, 1075, 1150);
-        if (verbose > 3) cout<<"get Values1.0 "<<iwf<<endl;
-        FillRegionIntegrals(iwf,&waveform);
+        if (verbose > 3) cout << "get Values1.0 " << iwf << endl;
+        FillRegionIntegrals(iwf, &waveform);
 
-        if (verbose > 3) cout<<"get Values1.1 "<<iwf<<endl;
+        if (verbose > 3) cout << "get Values1.1 " << iwf << endl;
         FillTotalRange(iwf, &waveform);
 
         // drs4 info
