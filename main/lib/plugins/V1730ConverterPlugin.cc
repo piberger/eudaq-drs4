@@ -17,7 +17,7 @@ class V1730ConverterPlugin:public DataConverterPlugin {
 
 public:
   virtual void Initialize(const Event & bore, const Configuration & cnf) {
-	std::cout<<"V1730 Initialize"<<std::endl;
+	//std::cout<<"V1730 Initialize"<<std::endl;
 	//m_serialno = bore.GetTag("V1730_serial_no", (int)-1);
 	//m_firmware = bore.GetTag("V1730_firmware_v", (int)-1);
 	//m_timestamp = bore.GetTag("V1730_timestamp", (int)-1);
@@ -96,7 +96,9 @@ public:
 
 private:
   V1730ConverterPlugin() : DataConverterPlugin(EVENT_TYPE), m_serialno(-1), m_firmware(-1), m_range(0){
-	std::cout<<"V1730ConverterPlugin Constructor"<<std::endl;}
+	//std::cout<<"V1730ConverterPlugin Constructor"<<std::endl;
+
+}
 
   uint64_t m_timestamp;
   uint32_t m_serialno;

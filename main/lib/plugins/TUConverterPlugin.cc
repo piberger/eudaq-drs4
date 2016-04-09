@@ -11,10 +11,15 @@ namespace eudaq{
             TUConverterPlugin() : DataConverterPlugin(Event::str2id("_TU")){} //changed from "_TU"
             virtual unsigned GetTriggerID(const eudaq::Event & ev) const{return ev.GetEventNumber();}
             
+            virtual void Initialize(const Event & bore, const Configuration & cnf){
+                std::cout << bore.GetTag("FirmwareID") << std::endl;
+
+            }
             virtual bool GetStandardSubEvent(eudaq::StandardEvent &sev, const eudaq::Event &ev) const{
                 const RawDataEvent & in_raw = dynamic_cast<const RawDataEvent &>(ev);
                 
                 int valid = std::stoi(in_raw.GetTag("valid"));
+                std::cout << "hello fuckers" << std::endl;
 
                 if(valid){
                      int id = 0;
@@ -44,16 +49,14 @@ namespace eudaq{
 
                      sev.SetTimestamp(time_stamp);
                      //add rest of values to sev
-
                 }
-
-
                 return true;
             }
 
 
         private:
             static TUConverterPlugin const m_instance;
+
         };
 
     TUConverterPlugin const TUConverterPlugin::m_instance;

@@ -8,8 +8,6 @@
 ** Author: Christian Dorfer (dorfer@phys.ethz.ch)
 ** ---------------------------------------------------------------------------------*/
 
-//FIX:remove ausgabe, besseres event sending (bitwise), main window, bore event bekommt ganzes config
-
 
 //system includes
 #include <iostream>
