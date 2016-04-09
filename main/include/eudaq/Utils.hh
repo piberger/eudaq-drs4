@@ -31,7 +31,7 @@ namespace eudaq {
   std::string DLLEXPORT ucase(const std::string &);
   std::string DLLEXPORT lcase(const std::string &);
 //  std::string DLLEXPORT trim(const std::string & s);
-  std::string DLLEXPORT trim(const std::string & s, std::string trim_characters="\t\n\r\v");
+  std::string DLLEXPORT trim(const std::string & s, std::string trim_characters="\t\n\r\v ");
   std::string DLLEXPORT firstline(const std::string & s);
   std::string DLLEXPORT escape(const std::string &);
   std::vector<std::string> DLLEXPORT split(const std::string & str, const std::string & delim = "\t");
