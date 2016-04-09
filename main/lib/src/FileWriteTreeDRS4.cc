@@ -665,13 +665,9 @@ void FileWriterTreeDRS4::FillRegionIntegrals(uint8_t iwf, const StandardWaveform
         WaveformSignalRegion * region = this_regions->GetRegion(i);
         signed char polarity;
         polarity = (string(region->GetName()).find("pulser") != string::npos) ? this_regions->GetPulserPolarity() : this_regions->GetPolarity();
-        Int_t peak_pos;
         uint16_t low_border = region->GetLowBoarder();
         uint16_t high_border = region->GetHighBoarder();
-        if (polarity * 1 > 0)
-            peak_pos = wf->getIndexMax(low_border,high_border);
-        else
-            peak_pos = wf->getIndexMin(low_border,high_border);
+        uint16_t peak_pos = wf->getIndex(low_border, high_border, polarity);
         region->SetPeakPostion(peak_pos);
         size_t nIntegrals = region->GetNIntegrals();
         for (UInt_t k = 0; k < nIntegrals;k++){
