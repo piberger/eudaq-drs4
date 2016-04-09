@@ -694,10 +694,9 @@ void FileWriterTreeDRS4::FillRegionIntegrals(uint8_t iwf, const StandardWaveform
             else if (name.find("full")!=name.npos){
                 integral = wf->getIntegral(low_border,high_border);
             }
-            else{
+            else {
                 integral = wf->getIntegral(p->GetIntegralStart(), p->GetIntegralStop());
-                vector<float> time_deltas = GetTimeDeltas(iwf, p->GetIntegralStart(), p->GetIntegralStop());
-                time_integral = wf->getIntegral(p->GetIntegralStart(), p->GetIntegralStop(), time_deltas);
+                time_integral = wf->getIntegral(p->GetIntegralStart(), p->GetIntegralStop(), peak_pos, f_trigger_cell, &tcal.at(iwf));
             }
             p->SetIntegral(integral);
             p->SetTimeIntegral(time_integral);
@@ -735,7 +734,7 @@ void FileWriterTreeDRS4::FillRegionVectors(){
                 IntegralPeakTime->push_back(getTriggerTime(iwf, f_trigger_cell, peak_pos));
                 uint16_t bin_low = p->GetIntegralStart();
                 uint16_t bin_up = p->GetIntegralStop();
-                IntegralLength->push_back(getTimeDifference(iwf,f_trigger_cell,bin_low,bin_up));
+                IntegralLength->push_back(getTimeDifference(iwf, f_trigger_cell, bin_low, bin_up));
             }
         }
     }
@@ -816,14 +815,7 @@ inline float FileWriterTreeDRS4::getTriggerTime(const uint8_t & ch, const uint16
 }
 
 float FileWriterTreeDRS4::getTimeDifference(uint8_t ch, uint16_t tcell, uint16_t bin_low, uint16_t bin_up) {
-    return full_time.at(ch).at(bin_low + tcell) - full_time.at(ch).at(uint16_t(bin_up + tcell));
-}
-
-vector<float> FileWriterTreeDRS4::GetTimeDeltas(uint8_t ch, uint16_t low_bin, uint16_t high_bin) const {
-    vector<float> time_deltas;
-    for (uint16_t i_bin = low_bin; i_bin <= high_bin; i_bin++)
-        time_deltas.push_back(tcal.at(ch).at(uint16_t((f_trigger_cell + i_bin) % 1024)));
-    return time_deltas;
+    return full_time.at(ch).at(bin_up + tcell) - full_time.at(ch).at(uint16_t(bin_low + tcell));
 }
 
 string FileWriterTreeDRS4::GetBitMask(uint16_t bitmask){

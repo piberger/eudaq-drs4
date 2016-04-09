@@ -95,7 +95,6 @@ namespace eudaq {
         void FillFullTime();
         inline float getTriggerTime(const uint8_t &ch, const uint16_t &tcell, const uint16_t &bin);
         float getTimeDifference(uint8_t ch, uint16_t tcell, uint16_t bin_low, uint16_t bin_up);
-        std::vector<float> GetTimeDeltas(uint8_t ch, uint16_t low_bin, uint16_t high_bin) const;
 
         /** SCALAR BRANCHES */
         int f_nwfs;
