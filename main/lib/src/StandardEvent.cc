@@ -59,16 +59,31 @@ float StandardWaveform::getIntegral(uint16_t min, uint16_t max, bool _abs) const
     return integral/(float)(max-(int)min);
 }
 
-float StandardWaveform::getIntegral(uint16_t low_bin, uint16_t high_bin, std::vector<float> tcal, bool _abs) const {
+float StandardWaveform::getIntegral(uint16_t low_bin, uint16_t high_bin, uint16_t peak_pos, uint16_t tcell, std::vector<float> * tcal) const {
 	if (high_bin > this->GetNSamples() - 1) high_bin = uint16_t(this->GetNSamples() - 1);
-	float integral = 0;
-	for (uint16_t i = low_bin; i <= high_bin; i++){
-		float value = (!_abs) ? m_samples.at(i) : abs(m_samples.at(i));
-		integral += value * tcal.at(i - low_bin);
+	float max_low_length = (peak_pos - low_bin) * float(.5);
+	float max_high_length = (high_bin - peak_pos - 1) * float(.5);
+    uint16_t size = std::min(m_samples.size(), tcal->size());
+	float integral = tcal->at((tcell + peak_pos) % size) * m_samples.at(peak_pos);  // take the value at the peak pos as start value
+	// sum up the times if the bins to the left side of the peak pos until max length is reached
+	uint16_t i = uint16_t(peak_pos - 1);
+	float low_length = tcal->at((peak_pos + tcell) % size) / 2.;
+	while (low_length + tcal->at((i + tcell) % size) < max_low_length) {
+		low_length += tcal->at((i + tcell) % size);
+		integral += m_samples.at(i) * tcal->at((i + tcell) % size);
+		i--;
 	}
-	float integral_length = 0;
-	for (auto i:tcal) integral_length += i;
-	return integral / integral_length;
+	integral += (max_low_length - low_length) * m_samples.at(i);
+	// same thing for the right side
+	i = uint16_t(peak_pos + 1);
+	float high_length = tcal->at((peak_pos + tcell) % size) / 2.;
+	while (high_length+tcal->at((i + tcell) % size) < max_high_length) {
+		high_length += tcal->at((i + tcell) % size);
+		integral += m_samples.at(i) * tcal->at((i + tcell) % size);
+		i++;
+	}
+	integral += (max_high_length - high_length) * m_samples.at(i);
+	return integral / (max_high_length + max_low_length);
 }
 
 float StandardWaveform::getMedian(uint32_t min, uint32_t max) const
