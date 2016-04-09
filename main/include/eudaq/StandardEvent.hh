@@ -50,19 +50,23 @@ public:
     float getAbsMaxInRange(int min,int max) const{
         return abs(m_samples.at(getIndexAbsMax(min,max)));
     }
-    int getIndexMin(int min, int max) const{
+	uint16_t getIndexMin(int min, int max) const{
         float* min_el = std::min_element(&m_samples.at(min), &m_samples.at(max));
-        return std::distance(&m_samples.at(0),min_el);//-m_samples.begin();
+        return uint16_t(std::distance(&m_samples.at(0),min_el));//-m_samples.begin();
     };
     int getIndexAbsMax(int min,int max) const{
         float mi = getIndexMin(min,max);
         float ma = getIndexMax(min,max);
         return abs(m_samples.at(mi))>abs(m_samples.at(ma))?mi:ma;
     }
-    int getIndexMax(int min, int max) const{
+	uint16_t getIndexMax(int min, int max) const{
         float* max_el = std::max_element(&m_samples.at(min), &m_samples.at(max));
-        return std::distance(&m_samples.at(0),max_el);//-m_samples.begin();
+        return uint16_t(std::distance(&m_samples.at(0),max_el));//-m_samples.begin();
     };
+
+	uint16_t getIndex(uint16_t min, uint16_t max, signed char pol) const {
+		return (pol * 1 > 0) ? getIndexMax(min, max) : getIndexMin(min, max);
+	}
 
     std::pair<int,float> getAbsMaxAndValue(int min, int max) const{
         int index = getIndexAbsMax(min,max);
