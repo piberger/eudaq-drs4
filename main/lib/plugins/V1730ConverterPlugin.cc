@@ -90,10 +90,6 @@ public:
 
 
 
-
-
-
-
 private:
   V1730ConverterPlugin() : DataConverterPlugin(EVENT_TYPE), m_serialno(-1), m_firmware(-1), m_range(0){
 	//std::cout<<"V1730ConverterPlugin Constructor"<<std::endl;

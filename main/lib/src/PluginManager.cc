@@ -64,6 +64,7 @@ namespace eudaq {
   }
 
 
+
   void PluginManager::PrintPlugins() const{
       std::map<t_eventid, DataConverterPlugin *>::const_iterator it;
 //           = m_pluginmap.find(eventtype);
@@ -71,16 +72,26 @@ namespace eudaq {
       for (it =  m_pluginmap.begin(); it!= m_pluginmap.end(); it++)
           std::cout<<"Plugin: "<<it->first.first<<"/"<<it->first.second<<": "<<it->second<<std::endl;
   }
+
+
   DataConverterPlugin & PluginManager::GetPlugin(PluginManager::t_eventid eventtype) {
-    std::map<t_eventid, DataConverterPlugin *>::iterator pluginiter
-      = m_pluginmap.find(eventtype);
+    std::map<t_eventid, DataConverterPlugin *>::iterator pluginiter = m_pluginmap.find(eventtype);
+
+    /*
+    std::cout << Event::id2str(eventtype.first) << " : " <<eventtype.second << std::endl;
+    std::cout << "Available plugins: " << std::endl;
+    for (auto it=m_pluginmap.begin(); it!=m_pluginmap.end(); ++it){
+      const t_eventid temp = it->first;
+      std::cout << "Plugin: " << temp.second << " : " << temp.first << std::endl;
+    }
+  */
 
     if (pluginiter == m_pluginmap.end()) {
       EUDAQ_THROW("PluginManager::GetPlugin(): Unkown event type "+Event::id2str(eventtype.first)+":"+eventtype.second);
     }
-
     return *pluginiter->second;
   }
+
 
   void PluginManager::Initialize(const DetectorEvent & dev) {
     eudaq::Configuration conf(dev.GetTag("CONFIG"));

@@ -171,7 +171,8 @@ void TUProducer::MainLoop(){
 
 
 		if(TUJustStopped){
-			SendEvent(TUEvent::EORE(m_run, ++m_ev));
+			//SendEvent(TUEvent::EORE(m_run, ++m_ev));
+		    SendEvent(eudaq::RawDataEvent::EORE(event_type, m_run, m_ev));
 			OnStatus();
 			TUJustStopped = false;
 		}
@@ -189,11 +190,14 @@ void TUProducer::OnStartRun(unsigned run_nr) {
 		m_ev = 0;
 
 		std::cout << "--> Starting TU Run." << std::endl;
-		TUEvent ev(TUEvent::BORE(m_run));
+
+		//TUEvent ev(TUEvent::BORE(m_run));
+		eudaq::RawDataEvent ev(eudaq::RawDataEvent::BORE(event_type, m_run));
 		ev.SetTag("FirmwareID", "not given"); //FIXME!
 		ev.SetTag("TriggerMask", "0x" + eudaq::to_hex(trg_mask));
 		ev.SetTimeStampToNow();
 		SendEvent(ev);
+
 		std::cout << "Sent BORE event." << std::endl;
 
 		OnReset();

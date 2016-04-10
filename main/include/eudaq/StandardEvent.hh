@@ -233,10 +233,14 @@ public:
 	void SetBeamCurrent(unsigned int cc){cal_beam_current=cc;}
 	unsigned int GetBeamCurrent() const {return cal_beam_current;}
 
+	void SetValid(bool in){m_valid=in;}
+	bool GetValid(){return m_valid;}
+
 	std::string GetType() const {return m_type;}
 	void Print(std::ostream &) const;
 
 private:
+	bool m_valid;
 	std::string m_type;
 	uint64_t m_timestamp;
 	unsigned int coincidence_count;

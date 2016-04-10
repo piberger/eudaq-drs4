@@ -4,7 +4,7 @@
 
 namespace eudaq {
 
-  EUDAQ_DEFINE_EVENT(TUEvent, str2id("_TU"));
+  EUDAQ_DEFINE_EVENT(TUEvent, str2id("TU"));
 
   TUEvent::TUEvent(Deserializer & ds) :
     Event(ds)

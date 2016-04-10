@@ -9,7 +9,7 @@ namespace eudaq{
 
     class TUConverterPlugin:public DataConverterPlugin{
         public:
-            TUConverterPlugin() : DataConverterPlugin(Event::str2id("_TU")){} //changed from "_TU"
+            TUConverterPlugin():DataConverterPlugin(EVENT_TYPE){}
             virtual unsigned GetTriggerID(const eudaq::Event & ev) const{return ev.GetEventNumber();}
             
             virtual void Initialize(const Event & bore, const Configuration & cnf){
@@ -20,8 +20,6 @@ namespace eudaq{
                 const RawDataEvent & in_raw = dynamic_cast<const RawDataEvent &>(ev);
                 
                 int valid = std::stoi(in_raw.GetTag("valid"));
-                std::cout << "hello fuckers" << std::endl;
-
                 if(valid){
                      int id = 0;
                      RawDataEvent::data_t data = in_raw.GetBlock(id);
@@ -51,6 +49,7 @@ namespace eudaq{
                      //add data to the StandardEvent:
                      sev.SetTimestamp(time_stamp);
                      StandardTUEvent tuev(EVENT_TYPE);
+                     tuev.SetValid(1);
                      tuev.SetTimeStamp(time_stamp);
                      tuev.SetCoincCount(coincidence_count);
                      tuev.SetCoincCountNoSin(coincidence_count_no_sin);
@@ -58,8 +57,12 @@ namespace eudaq{
                      tuev.SetHandshakeCount(handshake_count);
                      tuev.SetBeamCurrent(cal_beam_current);
                      sev.AddTUEvent(tuev);
-
+                }else{
+                     StandardTUEvent tuev(EVENT_TYPE);
+                     tuev.SetValid(0);
+                     sev.AddTUEvent(tuev);
                 }
+
                 return true;
             }
 
