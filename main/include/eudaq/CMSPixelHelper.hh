@@ -34,15 +34,15 @@ using namespace pxar;
 
 namespace eudaq {
 
-    struct VCALDict {
-        int row;
-        int col;
-        float par0;
-        float par1;
-        float par2;
-        float par3;
-        float calibration_factor;
-    };
+  struct VCALDict {
+    int row;
+    int col;
+    float par0;
+    float par1;
+    float par2;
+    float par3;
+    float calibration_factor;
+  };
 
 
 
@@ -94,44 +94,39 @@ namespace eudaq {
     }
 
     void read_PHCalibrationData(const Configuration & cnf){
-        std::cout<<"REAAD PH CALIBRATION"<<std::endl;
-        for (auto i: cnf.GetSections()){
-            if (i.find("Producer.")==-1)
-                continue;
-            cnf.SetSection(i);
-            std::string roctype = cnf.Get("roctype","roctype","");
-            if (roctype == "")
-                continue;
-            bool is_digital = true;
-            if (roctype.find("dig")==-1)
-                is_digital = false;
+      std::cout << "READ PH CALIBRATION..." << std::endl;
+      for (auto i: cnf.GetSections()){
+        if (i.find("Producer.")==-1) continue;
+        cnf.SetSection(i);
+        std::string roctype = cnf.Get("roctype","roctype","");
+        if (roctype == "") continue;
+        bool is_digital = (roctype.find("dig") == -1) ? false : true;
 
-            std::string fname = cnf.Get("phCalibrationFile","");
-            if (fname == ""){
-                fname = cnf.Get("dacFile","");
-                std::size_t found = fname.find_last_of("/");
-                if (is_digital)
-                    fname = fname.substr(0,found) + (std::string)"/phCalibrationFitErr";
-                else
-                    fname = fname.substr(0,found) + (std::string)"/phCalibrationGErfFit";
-            }
-            std::string i2c = cnf.Get("i2c","i2caddresses","0");
-            if (i.find("REF") != -1)
-                read_PH_CalibrationFile("REF",fname,i2c,roc_calibrations[roctype]);
-            else if (i.find("ANA") != -1)
-                read_PH_CalibrationFile("ANA",fname,i2c,roc_calibrations[roctype]);
-            else if (i.find("DIG") != -1)
-                read_PH_CalibrationFile("DIG",fname,i2c,roc_calibrations[roctype]);
-            else if (i.find("TRP") != -1)
-                read_PH_CalibrationFile("TRP",fname,i2c,roc_calibrations[roctype]);
-            else
-                read_PH_CalibrationFile("DUT",fname,i2c,roc_calibrations[roctype]);
+        std::string fname = m_conv_cfg->Get("phCalibrationFile", "");
+        if (fname == "") fname = cnf.Get("phCalibrationFile","");
+        if (fname == "") {
+          fname = cnf.Get("dacFile", "");
+          size_t found = fname.find_last_of("/");
+          fname = fname.substr(0, found);
         }
+        fname += (is_digital) ? "/phCalibrationFitErr" : "/phCalibrationGErfFit";
+        std::string i2c = cnf.Get("i2c","i2caddresses","0");
+        if (i.find("REF") != -1)
+          read_PH_CalibrationFile("REF", fname, i2c, roc_calibrations.at(roctype));
+        else if (i.find("ANA") != -1)
+          read_PH_CalibrationFile("ANA", fname, i2c, roc_calibrations.at(roctype));
+        else if (i.find("DIG") != -1)
+          read_PH_CalibrationFile("DIG", fname, i2c, roc_calibrations.at(roctype));
+        else if (i.find("TRP") != -1)
+          read_PH_CalibrationFile("TRP", fname, i2c, roc_calibrations.at(roctype));
+        else
+          read_PH_CalibrationFile("DUT", fname, i2c, roc_calibrations.at(roctype));
+      }
     }
 
     void read_PH_CalibrationFile(std::string roc_type,std::string fname, std::string i2cs,float factor){
       std::vector<std::string> vec_i2c = split(i2cs," ");
-      int nRocs  = vec_i2c.size();
+      size_t nRocs  = vec_i2c.size();
 
       // getting vcal-charge translation from file
       //
@@ -139,7 +134,7 @@ namespace eudaq {
       int row, col;
       std::string dump;
       char trash[30];
-      for (int iroc = 0; iroc<nRocs; iroc++){
+      for (uint16_t iroc = 0; iroc < nRocs; iroc++){
         std::string i2c = vec_i2c.at(iroc);
         FILE * fp;
         char *line = NULL;
@@ -147,36 +142,28 @@ namespace eudaq {
         ssize_t read;
         
         TString filename = fname;
-        filename+=(std::string)"_C"+(std::string)i2c+(std::string)".dat";
-        std::cout<<filename<< " with " << factor <<" e/ADC" << std::endl;
-        fp = fopen (filename,"r");//String::Format("/home/testbeam/sdvlp/TrackingTelescope/Calibrations/telescope9/phCalibrationGErfFit_C%d.dat", iroc), "r");
-        //std::cout << "this is the file: " << fp << std::endl;
+        filename += "_C"+ i2c + ".dat";
+        fp = fopen (filename, "r");
 
         VCALDict tmp_vcaldict;
-        if (!fp) {
-          std::cout <<  " DID NOT FIND A FILE TO GO FROM ADC TO CHARGE!!!!" << std::endl;}
+        if (!fp) std::cout <<  "  DID NOT FIND A FILE TO GO FROM ADC TO CHARGE!!" << std::endl;
         else{
-          std::cout <<  " FILLING THE VCAL - ADC TRANSLATION FACTORS!!!!" << std::endl;
-          read = getline(&line,&len,fp);
-          read = getline(&line,&len,fp);
-          read = getline(&line,&len,fp);
+          // jump to fourth line
+          for (uint8_t i = 0; i < 3; i++) if (!getline(&line, &len, fp)) return;
 
           int q = 0;
           while (fscanf(fp, "%f %f %f %f %s %d %d", &par0, &par1, &par2, &par3, trash,&col, &row) == 7){
-              // std::cout << "par0: " << par0 << "  par1: " << par1 << " row and col " << row << " " << col << std::endl;
-              tmp_vcaldict.par0 = par0;
-              tmp_vcaldict.par1 = par1;
-              tmp_vcaldict.par2 = par2;
-              tmp_vcaldict.par3 = par3;
-              tmp_vcaldict.calibration_factor = factor;
-              std::string identifier = roc_type + std::string( TString::Format("%01d%02d%02d",iroc,row,col));
-              //if (q==0) std::cout<<"IDENTIFIER: "<<identifier<<std::endl;
-              q++;
-              vcal_vals[identifier] = tmp_vcaldict;
+            tmp_vcaldict.par0 = par0;
+            tmp_vcaldict.par1 = par1;
+            tmp_vcaldict.par2 = par2;
+            tmp_vcaldict.par3 = par3;
+            tmp_vcaldict.calibration_factor = factor;
+            std::string identifier = roc_type + std::string( TString::Format("%01d%02d%02d",iroc,row,col));
+            q++;
+            vcal_vals[identifier] = tmp_vcaldict;
           }
-          std::cout<<"Read "<<q <<" Pixels for "<<roc_type<<i2c<<std::endl;
         }
-        delete fp;
+        fclose(fp);
       }
     }
 
