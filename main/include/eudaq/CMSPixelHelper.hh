@@ -66,6 +66,8 @@ namespace eudaq {
         //std::cout<<"get Charge: "<<val<<" "<<d.par0<<" "<<d.par1<<" "<<d.par2<<" "<<d.par3<<" "<<charge<<std::endl;
         return charge;
     }
+    virtual void SetConfig(Configuration * conv_cfg) { m_conv_cfg = conv_cfg; }
+
     void Initialize(const Event & bore, const Configuration & cnf) {
       DeviceDictionary* devDict;
       std::string roctype = bore.GetTag("ROCTYPE", "");
@@ -399,6 +401,7 @@ namespace eudaq {
     std::string m_event_type;
     mutable pxar::statistics decoding_stats;
     bool do_conversion;
+    Configuration * m_conv_cfg;
     static std::vector<uint16_t> TransformRawData(const std::vector<unsigned char> & block) {
 
       // Transform data of form char* to vector<int16_t>

@@ -315,6 +315,7 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     =====================================================================*/
 void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
     if (ev.IsBORE()) {
+        PluginManager::SetConfig(ev, m_config);
         eudaq::PluginManager::Initialize(ev);
         tcal = PluginManager::GetTimeCalibration(ev);
         FillFullTime();

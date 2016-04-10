@@ -104,6 +104,13 @@ namespace eudaq {
     return ret_val;
   }
 
+  void PluginManager::SetConfig(const DetectorEvent & dev, Configuration * conv_cfg) {
+    for (size_t i = 0; i < dev.NumEvents(); ++i) {
+      const eudaq::Event & subev = *dev.GetEvent(i);
+      GetInstance().GetPlugin(subev).SetConfig(conv_cfg);
+    }
+  }
+
   unsigned PluginManager::GetTriggerID(const Event & ev) {
     return GetInstance().GetPlugin(ev).GetTriggerID(ev);
   }
