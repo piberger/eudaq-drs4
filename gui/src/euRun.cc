@@ -13,7 +13,7 @@
 static const char * statuses[] = {
   "RUN",        "Run Number",
   "FILEBYTES",  "File Size",
-  "EVENT",      "DC Events Built",
+  "EVENT",      "Events Built",
   "TUSTAT",     "TU Status",
   "COINCCOUNT", "Coincidence Count",
   "COINCRATE",   "Coincidence Rate",

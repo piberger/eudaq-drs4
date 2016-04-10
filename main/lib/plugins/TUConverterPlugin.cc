@@ -1,5 +1,6 @@
 #include "eudaq/DataConverterPlugin.hh"
 #include "eudaq/TUEvent.hh"
+#include "eudaq/StandardEvent.hh"
 #include <string>
 
 namespace eudaq{
@@ -47,12 +48,20 @@ namespace eudaq{
                      unsigned int cal_beam_current = static_cast<unsigned int>(data[0]);
                      id++;
 
+                     //add data to the StandardEvent:
                      sev.SetTimestamp(time_stamp);
-                     //add rest of values to sev
+                     StandardTUEvent tuev(EVENT_TYPE);
+                     tuev.SetTimeStamp(time_stamp);
+                     tuev.SetCoincCount(coincidence_count);
+                     tuev.SetCoincCountNoSin(coincidence_count_no_sin);
+                     tuev.SetPrescalerCount(prescaler_count);
+                     tuev.SetHandshakeCount(handshake_count);
+                     tuev.SetBeamCurrent(cal_beam_current);
+                     sev.AddTUEvent(tuev);
+
                 }
                 return true;
             }
-
 
         private:
             static TUConverterPlugin const m_instance;

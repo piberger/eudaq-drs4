@@ -73,7 +73,7 @@ void TUProducer::MainLoop(){
 		}
 			    	
 		if(TUStarted || TUJustStopped){
-			eudaq::mSleep(500); //only read out every second
+			eudaq::mSleep(250); //only read out every second
 			
 			//auto start0 = std::chrono::high_resolution_clock::now(); //debugging
 
@@ -109,7 +109,6 @@ void TUProducer::MainLoop(){
 				//auto elapsed0 = std::chrono::high_resolution_clock::now() - start0;//debugging
 				//long long readout = std::chrono::duration_cast<std::chrono::microseconds>(elapsed0).count();//debugging
 				//std::cout << readout;
-
 
 				//check if eventnumber has changed since last readout:
 				if(coincidence_count != prev_coincidence_count){
