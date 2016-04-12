@@ -8,7 +8,7 @@
 
 #include "eudaq/TransportServer.hh"
 #include "eudaq/CommandReceiver.hh"
-#include "eudaq/Event.hh"
+#include "eudaq/TUEvent.hh"
 #include "eudaq/FileWriter.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Utils.hh"
@@ -56,7 +56,7 @@ namespace eudaq {
 	  std::unique_ptr<std::thread> m_thread;
       std::vector<Info> m_buffer;
       size_t m_numwaiting; ///< The number of producers with events waiting in the buffer
-      size_t m_itlu; ///< Index of TLU in m_buffer vector, or -1 if no TLU
+      size_t m_itu; ///< Index of TLU in m_buffer vector, or -1 if no TLU
       unsigned m_runnumber, m_eventnumber;
       std::shared_ptr<FileWriter> m_writer;
       Configuration m_config;
