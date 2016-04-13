@@ -1,5 +1,4 @@
 #include "eudaq/DataConverterPlugin.hh"
-#include "eudaq/TUEvent.hh"
 #include "eudaq/StandardEvent.hh"
 #include <string>
 

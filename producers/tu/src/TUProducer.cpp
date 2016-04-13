@@ -28,11 +28,9 @@
 
 //TU includes
 #include "TUProducer.hh"
-#include "eudaq/TUEvent.hh"
 #include "trigger_controll.h"
 
 static const std::string EVENT_TYPE = "TU";
-typedef eudaq::TUEvent TUEvent;
 
 
 TUProducer::TUProducer(const std::string &name, const std::string &runcontrol, const std::string &verbosity):eudaq::Producer(name, runcontrol),
@@ -171,7 +169,6 @@ void TUProducer::MainLoop(){
 
 
 		if(TUJustStopped){
-			//SendEvent(TUEvent::EORE(m_run, ++m_ev));
 		    SendEvent(eudaq::RawDataEvent::EORE(event_type, m_run, m_ev));
 			OnStatus();
 			TUJustStopped = false;
@@ -191,7 +188,6 @@ void TUProducer::OnStartRun(unsigned run_nr) {
 
 		std::cout << "--> Starting TU Run." << std::endl;
 
-		//TUEvent ev(TUEvent::BORE(m_run));
 		eudaq::RawDataEvent ev(eudaq::RawDataEvent::BORE(event_type, m_run));
 		ev.SetTag("FirmwareID", "not given"); //FIXME!
 		ev.SetTag("TriggerMask", "0x" + eudaq::to_hex(trg_mask));
@@ -486,28 +482,3 @@ int main(int /*argc*/, const char ** argv) {
 	}
 	return 0;
 }
-
-
-	      			//TUEvent ev(m_run, m_ev, ts);
-					//ev.SetTag("valid", std::to_string(1));
-					//ev.SetTag("coincidence_count_no_sin", std::to_string(coincidence_count_no_sin));
-					//ev.SetTag("coincidence_count", std::to_string(coincidence_count));
-					//ev.SetTag("cal_beam_current", std::to_string(cal_beam_current));
-					//ev.SetTag("prescaler_count", std::to_string(prescaler_count));
-					//ev.SetTag("prescaler_count_xor_pulser_count", std::to_string(prescaler_count_xor_pulser_count));
-					//ev.SetTag("handshake_count", std::to_string(handshake_count));
-					//for(int idx=0; idx<10; idx++){
-					//	ev.SetTag("scaler" + std::to_string(idx), std::to_string(trigger_counts[idx]));
-					//}
-					//SendEvent(ev);
-					//std::cout << "##### real event " << m_ev << "sent." << std::endl;
-					//auto elapsed2 = std::chrono::high_resolution_clock::now() - start2;
-					//long long real = std::chrono::duration_cast<std::chrono::microseconds>(elapsed2).count();
-					//std::cout << " " << real << std::endl;
-					//std::cout << std::endl;
-
-/*
-							TUEvent f_ev(m_run, id, 0); 
-							f_ev.SetTag("valid", std::to_string(0));
-							SendEvent(f_ev);
-							*/
