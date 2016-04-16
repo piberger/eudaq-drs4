@@ -1,17 +1,28 @@
-#ifndef V1730PRODUCER_HH
-#define V1730PRODUCER_HH
+/* ---------------------------------------------------------------------------------
+** CAEN VX1742 implementation into the EUDAQ framework
+** 
+**
+** <VX1742Producer>.hh
+** 
+** Date: April 2016
+** Author: Christian Dorfer (dorfer@phys.ethz.ch)
+** ---------------------------------------------------------------------------------*/
+
+
+#ifndef VX1742PRODUCER_HH
+#define VX1742PRODUCER_HH
+
+// VME includes
+#include "RCDVme/RCDVme.h"
+#include "RCDVme/RCDCmemSegment.h"
 
 
 class Producer;
 class Configuration;
-class caen_v1730;
-class VP717;
-class vme_interface;
 
-
-class V1730Producer: public eudaq::Producer{
+class VX1742Producer: public eudaq::Producer{
 public:
-  V1730Producer(const std::string & name, const std::string & runcontrol, const std::string & verbosity);
+  VX1742Producer(const std::string & name, const std::string & runcontrol, const std::string & verbosity);
   void OnConfigure(const eudaq::Configuration & config);
   void OnStartRun(unsigned runnumber);
   void OnStopRun();
@@ -19,11 +30,12 @@ public:
   void SetTimeStamp();
   void ReadoutLoop();
 
-
 private:
-  VP717 *vp717_interface;
-  vme_interface *interface;
-  caen_v1730 *V1730_handle;
+  RCD::VME *vme;
+  RCD::VMEMasterMap *vmm;
+  RCD::CMEMSegment* seg;
+
+
 
 
   std::string m_producerName, m_event_type;
@@ -39,12 +51,11 @@ private:
   std::map<uint8_t,uint16_t> m_channel_dac;
 
   //to be implemented: int n_channels;
-
-
 };
+
 
 
 int main(int /*argc*/, const char ** argv);
 
 
-#endif 
+#endif //VX1742PRODUCER_HH
