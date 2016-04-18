@@ -36,6 +36,13 @@ private:
   VX1742Interface *caen;
   eudaq::Configuration m_config;
 
+  //config values
+  u_int sampling_frequency;
+  u_int post_trigger_samples;
+  u_int trigger_source;
+  u_int active_groups;
+  u_int groups[4];
+
 
 
 

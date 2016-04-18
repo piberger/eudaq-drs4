@@ -53,14 +53,16 @@ VX1742Producer::VX1742Producer(const std::string & name, const std::string & run
 
 
 void VX1742Producer::OnConfigure(const eudaq::Configuration& conf) {
-  m_config = conf;
   std::cout << "###Configure VX1742 board with: " << m_config.Name() << std::endl;  
   
   try{
-    m_trigger_source = m_config.Get("trigger_source", 1);
-    m_active_channels = m_config.Get("active_channels", 1); 
-    m_post_trigger_samples = m_config.Get("post_trigger_samples", 0); //1 sample = 8.5ns
-    m_trigger_threshold = m_config.Get("trigger_threshold", 1); 
+    sampling_frequency = conf.Get("sampling_frequency", 0);
+    post_trigger_samples = conf.Get("post_trigger_samples", 0);
+    trigger_source = conf.Get("trigger_source", 0);
+    groups[0] = conf.Get("group1", 1);
+    groups[1] = conf.Get("group2", 1);
+    groups[2] = conf.Get("group3", 1);
+    groups[3] = conf.Get("group4", 1);
 
     if(caen->isRunning())
       caen->stopAcquisition();
@@ -68,83 +70,28 @@ void VX1742Producer::OnConfigure(const eudaq::Configuration& conf) {
     caen->softwareReset();
     usleep(1000000);
 
-    
-    //set sampling frequency
-
-    //do calibration
-
-    //set post trigger samples
-
-    //set trigger source (internal, external)
+    caen->setSamplingFrequency(sampling_frequency);
+    caen->setPostTriggerSamples(post_trigger_samples);
+    caen->setTriggerSource(trigger_source);
+    caen->toggleGroups(groups);
 
     //send busy signal via the TRG OUT Limo connnector
+    caen->sendBusyToTRGout();
+    caen->setTriggerCount(); //count all, not just accepted triggers
+
+
+    //individual group configuration
+
+    //continue here...
 
 
 
-
+ 
 
 
 /*
 
 
-
-    //set trigger source
-    caen_VX1742::trigger_source_mask t_mask = VX1742_handle->getTriggerSourceMask();
-    if(m_trigger_source == 1){
-      t_mask.ext_trigger = 1;
-      t_mask.sw_trigger = 0;
-    }
-    else if(m_trigger_source == 0){
-      t_mask.ext_trigger = 0;
-      t_mask.sw_trigger = 1;
-    }
-    VX1742_handle->setTriggerSourceMask(t_mask);
-    VX1742_handle->printTriggerMask(VX1742_handle->getTriggerSourceMask());
-
-
-    //enable channels/groups
-    caen_VX1742::group_enable_mask c_enable_mask = VX1742_handle->getGroupEnableMask();
-    if(m_active_channels == 1){
-      c_enable_mask.group0 = 1;
-      c_enable_mask.group1 = 0;
-      c_enable_mask.group2 = 0;
-      c_enable_mask.group3 = 0;
-    }
-    if(m_active_channels == 2){
-      c_enable_mask.group0 = 1;
-      c_enable_mask.group1 = 1;
-      c_enable_mask.group2 = 0;
-      c_enable_mask.group3 = 0;
-    }
-    VX1742_handle->setGroupEnableMask(c_enable_mask);
-    VX1742_handle->printGroupEnableMask(VX1742_handle->getGroupEnableMask());
-
-
-    //set post trigger samples:
-    VX1742_handle->setPostTrigger(m_post_trigger_samples);
-    std::cout << std::endl << "Post trigger samples set to: " << m_post_trigger_samples << std::endl;
-
-    
-    //send busy signal via the TRG OUT Limo connnector; print it?
-    caen_VX1742::front_panel_io_control_reg ctr_reg = VX1742_handle->getFrontPanelIOControl();
-    ctr_reg.force_trg_out_mode = 0; //force it or not, does not matter
-    ctr_reg.trg_out_mode = 0; //trg_out is internal signal
-    ctr_reg.trg_out_mode_select = 1; //select trg_out
-    ctr_reg.motherboad_probe = 3; //allows roc to issue busy signal
-    ctr_reg.busy_unlock = 0; //propagates it to trg_out
-    VX1742_handle->setFrontPanelIOControl(ctr_reg);
-
-    //debugging
-    caen_VX1742::firmware_revision fw_rev_drs = VX1742_handle->getGroup_AMC_firmware(0);
-    VX1742_handle->printFirmware(fw_rev_drs);
-
-    caen_VX1742::acq_control acq_ctrl = VX1742_handle->getACQControl();
-    acq_ctrl.trigger_count = 1; //cout ALL triggers
-    acq_ctrl.buffer_mode = 1; //always keep one buffer free
-    VX1742_handle->setACQControl(acq_ctrl);
-
-    //FIXME: set sampling frequency
-    //FIXME: read out DRS4 temperature
 
     //set channel settings: threshold
     for(int gr = 0; gr < VX1742_handle->GROUPS; gr++){
@@ -163,7 +110,7 @@ void VX1742Producer::OnConfigure(const eudaq::Configuration& conf) {
       //std::cout << "Range group " << gr << ": " << range << " dac: " << dac << ", gain: " << gain << std::endl;   
     */
     
-    //}
+
   std::cout << "VX1742: Configured! Ready to take data." << std::endl << std::endl;
   
   SetStatus(eudaq::Status::LVL_OK, "Configured VX1742 (" + m_config.Name() +")");
@@ -263,7 +210,6 @@ void VX1742Producer::OnTerminate(){
   delete caen;
   std::cout << "VX1742 producer terminated." << std::endl; 
 }
-
 
 
 int main(int /*argc*/, const char ** argv){

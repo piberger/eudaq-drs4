@@ -42,7 +42,23 @@ class VX1742Interface{
 	void softwareReset();
 	void clearBuffers();
 
-	
+	void setSamplingFrequency(u_int param);
+	u_int getSamplingFrequency();
+
+	void setPostTriggerSamples(u_int param);
+	u_int getPostTriggerSamples();
+
+	void setTriggerSource(u_int param);
+	std::string getTriggerSource();
+
+	void toggleGroups(u_int param[]);
+
+
+	void sendBusyToTRGout();
+
+	void setTriggerCount();
+
+
 
 
 
