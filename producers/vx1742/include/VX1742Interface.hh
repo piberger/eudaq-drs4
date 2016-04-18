@@ -36,6 +36,13 @@ class VX1742Interface{
 
 	std::string getSerialNumber();
 	std::string getFirmwareVersion();
+	u_int isRunning();
+	void startAcquisition();
+	void stopAcquisition();
+	void softwareReset();
+	void clearBuffers();
+
+	
 
 
 

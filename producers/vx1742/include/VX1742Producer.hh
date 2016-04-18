@@ -34,13 +34,13 @@ public:
 
 private:
   VX1742Interface *caen;
-
+  eudaq::Configuration m_config;
 
 
 
 
   std::string m_producerName, m_event_type;
-  eudaq::Configuration m_config;
+  
   uint32_t m_serialno, m_active_channels, m_ev, m_trigger_source, m_post_trigger_samples;
   float m_firmware;
   uint64_t m_timestamp;

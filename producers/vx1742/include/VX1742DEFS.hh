@@ -2,7 +2,7 @@
 ** CAEN VX1742B constants and memory layout
 ** 
 **
-** <vx1742scope>.h
+** <VX1742DEFS>.hh
 ** 
 ** Date: March 2015
 ** Author: Christian Dorfer (dorfer@phys.ethz.ch)
@@ -68,7 +68,7 @@ typedef struct{
   u_int buffer_mode     :1;
   u_int reserved_1      :1;
   u_int trigger_count   :1;
-  u_int acq_control     :1;
+  u_int run             :1;
   u_int reserved_0      :2;
 }st_acq_control;
 

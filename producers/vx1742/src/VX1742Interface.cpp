@@ -104,3 +104,26 @@ std::string VX1742Interface::getFirmwareVersion(){
     firmware << "VX1742 firmware version: " << value1 << "." << value << " from " << day << "." << month << "." << year;
     return firmware.str();
 }
+
+
+u_int VX1742Interface::isRunning(){
+	return vx1742->acq_status.run; //returns 1 if running
+}
+
+void VX1742Interface::startAcquisition(){
+	vx1742->acq_control.run = 0;
+}
+
+void VX1742Interface::stopAcquisition(){
+	vx1742->acq_control.run = 1;
+}
+
+void VX1742Interface::softwareReset(){
+	vx1742->software_reset = 1;
+}
+
+void VX1742Interface::clearBuffers(){
+	vx1742->software_clear = 1;
+}
+
+

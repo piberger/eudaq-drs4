@@ -51,132 +51,42 @@ VX1742Producer::VX1742Producer(const std::string & name, const std::string & run
 
 
 
-void VX1742Producer::OnStartRun(unsigned runnumber){
-  m_run = runnumber;
-  m_ev = 0;
-  try{
-    this->SetTimeStamp();
-
-    //create BORE
-    std::cout<<"VX1742: Create " << m_event_type << "BORE EVENT for run " << m_run <<  " @time: " << m_timestamp << "." << std::endl;
-    eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
-    bore.SetTag("timestamp", m_timestamp);
-    bore.SetTag("serial_number", caen->getSerialNumber());
-    bore.SetTag("firmware_version", caen->getFirmwareVersion());
-    
-    /*
-    for (unsigned ch = 0; ch <  VX1742_handle->GROUPS; ch++){
-        std::string key = "VX1742_CHANNEL_DAC_"+std::to_string(ch);
-	      //std::cout << key << " - " << m_channel_dac.at(ch);
-	      bore.SetTag(key, m_channel_dac.at(ch));
-	
-        key = "VX1742_CHANNEL_RANGE_"+std::to_string(ch);
-	      //std::cout << key << " - " << m_dynamic_range.at(ch);
-	      bore.SetTag(key, m_dynamic_range.at(ch));
-
-        key = "VX1742_CHANNEL_GAIN_"+std::to_string(ch);
-	      //std::cout << key << " - " << m_channel_gain.at(ch);
-	      bore.SetTag(key, m_channel_gain.at(ch));
-    }
-    */
-    //set number of channels to be implemented
-    //set tags for the channel numbers
-
-    //buffer in event??
-
-    //set digitizer online (allow it to accept triggers)
-    //VX1742_handle->SoftwareClear();
-    //VX1742_handle->Start();
-
-    //VX1742_handle->printAcquisitionStatus(VX1742_handle->getAcquisitionStatus());
-
-    SendEvent(bore);
-
-    SetStatus(eudaq::Status::LVL_OK, "Running");
-    m_running = true;
-  }
-  catch (...){
-  EUDAQ_ERROR(std::string("Error in the VX1742 OnStartRun procedure."));
-  SetStatus(eudaq::Status::LVL_ERROR, "Error in the VX1742 OnStartRun procedure.");}
-}
-
-
-
-void VX1742Producer::OnStopRun(){
-  // Break the readout loop
-  m_running = false;
-  //VX1742_handle->Stop();
-  std::cout << "VX1742 run stopped." << std::endl;
-}
-
-
-void VX1742Producer::OnTerminate(){
-  m_running = false;
-  m_terminated = true;
-
-
-  //VME::Close();
-  //del segmented memory
-  //del master mappig
-
-
-  //VX1742_handle->Stop();
-  //VX1742_handle->SoftwareReset(); //resets registers
-  //VX1742_handle->SoftwareClear(); //clears buffers
-  std::cout << "VX1742 run terminated, registers reset and buffers cleared." << std::endl;
-  //delete vp717_interface, interface, VX1742_handle;
-}
-
-
-
-void VX1742Producer::ReadoutLoop() {
-  while(!m_terminated){
-    if(!m_running){
-      sched_yield();} //if not running deprioritize thread
-
-
-  while(m_running){
-    try{
-      
-	std::cout << "Function prototype" << std::endl;
-      //end if
-      
-    }catch (...){
-    EUDAQ_ERROR(std::string("Readout error................"));
-    SetStatus(eudaq::Status::LVL_ERROR, "Readout error................");}
-
-    }//running
-  }}
-
-
-
-
-
 
 void VX1742Producer::OnConfigure(const eudaq::Configuration& conf) {
-  std::cout << "###Configure VX1742 board:" << std::endl;  
   m_config = conf;
-  std::cout << m_config <<  std::endl;
-
-  m_trigger_source = m_config.Get("trigger_source", 1); //default 1 for external trigger
-  m_active_channels = m_config.Get("active_channels", 1); 
-  m_post_trigger_samples = m_config.Get("post_trigger_samples", 0); //default0 - 1 sample = 8.5ns
-  m_trigger_threshold = m_config.Get("trigger_threshold", 1); //default 1
-  std::cout << "m_trigger_source: " << m_trigger_source << std::endl;
-  std::cout << "m_active_channels: " << m_active_channels << std::endl;
-  std::cout << "m_post_trigger_samples: " << m_post_trigger_samples << std::endl;
-  std::cout << "m_trigger_threshold: " << m_trigger_threshold << std::endl;
-  std::cout << "Name: " << m_config.Name() << std::endl;
-
-
+  std::cout << "###Configure VX1742 board with: " << m_config.Name() << std::endl;  
+  
   try{
-/*
-    if(VX1742_handle->isRunning()){ //0x8104 get acquisiton status
-      VX1742_handle->Stop();} //0x8100
+    m_trigger_source = m_config.Get("trigger_source", 1);
+    m_active_channels = m_config.Get("active_channels", 1); 
+    m_post_trigger_samples = m_config.Get("post_trigger_samples", 0); //1 sample = 8.5ns
+    m_trigger_threshold = m_config.Get("trigger_threshold", 1); 
+
+    if(caen->isRunning())
+      caen->stopAcquisition();
+
+    caen->softwareReset();
+    usleep(1000000);
+
     
-    //set all configuration registers to their default values
-    VX1742_handle->SoftwareReset();
-    sleep(1);
+    //set sampling frequency
+
+    //do calibration
+
+    //set post trigger samples
+
+    //set trigger source (internal, external)
+
+    //send busy signal via the TRG OUT Limo connnector
+
+
+
+
+
+
+/*
+
+
 
     //set trigger source
     caen_VX1742::trigger_source_mask t_mask = VX1742_handle->getTriggerSourceMask();
@@ -264,6 +174,95 @@ void VX1742Producer::OnConfigure(const eudaq::Configuration& conf) {
 }
 
 
+
+
+void VX1742Producer::OnStartRun(unsigned runnumber){
+  m_run = runnumber;
+  m_ev = 0;
+  try{
+    this->SetTimeStamp();
+
+    //create BORE
+    std::cout<<"VX1742: Create " << m_event_type << "BORE EVENT for run " << m_run <<  " @time: " << m_timestamp << "." << std::endl;
+    eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
+    bore.SetTag("timestamp", m_timestamp);
+    bore.SetTag("serial_number", caen->getSerialNumber());
+    bore.SetTag("firmware_version", caen->getFirmwareVersion());
+    
+    /*
+    for (unsigned ch = 0; ch <  VX1742_handle->GROUPS; ch++){
+        std::string key = "VX1742_CHANNEL_DAC_"+std::to_string(ch);
+	      //std::cout << key << " - " << m_channel_dac.at(ch);
+	      bore.SetTag(key, m_channel_dac.at(ch));
+	
+        key = "VX1742_CHANNEL_RANGE_"+std::to_string(ch);
+	      //std::cout << key << " - " << m_dynamic_range.at(ch);
+	      bore.SetTag(key, m_dynamic_range.at(ch));
+
+        key = "VX1742_CHANNEL_GAIN_"+std::to_string(ch);
+	      //std::cout << key << " - " << m_channel_gain.at(ch);
+	      bore.SetTag(key, m_channel_gain.at(ch));
+    }
+    */
+    //set number of channels to be implemented
+    //set tags for the channel numbers
+
+
+    caen->clearBuffers();
+    caen->startAcquisition();
+
+    SendEvent(bore);
+
+    SetStatus(eudaq::Status::LVL_OK, "Running");
+    m_running = true;
+  }
+  catch (...){
+  EUDAQ_ERROR(std::string("Error in the VX1742 OnStartRun procedure."));
+  SetStatus(eudaq::Status::LVL_ERROR, "Error in the VX1742 OnStartRun procedure.");}
+}
+
+
+
+
+
+void VX1742Producer::ReadoutLoop() {
+  while(!m_terminated){
+    if(!m_running){
+      sched_yield();} //if not running deprioritize thread
+
+
+  while(m_running){
+    try{
+      
+  std::cout << "Function prototype" << std::endl;
+      //end if
+      
+    }catch (...){
+    EUDAQ_ERROR(std::string("Readout error................"));
+    SetStatus(eudaq::Status::LVL_ERROR, "Readout error................");}
+
+    }//running
+  }}
+
+
+
+
+
+
+void VX1742Producer::OnStopRun(){
+  m_running = false;
+  caen->stopAcquisition();
+  std::cout << "VX1742 run stopped." << std::endl;
+}
+
+
+void VX1742Producer::OnTerminate(){
+  m_running = false;
+  m_terminated = true;
+  caen->closeVME();
+  delete caen;
+  std::cout << "VX1742 producer terminated." << std::endl; 
+}
 
 
 
