@@ -28,76 +28,21 @@
 #include "eudaq/Configuration.hh"
 #include "VX1742Producer.hh"
 
-using namespace RCD;
 
 static const std::string EVENT_TYPE = "VX1742";
 
-// Constants for VME master map
-const u_int vmebus_address = 0x32100000; 
-const u_int window_size = 0x10000;
-const u_int address_modifier = VME_A32;
-const u_int options = 0;
 
-
-
-VX1742Producer::VX1742Producer(const std::string & name, const std::string & runcontrol, const std::string & verbosity)  
-  : eudaq::Producer(name, runcontrol),
+VX1742Producer::VX1742Producer(const std::string & name, const std::string & runcontrol, const std::string & verbosity)
+:eudaq::Producer(name, runcontrol),
   m_producerName(name),
   m_event_type(EVENT_TYPE),
   m_ev(0), 
   m_run(0), 
   m_running(false){
 
-  
   try{
-    std::cout << "###Initialize VX1742 connection.. ";  
-    vme = VME::Open();
-    if((*vme)()){
-      std::cout << std::endl << "ERROR opening VME object" << std::endl;
-      vme->ErrorPrint((*vme)());
-    }
-    std::cout << "[OK]" << std::endl;
-
-    std::cout << "###Create VME master mapping.. "; 
-    vmm = vme->MasterMap(vmebus_address, window_size, address_modifier, options);
-    if((*vmm)()) {
-      std::cout << "ERROR opening VME master mapping" << std::endl;
-      vme->ErrorPrint((*vmm)());
-    }
-    std::cout << "[OK]" << std::endl;
-
-
-
-        // create new contiguous memory segment
-        //seg = new CMEMSegment("testRCDVme",g_bsiz);
-
-  
-
-
-
-
-
-
-  //initialize a pointer to the caen_VX1742 class:
-  //vp717_interface = new VP717();
-  //interface = vp717_interface;
-  //vme_addr_t VX1742_handleBaseAddress=0x32100000;
-  //VX1742_handle = new caen_VX1742(interface, VX1742_handleBaseAddress);
-  //std::cout << "Handle to digitizer: " << VX1742_handle << std::endl;
-  
-  //get serial number 
-  //m_serialno = VX1742_handle->getSerialNumber();
-  std::cout << "Serial number: " << m_serialno << std::endl;
-
-  //get firmware revision
-  //caen_VX1742::firmware_revision fw = VX1742_handle->getROC_firmware();
-  //VX1742_handle->printFirmware(fw);
-
-  //get board model
-  //std::string board_model = VX1742_handle->getBoardModel(); 
-  //std::cout << "VME connection to CAEN " << VX1742_handle->getBoardModel() << " established." << std::endl;
-
-  m_terminated = false;
+    caen = new VX1742Interface();
+    caen->openVME();
   }
   catch (...){
     EUDAQ_ERROR(std::string("Error in the VX1742Producer class constructor."));
@@ -110,15 +55,14 @@ void VX1742Producer::OnStartRun(unsigned runnumber){
   m_run = runnumber;
   m_ev = 0;
   try{
-    //set time stamp:
     this->SetTimeStamp();
 
-    //create event:
-    std::cout<<"VX1742: Create " << m_event_type << " EVENT for run " << m_run <<  " @time: " << m_timestamp << "." << std::endl << std::endl;
+    //create BORE
+    std::cout<<"VX1742: Create " << m_event_type << "BORE EVENT for run " << m_run <<  " @time: " << m_timestamp << "." << std::endl;
     eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
-    bore.SetTag("VX1742_timestamp", m_timestamp);
-    bore.SetTag("VX1742_serial_no", m_serialno);
-    bore.SetTag("VX1742_firmware_v", m_firmware);
+    bore.SetTag("timestamp", m_timestamp);
+    bore.SetTag("serial_number", caen->getSerialNumber());
+    bore.SetTag("firmware_version", caen->getFirmwareVersion());
     
     /*
     for (unsigned ch = 0; ch <  VX1742_handle->GROUPS; ch++){
@@ -169,6 +113,13 @@ void VX1742Producer::OnStopRun(){
 void VX1742Producer::OnTerminate(){
   m_running = false;
   m_terminated = true;
+
+
+  //VME::Close();
+  //del segmented memory
+  //del master mappig
+
+
   //VX1742_handle->Stop();
   //VX1742_handle->SoftwareReset(); //resets registers
   //VX1742_handle->SoftwareClear(); //clears buffers

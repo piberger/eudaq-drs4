@@ -15,6 +15,8 @@
 // VME includes
 #include "RCDVme/RCDVme.h"
 #include "RCDVme/RCDCmemSegment.h"
+#include "VX1742DEFS.hh"
+#include "VX1742Interface.hh"
 
 
 class Producer;
@@ -31,9 +33,8 @@ public:
   void ReadoutLoop();
 
 private:
-  RCD::VME *vme;
-  RCD::VMEMasterMap *vmm;
-  RCD::CMEMSegment* seg;
+  VX1742Interface *caen;
+
 
 
 
@@ -50,7 +51,12 @@ private:
   std::map<uint8_t,uint16_t> m_channel_gain;
   std::map<uint8_t,uint16_t> m_channel_dac;
 
-  //to be implemented: int n_channels;
+
+
+
+
+
+
 };
 
 
@@ -58,4 +64,4 @@ private:
 int main(int /*argc*/, const char ** argv);
 
 
-#endif //VX1742PRODUCER_HH
+#endif
