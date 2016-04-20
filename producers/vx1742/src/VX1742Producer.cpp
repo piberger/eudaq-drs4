@@ -53,16 +53,16 @@ VX1742Producer::VX1742Producer(const std::string & name, const std::string & run
 
 
 void VX1742Producer::OnConfigure(const eudaq::Configuration& conf) {
-  std::cout << "###Configure VX1742 board with: " << m_config.Name() << std::endl;  
+  std::cout << "###Configure VX1742 board with: " << conf.Name() << "..";
   
   try{
     sampling_frequency = conf.Get("sampling_frequency", 0);
     post_trigger_samples = conf.Get("post_trigger_samples", 0);
     trigger_source = conf.Get("trigger_source", 0);
-    groups[0] = conf.Get("group1", 1);
-    groups[1] = conf.Get("group2", 1);
-    groups[2] = conf.Get("group3", 1);
-    groups[3] = conf.Get("group4", 1);
+    groups[0] = conf.Get("group1", 0);
+    groups[1] = conf.Get("group2", 0);
+    groups[2] = conf.Get("group3", 0);
+    groups[3] = conf.Get("group4", 0);
 
     if(caen->isRunning())
       caen->stopAcquisition();
@@ -77,43 +77,18 @@ void VX1742Producer::OnConfigure(const eudaq::Configuration& conf) {
 
     //send busy signal via the TRG OUT Limo connnector
     caen->sendBusyToTRGout();
-    caen->setTriggerCount(); //count all, not just accepted triggers
+    //caen->setTriggerCount(); //count all, not just accepted triggers
 
 
-    //individual group configuration
+    //individual group configuration here
 
     //continue here...
+    //#) DC offset
+    //#) Calibration?
 
-
-
- 
-
-
-/*
-
-
-
-    //set channel settings: threshold
-    for(int gr = 0; gr < VX1742_handle->GROUPS; gr++){
-      VX1742_handle->setGroup_Thres(gr, m_trigger_threshold);
-      //DC offset?
-      //calibration?
-      //VX1742_handle->printGroupStatus(VX1742_handle->getGroup_Status(0));
-      float dac = VX1742_handle->getGroup_DAC(0); //FIXME: hard-coded
-      float range = 2; //FIXME: hard coded +/-1V
-      float gain = 1; //FIXME: does not exis
-    
-      m_channel_dac[gr] = dac;
-      m_dynamic_range[gr] = range;
-      m_channel_gain[gr] = gain;
-
-      //std::cout << "Range group " << gr << ": " << range << " dac: " << dac << ", gain: " << gain << std::endl;   
-    */
-    
-
-  std::cout << "VX1742: Configured! Ready to take data." << std::endl << std::endl;
+  std::cout << " [OK]" << std::endl;
   
-  SetStatus(eudaq::Status::LVL_OK, "Configured VX1742 (" + m_config.Name() +")");
+  SetStatus(eudaq::Status::LVL_OK, "Configured VX1742 (" + conf.Name() +")");
 
   }catch ( ... ){
   EUDAQ_ERROR(std::string("Error in the VX1742 configuration procedure."));
@@ -137,27 +112,24 @@ void VX1742Producer::OnStartRun(unsigned runnumber){
     bore.SetTag("firmware_version", caen->getFirmwareVersion());
     
     /*
-    for (unsigned ch = 0; ch <  VX1742_handle->GROUPS; ch++){
         std::string key = "VX1742_CHANNEL_DAC_"+std::to_string(ch);
-	      //std::cout << key << " - " << m_channel_dac.at(ch);
 	      bore.SetTag(key, m_channel_dac.at(ch));
 	
         key = "VX1742_CHANNEL_RANGE_"+std::to_string(ch);
-	      //std::cout << key << " - " << m_dynamic_range.at(ch);
 	      bore.SetTag(key, m_dynamic_range.at(ch));
 
         key = "VX1742_CHANNEL_GAIN_"+std::to_string(ch);
-	      //std::cout << key << " - " << m_channel_gain.at(ch);
 	      bore.SetTag(key, m_channel_gain.at(ch));
     }
-    */
     //set number of channels to be implemented
     //set tags for the channel numbers
-
+    */
 
     caen->clearBuffers();
-    caen->startAcquisition();
+    caen->printAcquisitionStatus();
+    caen->printAcquisitionControl();
 
+    caen->startAcquisition();
     SendEvent(bore);
 
     SetStatus(eudaq::Status::LVL_OK, "Running");
@@ -181,9 +153,10 @@ void VX1742Producer::ReadoutLoop() {
   while(m_running){
     try{
       
-  std::cout << "Function prototype" << std::endl;
-      //end if
-      
+      std::cout << "Events stored: " << caen->getEventsStored() << ", size of next event: " << caen->getNextEventSize() << std::endl;
+
+
+
     }catch (...){
     EUDAQ_ERROR(std::string("Readout error................"));
     SetStatus(eudaq::Status::LVL_ERROR, "Readout error................");}
@@ -198,6 +171,7 @@ void VX1742Producer::ReadoutLoop() {
 
 void VX1742Producer::OnStopRun(){
   m_running = false;
+  //caen->printAcquisitionControl();
   caen->stopAcquisition();
   std::cout << "VX1742 run stopped." << std::endl;
 }

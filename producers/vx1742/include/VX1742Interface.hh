@@ -41,6 +41,8 @@ class VX1742Interface{
 	void stopAcquisition();
 	void softwareReset();
 	void clearBuffers();
+	void printAcquisitionStatus();
+	void printAcquisitionControl();
 
 	void setSamplingFrequency(u_int param);
 	u_int getSamplingFrequency();
@@ -57,6 +59,14 @@ class VX1742Interface{
 	void sendBusyToTRGout();
 
 	void setTriggerCount();
+	void setMaxBLTEvents(u_int param);
+	u_int getEventsStored();
+	u_int getNextEventSize();
+
+
+
+	void SetMaxBLTEvents(u_int param);
+	u_int BlockTransferD64(u_int VX1742Event , u_int nEvents);
 
 
 

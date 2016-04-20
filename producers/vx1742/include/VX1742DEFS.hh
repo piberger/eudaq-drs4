@@ -4,9 +4,8 @@
 **
 ** <VX1742DEFS>.hh
 ** 
-** Date: March 2015
+** Date: April 2016
 ** Author: Christian Dorfer (dorfer@phys.ethz.ch)
-** Info: No need for unions, endianess is handled in the TSI chip
 ** ------------------------------------------------------------------------------------*/
 
 #ifndef _VX1742DEFS_H
@@ -17,7 +16,7 @@
 #define VX1742_GROUPS 4
 
 
-// Constants for VME master map and BlockTransfer
+// Constants for VME master map and BlockTransfer //FIXME: move
 const u_int vmebus_address = 0x32100000; 
 const u_int window_size = 0x10000;
 const u_int address_modifier = VME_A32;
@@ -48,113 +47,112 @@ typedef struct{
 
 
 typedef struct{
-  u_int monitor_signal      :4;
-  u_int reserved_5         :15;
-  u_int trigger_trn_enable  :1;
-  u_int sig_trn_enable      :1;
-  u_int reserved_4          :2; 
-  u_int individual_trg      :1; 
-  u_int reserved_3          :1;
-  u_int trigger_polarity    :1; 
-  u_int reserved_2          :1; 
-  u_int reserved_1          :1;
-  u_int test_mode           :1;
   u_int reserved_0          :3; 
+  u_int test_mode           :1;
+  u_int reserved_1          :1;
+  u_int reserved_2          :1; 
+  u_int trigger_polarity    :1; 
+  u_int reserved_3          :1;
+  u_int individual_trg      :1; 
+  u_int reserved_4          :2; 
+  u_int sig_trn_enable      :1;
+  u_int trigger_trn_enable  :1;
+  u_int reserved_5         :15;
+  u_int monitor_signal      :4;
 }st_group_conf;
 
 
 typedef struct{
-  u_int reserved       :26;
-  u_int buffer_mode     :1;
-  u_int reserved_1      :1;
-  u_int trigger_count   :1;
-  u_int run             :1;
   u_int reserved_0      :2;
+  u_int run             :1;
+  u_int trigger_count   :1;
+  u_int reserved_1      :1;
+  u_int buffer_mode     :1;
+  u_int reserved       :26;
 }st_acq_control;
 
-
 typedef struct{
-  u_int reserved1      :23;
-  u_int ready           :1; 
-  u_int PLL_status      :1;
-  u_int PLL_bypass      :1; 
-  u_int clock_source    :1; 
-  u_int event_full      :1;
-  u_int event_ready     :1;
-  u_int run             :1;
   u_int reserved2       :2;
+  u_int run             :1;
+  u_int event_ready     :1;
+  u_int event_full      :1;
+  u_int clock_source    :1; 
+  u_int PLL_bypass      :1; 
+  u_int PLL_status      :1;
+  u_int ready           :1; 
+  u_int reserved1      :23;
 }st_acq_status;
 
 
 typedef struct{
-  u_int sw_trigger      :1;
-  u_int ext_trigger     :1;
   u_int reserved       :30;
+  u_int ext_trigger     :1;
+  u_int sw_trigger      :1;
 }st_trigger_source;
 
 
 typedef struct{
-  u_int sw_trigger      :1;
-  u_int ext_trigger     :1;
-  u_int reserved       :26;
-  u_int grp3_trg        :1;
-  u_int grp2_trg        :1;
-  u_int grp1_trg        :1;
   u_int grp0_trg        :1;
+  u_int grp1_trg        :1;
+  u_int grp2_trg        :1;
+  u_int grp3_trg        :1;
+  u_int reserved       :26;
+  u_int ext_trigger     :1;
+  u_int sw_trigger      :1;
 }st_trigger_out_mask;
 
 
 typedef struct{
-  u_int reserved1             :11;
-  u_int busy_unlock            :1;
-  u_int motherboad_probe       :2;
-  u_int trg_out_mode_select    :2;
-  u_int trg_out_mode           :1;
-  u_int force_trg_out_mode     :1; 
-  u_int reserved2              :6;
-  u_int io_mode                :2;
-  u_int lvds_direction_12_15   :1;
-  u_int lvds_direction_8_11    :1;
-  u_int lvds_direction_4_7     :1;
-  u_int lvds_direction_0_3     :1;
-  u_int panel_output_state     :1;
   u_int trg_clk_level          :1;
+  u_int panel_output_state     :1;
+  u_int lvds_direction_0_3     :1;
+  u_int lvds_direction_4_7     :1;
+  u_int lvds_direction_8_11    :1;
+  u_int lvds_direction_12_15   :1;
+  u_int io_mode                :2;
+  u_int reserved2              :6;
+  u_int force_trg_out_mode     :1; 
+  u_int trg_out_mode           :1;
+  u_int trg_out_mode_select    :2;
+  u_int motherboad_probe       :2;
+  u_int busy_unlock            :1;
+  u_int reserved1             :11;
 }st_front_panel_io_control;
 
 
 typedef struct{
-  u_int reserved  :24;
-  u_int group3    :1;
-  u_int group2    :1;
-  u_int group1    :1;
   u_int group0    :1;
+  u_int group1    :1;
+  u_int group2    :1;
+  u_int group3    :1;
+  u_int reserved  :24;
 }st_group_en_mask;
 
 
 typedef struct{
-  u_int reserved    :16;
-  u_int memory      :8;
   u_int board_type  :8;
+  u_int memory      :8;
+  u_int reserved    :16;
 }st_board_info;
 
 
 typedef struct{
-  u_int reserved       :24;
-  u_int release         :1;
-  u_int reloc           :1;
-  u_int align64         :1;
-  u_int berr            :1; 
-  u_int optical_link    :1;
   u_int interrupt_level :3;
+  u_int optical_link    :1;
+  u_int berr            :1; 
+  u_int align64         :1;
+  u_int reloc           :1;
+  u_int release         :1;
+  u_int reserved       :24;
 }st_vme_control;
 
 
 typedef struct{
-  u_int reserved1    :28;
-  u_int fifo_empty    :1;
-  u_int bus_error     :1;
-  u_int reserved2     :1;
   u_int event_ready   :1;
+  u_int reserved2     :1;
+  u_int bus_error     :1;
+  u_int fifo_empty    :1;
+  u_int reserved1    :28;
 }st_vme_status;
 
 
