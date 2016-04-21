@@ -86,6 +86,16 @@ float StandardWaveform::getIntegral(uint16_t low_bin, uint16_t high_bin, uint16_
 	return integral / (max_high_length + max_low_length);
 }
 
+std::vector<uint16_t> * StandardWaveform::getAllPeaksAbove(uint16_t min, uint16_t max, float threshold) const {
+	std::vector<uint16_t> * peak_positions = new std::vector<uint16_t>;
+	// make sure min does not start at zero
+	if (!min) min++;
+	for (uint16_t j = uint16_t(min + 1); j <= max; j++)
+		if (abs(m_samples.at(j)) > threshold && abs(m_samples.at(uint16_t(j - 1))) < threshold)
+			peak_positions->push_back(j);
+	return peak_positions;
+}
+
 float StandardWaveform::getMedian(uint32_t min, uint32_t max) const
 {
     float median;
