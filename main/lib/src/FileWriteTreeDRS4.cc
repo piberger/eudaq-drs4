@@ -53,6 +53,8 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     v_is_saturated = new vector<bool>;
     v_median = new vector<float>;
     v_average = new vector<float>;
+    v_peak_positions.resize(4, new vector<uint16_t>);
+    v_peak_timings.resize(4, new vector<float>);
 
     // waveforms
     for (uint8_t i = 0; i < 4; i++) f_wf[i] = new vector<float>;
@@ -272,6 +274,11 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     m_ttree->Branch("is_saturated", &v_is_saturated);
     m_ttree->Branch("median", &v_median);
     m_ttree->Branch("average", &v_average);
+    for (uint8_t i_wf = 0; i_wf < 4; i_wf++)
+        if ((active_regions & 1 << i_wf) == 1 << i_wf){
+            m_ttree->Branch(TString::Format("peak_positions%i", i_wf), &v_peak_positions.at(i_wf));
+            m_ttree->Branch(TString::Format("peak_timings%i", i_wf), &v_peak_timings.at(i_wf));
+        }
 
     // fft stuff and spectrum
     if (fft_waveforms) {
@@ -534,11 +541,8 @@ inline void FileWriterTreeDRS4::ResizeVectors(size_t n_channels) {
     v_is_saturated->resize(n_channels);
     v_median->resize(n_channels);
     v_average->resize(n_channels);
-
-    npeaks->resize(n_channels, 0);
-    for (auto p: peaks_x) p->clear();
-    for (auto p: peaks_y) p->clear();
-    for (auto p: peaks_no) p->clear();
+    for (auto v_t:v_peak_positions) v_t->clear();
+    for (auto v_t:v_peak_timings) v_t->clear();
 
     fft_mean->resize(n_channels, 0);
     fft_min->resize(n_channels, 0);
@@ -740,6 +744,13 @@ void FileWriterTreeDRS4::FillTotalRange(uint8_t iwf, const StandardWaveform *wf)
     v_is_saturated->at(iwf) = wf->getAbsMaxInRange(0, 1023) > 498; // indicator if saturation is reached in sampling region (1-1024)
     v_median->at(iwf) = pol * wf->getMedian(0, 1023); // Median over whole sampling region
     v_average->at(iwf) = pol * wf->getIntegral(0, 1023);
+    if (UseWaveForm(active_regions, iwf)){
+        vector<uint16_t> * peak_positions = wf->getAllPeaksAbove(0, 1023, 50);
+        v_peak_positions.at(iwf) = peak_positions;
+        vector<float> * peak_timings = new vector<float>;
+        for (auto i_pos:*peak_positions) peak_timings->push_back(getTriggerTime(iwf, i_pos));
+        v_peak_timings.at(iwf) = peak_timings;
+    }
 }
 
 void FileWriterTreeDRS4::UpdateWaveforms(uint8_t iwf){
