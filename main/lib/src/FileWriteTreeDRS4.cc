@@ -124,14 +124,11 @@ void FileWriterTreeDRS4::Configure(){
     max_event_number = m_config->Get("max_event_number", 0);
 
     // spectrum and fft
-    spectrum_sigma = m_config->Get("spectrum_sigma", 10);
-    spectrum_threshold = m_config->Get("spectrum_threshold", 10);
-    spectrum_deconIterations = m_config->Get("spectrum_deconIterations", 10);
-    spectrum_averageWindow = m_config->Get("spectrum_averageWindow", 5);
-    spec->SetDeconIterations(spectrum_deconIterations);
-    spec->SetAverageWindow(spectrum_averageWindow);
-    spectrum_markov = m_config->Get("spectrum_markov", true);
-    spectrum_background_removal= m_config->Get("spectrum_background_removal", true);
+    spec_sigma = m_config->Get("spectrum_sigma", 5);
+    spec_decon_iter = m_config->Get("spectrum_deconIterations", 3);
+    spec_aver_win = m_config->Get("spectrum_averageWindow", 5);
+    spec_markov = m_config->Get("spectrum_markov", true);
+    spec_rm_bg = m_config->Get("spectrum_background_removal", true);
     spectrum_waveforms = m_config->Get("spectrum_waveforms", uint16_t(0));
     fft_waveforms = m_config->Get("fft_waveforms", uint16_t(0));
 
@@ -164,7 +161,7 @@ void FileWriterTreeDRS4::Configure(){
     for (auto i: pulser_polarities) v_pulser_polarities->push_back(uint16_t(i * 1));
 
     // regions todo: add default range
-    uint16_t active_regions = m_config->Get("active_regions", uint16_t(0));
+    active_regions = m_config->Get("active_regions", uint16_t(0));
     macro->AddLine(TString::Format("active_regions: %d", active_regions));
     for (uint8_t i = 0; i < 4; i++)
         if (UseWaveForm(active_regions, i)) (*regions)[i] = new WaveformSignalRegions(i, polarities.at(i), pulser_polarities.at(i));
@@ -208,8 +205,8 @@ void FileWriterTreeDRS4::Configure(){
 
     // output
     cout << "CHANNEL AND PULSER SETTINGS:" << endl;
-    cout << append_spaces(24, "  pulser channel:") << pulser_channel << endl;
-    cout << append_spaces(24, "  trigger channel:") << trigger_channel << endl;
+    cout << append_spaces(24, "  pulser channel:") << int(pulser_channel) << endl;
+    cout << append_spaces(24, "  trigger channel:") << int(trigger_channel) << endl;
     cout << append_spaces(24, "  pulser_int threshold:") << pulser_threshold << endl;
     cout << append_spaces(24, "  save waveforms:") << save_waveforms << ":  " << GetBitMask(save_waveforms) << endl;
     cout << append_spaces(24, "  fft waveforms:") << fft_waveforms << ":  " << GetBitMask(fft_waveforms) << endl;
@@ -386,6 +383,9 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         if (verbose > 3) cout << "DoFFT " << iwf << endl;
         this->DoFFTAnalysis(iwf);
 
+        // drs4 info
+        if (iwf == wf_order.at(0)) f_trigger_cell = waveform.GetTriggerCell(); // same for every waveform
+
         // calculate the signal and so on
         // float sig = CalculatePeak(data, 1075, 1150);
         if (verbose > 3) cout << "get Values1.0 " << iwf << endl;
@@ -393,9 +393,6 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
 
         if (verbose > 3) cout << "get Values1.1 " << iwf << endl;
         FillTotalRange(iwf, &waveform);
-
-        // drs4 info
-        if (iwf == wf_order.at(0)) f_trigger_cell = waveform.GetTriggerCell(); // same for every waveform
 
         // determine FORC timing: trigger WF august: 2, may: 1
         if (verbose > 3) cout << "get trigger wf " << iwf << endl;
@@ -567,7 +564,7 @@ void FileWriterTreeDRS4::DoFFTAnalysis(uint8_t iwf){
     float sample_rate = 2e6;
     if(fft_own->GetN()[0] != n+1){
         n_samples = n+1;
-        cout << "RECreating a new VirtualFFT with " << n_samples << " Samples, before " << fft_own->GetN() << endl;
+        cout << "Recreating a new VirtualFFT with " << n_samples << " Samples, before " << fft_own->GetN() << endl;
         delete fft_own;
         delete in;
         delete re_full;
@@ -728,10 +725,10 @@ void FileWriterTreeDRS4::FillRegionVectors(){
                 IntegralValues->push_back(integral);
                 TimeIntegralValues->push_back(p->GetTimeIntegral());
                 IntegralPeaks->push_back(peak_pos);
-                IntegralPeakTime->push_back(getTriggerTime(iwf, f_trigger_cell, peak_pos));
+                IntegralPeakTime->push_back(getTriggerTime(iwf, peak_pos));
                 uint16_t bin_low = p->GetIntegralStart();
                 uint16_t bin_up = p->GetIntegralStop();
-                IntegralLength->push_back(getTimeDifference(iwf, f_trigger_cell, bin_low, bin_up));
+                IntegralLength->push_back(getTimeDifference(iwf, bin_low, bin_up));
             }
         }
     }
@@ -783,7 +780,7 @@ inline void FileWriterTreeDRS4::ExtractForcTiming(vector<float> * data) {
     for (uint16_t j=1; j<data->size(); j++){
         if( abs(data->at(j)) > 200 && abs(data->at(uint16_t(j - 1))) < 200) {
             v_forc_pos->push_back(j);
-            v_forc_time->push_back(getTriggerTime(trigger_channel, f_trigger_cell, j));
+            v_forc_time->push_back(getTriggerTime(trigger_channel, j));
             found_timing = true;
         }
     }
@@ -807,12 +804,12 @@ void FileWriterTreeDRS4::FillFullTime(){
     }
 }
 
-inline float FileWriterTreeDRS4::getTriggerTime(const uint8_t & ch, const uint16_t & tcell, const uint16_t & bin) {
-    return full_time.at(ch).at(bin + tcell) - full_time.at(ch).at(tcell);
+inline float FileWriterTreeDRS4::getTriggerTime(const uint8_t & ch, const uint16_t & bin) {
+    return full_time.at(ch).at(bin + f_trigger_cell) - full_time.at(ch).at(f_trigger_cell);
 }
 
-float FileWriterTreeDRS4::getTimeDifference(uint8_t ch, uint16_t tcell, uint16_t bin_low, uint16_t bin_up) {
-    return full_time.at(ch).at(bin_up + tcell) - full_time.at(ch).at(uint16_t(bin_low + tcell));
+float FileWriterTreeDRS4::getTimeDifference(uint8_t ch, uint16_t bin_low, uint16_t bin_up) {
+    return full_time.at(ch).at(bin_up + f_trigger_cell) - full_time.at(ch).at(uint16_t(bin_low + f_trigger_cell));
 }
 
 string FileWriterTreeDRS4::GetBitMask(uint16_t bitmask){

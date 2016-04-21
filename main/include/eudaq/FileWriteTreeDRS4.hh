@@ -51,6 +51,7 @@ namespace eudaq {
         TH1F *histo;
         long max_event_number;
         uint16_t save_waveforms;
+        uint16_t active_regions;
         void ClearVectors();
         void ResizeVectors(size_t n_channels);
         int IsPulserEvent(const StandardWaveform *wf);
@@ -75,8 +76,6 @@ namespace eudaq {
         int verbose;
         std::vector<float> * data;
         std::vector<std::string> sensor_name;
-        std::vector<float> v1;
-        std::vector<float> v_yy;
         // Book variables for the Event_to_TTree conversion
         unsigned m_noe;
         short chan;
@@ -93,8 +92,8 @@ namespace eudaq {
         std::map<uint8_t, std::vector<float> > full_time;
 
         void FillFullTime();
-        inline float getTriggerTime(const uint8_t &ch, const uint16_t &tcell, const uint16_t &bin);
-        float getTimeDifference(uint8_t ch, uint16_t tcell, uint16_t bin_low, uint16_t bin_up);
+        inline float getTriggerTime(const uint8_t &ch, const uint16_t &bin);
+        float getTimeDifference(uint8_t ch, uint16_t bin_low, uint16_t bin_up);
 
         /** SCALAR BRANCHES */
         int f_nwfs;
@@ -110,12 +109,12 @@ namespace eudaq {
         std::vector<uint16_t> *v_forc_pos;
         std::vector<float> *v_forc_time;
 
-        float spectrum_sigma;
-        float spectrum_threshold;
-        int spectrum_deconIterations;
-        int spectrum_averageWindow;
-        bool spectrum_markov;
-        bool spectrum_background_removal;
+        // spectrum parameters
+        float spec_sigma;
+        int spec_decon_iter;
+        int spec_aver_win;
+        bool spec_markov;
+        bool spec_rm_bg;
 
         uint16_t spectrum_waveforms;
         uint16_t fft_waveforms;
