@@ -162,8 +162,8 @@ namespace eudaq {
             q++;
             vcal_vals[identifier] = tmp_vcaldict;
           }
+          fclose(fp);
         }
-        fclose(fp);
       }
     }
 
