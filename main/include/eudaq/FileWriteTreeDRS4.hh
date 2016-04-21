@@ -167,11 +167,11 @@ namespace eudaq {
         TMacro *macro;
 
         // spectrum
-        std::vector<Double_t> v_y;
-        std::vector<std::vector<float> *> peaks_x;
+        std::vector<float> data_pos;
+        std::vector<float> decon;
+        std::vector<std::vector<uint16_t> *> peaks_x;
+        std::vector<std::vector<float> *> peaks_x_time;
         std::vector<std::vector<float> *> peaks_y;
-        std::vector<std::vector<int> *> peaks_no;
-        std::vector<float> *npeaks;
         // fft
         std::vector<std::vector<float> *> fft_values;
         std::vector<float> *fft_mean;

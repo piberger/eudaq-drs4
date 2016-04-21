@@ -60,10 +60,9 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     for (uint8_t i = 0; i < 4; i++) f_wf[i] = new vector<float>;
 
     // spectrum vectors
-    peaks_x.resize(4, new std::vector<float>);
+    peaks_x.resize(4, new std::vector<uint16_t>);
+    peaks_x_time.resize(4, new std::vector<float>);
     peaks_y.resize(4, new std::vector<float>);
-    peaks_no.resize(4, new std::vector<int>);
-    npeaks = new std::vector<float>;
 
     // fft analysis
     fft_modes.resize(4, new std::vector<float>);
@@ -92,7 +91,7 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
     avgWF_3_pul = new TH1F("avgWF_3_pul","avgWF_3_pul", 1024, 0, 1024);
     avgWF_3_sig = new TH1F("avgWF_3_sig","avgWF_3_sig", 1024, 0, 1024);
 
-    spec = new TSpectrum(20, 3);
+    spec = new TSpectrum(25);
     fft_own = 0;
     if(!fft_own){
         int n = 1024;
@@ -290,12 +289,11 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
         m_ttree->Branch("fft_min", &fft_min);
         m_ttree->Branch("fft_min_freq", &fft_min_freq);
     }
-    if (spectrum_waveforms) m_ttree->Branch("npeaks", &npeaks);
     for (uint8_t i_wf = 0; i_wf < 4; i_wf++){
         if (UseWaveForm(spectrum_waveforms, i_wf)){
             m_ttree->Branch(TString::Format("peaks%d_x", i_wf), &peaks_x.at(i_wf));
+            m_ttree->Branch(TString::Format("peaks%d_x_time", i_wf), &peaks_x_time.at(i_wf));
             m_ttree->Branch(TString::Format("peaks%d_y", i_wf), &peaks_y.at(i_wf));
-            m_ttree->Branch(TString::Format("peaks%d_no", i_wf), &peaks_no.at(i_wf));
         }
         if (UseWaveForm(fft_waveforms, i_wf)) {
             m_ttree->Branch(TString::Format("fft_modes%d", i_wf), &fft_modes.at(i_wf));
@@ -457,6 +455,7 @@ FileWriterTreeDRS4::~FileWriterTreeDRS4() {
     double t = w_total.RealTime();
     ss << "\nTotal time: " <<  setw(2) << setfill('0') << int(t / 60) << ":" << setw(2) << setfill('0') << int(t - int(t / 60) * 60);
     if (entries > 1000) ss << "\nTime/1000 events: " << int(t / entries * 1000 * 1000) << " ms";
+    if (spectrum_waveforms) ss << "\nTSpectrum: " << w_spectrum.RealTime() << " seconds";
     print_banner(ss.str(), '*');
     m_ttree->Write();
     avgWF_0->Write();
@@ -531,8 +530,8 @@ inline void FileWriterTreeDRS4::ClearVectors(){
     f_charge->clear();
 
     for (auto peak: peaks_x) peak->clear();
+    for (auto peak: peaks_x_time) peak->clear();
     for (auto peak: peaks_y) peak->clear();
-    for (auto peak: peaks_no) peak->clear();
 } // end ClearVectors()
 
 inline void FileWriterTreeDRS4::ResizeVectors(size_t n_channels) {
@@ -621,25 +620,27 @@ void FileWriterTreeDRS4::DoFFTAnalysis(uint8_t iwf){
         cout<<runnumber<<" "<<std::setw(3)<<f_event_number<<" "<<iwf<<" "<<finalVal<<" "<<max<<" "<<min<<endl;
 } // end DoFFTAnalysis()
 
-void FileWriterTreeDRS4::DoSpectrumFitting(uint8_t iwf){ // todo revise if going to use
-    bool do_spectrum = (spectrum_waveforms & 1 << iwf) == 1 << iwf;
-    if (!do_spectrum) return;
-    npeaks->at(iwf) = 0;
+inline void FileWriterTreeDRS4::DoSpectrumFitting(uint8_t iwf){
+
+    if (!UseWaveForm(spectrum_waveforms, iwf)) return;
 
     w_spectrum.Start(false);
-    v_yy.resize(v_y.size());
-    int peaks = spec->SearchHighRes(&v1[0], &(v_yy[0]), int(v1.size()), spectrum_sigma, spectrum_threshold,
-            spectrum_background_removal, spectrum_deconIterations,spectrum_markov, spectrum_averageWindow);
-    npeaks->at(iwf) = peaks;
-    for(UInt_t i=0; i< peaks; i++){
-        float xval = spec->GetPositionX()[i];
-        uint32_t bin = uint32_t(xval + .5);
-        uint32_t min_bin = bin - 5 >= 0 ? bin-5 : 0;
-        uint32_t max_bin = bin + 5 < v_y.size() ? bin + 5 : uint32_t(v_y.size()) - 1;
-        float max = *std::max_element(&v1.at(min_bin),&v1.at(max_bin));
-        peaks_x.at(iwf)->push_back(xval);
+    uint16_t noise = 20; // todo: find a way to extract to maximum noise
+    float max = *max_element(data_pos.begin(), data_pos.end());
+    //return if the max element is not about the noise level
+    if (max < 2 * noise) return;
+    float threshold = 100 * 2 * noise / max;
+    uint16_t size = uint16_t(data_pos.size());
+    decon.resize(size);
+    int peaks = spec->SearchHighRes(&data_pos[0], &decon[0], size, spec_sigma, threshold, spec_rm_bg, spec_decon_iter, spec_markov, spec_aver_win);
+    for(uint8_t i=0; i < peaks; i++){
+        uint16_t bin = uint16_t(spec->GetPositionX()[i] + .5);
+        uint16_t min_bin = bin - 5 >= 0 ? uint16_t(bin - 5) : uint16_t(0);
+        uint16_t max_bin = bin + 5 < size ? uint16_t(bin + 5) : uint16_t(size - 1);
+        float max = *std::max_element(&data_pos.at(min_bin), &data_pos.at(max_bin));
+        peaks_x.at(iwf)->push_back(bin);
+        peaks_x_time.at(iwf)->push_back(getTriggerTime(iwf, bin));
         peaks_y.at(iwf)->push_back(max);
-        peaks_no.at(iwf)->push_back(i);
     }
     w_spectrum.Stop();
 } // end DoSpectrumFitting()
@@ -648,13 +649,9 @@ void FileWriterTreeDRS4::FillSpectrumData(uint8_t iwf){
     bool b_spectrum = UseWaveForm(spectrum_waveforms, iwf);
     bool b_fft = UseWaveForm(fft_waveforms, iwf);
     if(b_spectrum || b_fft){
-        v_y.resize(data->size());
-        v1.resize(data->size());
-        int pol = polarities.at(iwf);
-        for (unsigned i = 0; i < data->size(); i++){
-            v_y.at(i) = pol * data->at(i);
-            v1.at(i) = pol * data->at(i);
-        }
+        data_pos.resize(data->size());
+        for (uint16_t i = 0; i < data->size(); i++)
+            data_pos.at(i) = polarities.at(iwf) * data->at(i);
     }
 } // end FillSpectrumData()
 
