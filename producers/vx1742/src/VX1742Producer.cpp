@@ -27,7 +27,7 @@
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Configuration.hh"
 #include "VX1742Producer.hh"
-//#include "VX1742Event.hh"
+#include "VX1742Event.hh"
 
 
 static const std::string EVENT_TYPE = "VX1742";
@@ -160,9 +160,10 @@ void VX1742Producer::ReadoutLoop() {
       
       std::cout << "Events stored: " << caen->getEventsStored() << ", size of next event: " << caen->getNextEventSize() << std::endl;
       usleep(500000);
-      if(caen->eventReady()) 
-        caen->BlockTransferEventD64();
-
+      if(caen->eventReady()){
+        VX1742Event vxEvent;
+        caen->BlockTransferEventD64(&vxEvent);
+      }
 
     }catch (...){
     EUDAQ_ERROR(std::string("Readout error................"));

@@ -11,9 +11,13 @@
 #ifndef _VX1742DEFS_H
 #define _VX1742DEFS_H
 
+#include "RCDVme/RCDVme.h"
+
 // Constants
 #define VX1742_CHANNELS 32
 #define VX1742_GROUPS 4
+#define VX1742_CHANNELS_PER_GROUP 8
+#define VX1742_RESOLUTION 12
 
 
 // Constants for VME master map and BlockTransfer //FIXME: move

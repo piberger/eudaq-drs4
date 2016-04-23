@@ -17,6 +17,7 @@
 #include "RCDVme/RCDCmemSegment.h"
 #include "VX1742DEFS.hh"
 
+class VX1742Event;
 
 
 class VX1742Interface{
@@ -71,7 +72,7 @@ class VX1742Interface{
 
 
 	void SetMaxBLTEvents(u_int param);
-	u_int BlockTransferEventD64();
+	u_int BlockTransferEventD64(VX1742Event *vxEvent);
 
 
 

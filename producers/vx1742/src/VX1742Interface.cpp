@@ -13,6 +13,7 @@
 #include <iostream>
 #include <sstream>
 #include "VX1742Interface.hh"
+#include "VX1742Event.hh"
 
 using namespace RCD;
 
@@ -252,21 +253,23 @@ u_int VX1742Interface::getNextEventSize(){
 
 
 //nEvents needs to be smaller than 255
-u_int VX1742Interface::BlockTransferEventD64(){
+u_int VX1742Interface::BlockTransferEventD64(VX1742Event *vxEvent){
 	u_int eventsize = this->getNextEventSize();
-	this->setMaxBLTEvents(1);
+	this->setMaxBLTEvents(1); //raise BE if more than 1 event is read out
 
 	if(eventsize > 0){
 		vme->RunBlockTransfer(*seg, 0x0, vmebus_address, eventsize, VME_DMA_D64R, buffer_size, true);
 		u_int* data = (u_int*)seg->VirtualAddress();
     	//size = (u_int)seg->Size()/sizeof(u_int);
-    	std::printf("CMEM segment, virt = %p, phys = 0x%016lx, size = %d\n", (void*)data, seg->PhysicalAddress(), eventsize);
-    	std::cout <<"Dump data:" << std::endl;
-    	for(u_int i=0; i<eventsize; i++){
-        	std::printf("%6d: 0x%08x\n",i , data[i]);}
-
-        	/*
-		//write data to event
+    	
+    	#ifdef DEBUG
+    		std::printf("CMEM segment, virt = %p, phys = 0x%016lx, size = %d\n", (void*)data, seg->PhysicalAddress(), eventsize);
+    		std::cout <<"Dump data:" << std::endl;
+    		for(u_int i=0; i<eventsize; i++){
+        		std::printf("%6d: 0x%08x\n",i , data[i]);}
+        #endif
+        
+		//write data to event class
 		VX1742Event::header head;
 		
 		u_int offset = 0;
@@ -284,132 +287,26 @@ u_int VX1742Interface::BlockTransferEventD64(){
 		head.evnt_cnt.raw= data[(++offset)];
 		head.trigger_time= data[(++offset)];
 
-		printf(" header_size:    0x%08X\n", head.size.raw);
-		printf(" header_pattern: 0x%08X\n", head.pattern.raw);
-		printf(" event_counter:  0x%08X\n", head.evnt_cnt.raw);
-		printf(" trigger_time:   0x%08X\n\n", head.trigger_time);
+		#ifdef DEBUG
+			printf("******************************************************\n");
+			printf("RAW header:         0x%08X\n", head.size.raw);
+			printf("0xA:                0x%01X\n", head.size.A);
+			printf("Event size:         %d\n", head.size.eventSize);
+			printf("------------------------------------------------------\n");
+			printf("RAW header_pattern: 0x%08X\n", head.pattern.raw);
+			printf("Group mask:         %d\n", head.pattern.group_mask);
+			printf("Pattern:            %d\n", head.pattern.pattern);
+			printf("Board ID:           %d\n", head.pattern.board_id);
+			printf("------------------------------------------------------\n");
+			printf("RAW event_counter:  0x%08X\n", head.evnt_cnt.raw);
+			printf("Event count:        %d\n", head.evnt_cnt.event_counter);
+			printf("------------------------------------------------------\n");
+			printf("Trigger time:       %d\n", head.trigger_time);
+			printf("******************************************************\n\n");
+		#endif
 
-*/
-}}
-
-
-
-
-/*
-readout collection:
-return(vme->RunBlockTransfer(*seg,0x00000000,g_base+addr,size,dir,0xffffffff,false));
-u_int RunBlockTransfer(const CMEMSegment&, const u_int, const u_int, const u_int, const u_int, const u_int msiz = 0xffffffff, const bool incr = false);
-//(nEvents < 255) ? this->BlockTransferD64(nEvents) : std::cout << "Number of events for BLT to big " << std::endl; //FIXME: raise error
-uint32_t* data = (uint32_t*)seg->VirtualAddress();
-*/
-
-
-
-/*
-===============
-blist.number_of_items = 1;
-blist.list_of_items[0].vmebus_address       = VME_BLOCK_TRANSFER_ADDRESS;
-blist.list_of_items[0].system_iobus_address = cmem_desc_in_paddr;  
-blist.list_of_items[0].size_requested       = 0x400;              
-blist.list_of_items[0].control_word         = VME_DMA_D64R;        //Type of transfer: D64 read
-
-ret = VME_BlockTransfer(&blist, time_out);
-===============
-
-VME_DMA_D64R für MBLT64 read und VME_DMA_D64W für MBLT64 write.
-
-
-
-
-
-
-
-int caen_v1742::BlockTransfer_D64_many_events(v1742_event *events, int events_to_read) {
-
-	
-	size_t eventsize=(number_enabled_groups(GroupEnableMask)*blksize())/4+4;	//in multiples of 4 bytes (32 bits)
-	uint32_t* buffer = new uint32_t[eventsize*events_to_read+2];
-
-
-	if ( (ret=vme->read64(ba, reinterpret_cast <uint64_t*>(buffer), (eventsize*events_to_read/2)+1, false)) < 0 ){
-		throw llbad_caen_v1742_vme_error("BlockTransfer_D64_many_events::read error",ret);
+		vxEvent->setData(&head, data, (head.size.eventSize-4));
 	}
-	#if __BYTE_ORDER == __LITTLE_ENDIAN
-		for(size_t i=0; i<ret; i++){
-			uint32_t buf=buffer[2*i];
-			buffer[2*i]=buffer[2*i+1];
-			buffer[2*i+1]=buf;
-		}
-	#endif
-	//each 64 bit transfer covers two 32 bit words
-	ret*=2;
-	
-	#ifdef v1742_DEBUG
-		cout << "ret=" <<ret << "; ret/eventsize=" << ret/eventsize;
-		if( ret%eventsize != 0 ) {
-			cout << "; ret%eventsize= " << ret%eventsize <<"!=0";
-		}
-		cout << endl;
-	
-		
-		for(int i=eventsize*(ret/eventsize);i<ret;i++){
-			cout << dec <<i << ":" << hex << buffer[i] << dec <<endl;
-		}
-	#endif
 
-	ret/=eventsize;
-
-	v1742_event::header header;
-
-	for(int i=0; i< events_to_read; i++) {
-		if(i>=ret){
-			events[i].invalidate();
-		} else {
-			header.size.raw=buffer[i*eventsize];
-			if (header.size.A != 0xA) {
-				throw llbad_caen_v1742("Event does not start with 0xA",header.size.raw);
-			}
-			header.pattern.raw=buffer[i*eventsize+1];
-			header.evnt_cnt.raw=buffer[i*eventsize+2];
-			header.trigger_time=buffer[i*eventsize+3];
-	#ifdef v1742_DEBUG	
-			printf(" header_size:    0x%08X\n", header.size.raw);
-			printf(" header_pattern: 0x%08X\n", header.pattern.raw);
-			printf(" event_counter:  0x%08X\n", header.evnt_cnt.raw);
-			printf(" trigger_time:   0x%08X\n\n", header.trigger_time);
-
-			printf(" EventSize: %d x32bit = 4x32bit Header + %d byte data\n", header.size.eventSize, (header.size.eventSize-4)*4);
-	#endif
-		
-
-			events[i].setData(&header, buffer+i*eventsize+4, header.size.eventSize-4);// 4 long word header is not part of buffer
-		}
-	}
-	delete [] buffer;
-	return ret;
+	return 0;
 }
-
-
-
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

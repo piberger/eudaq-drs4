@@ -12,16 +12,16 @@
 #define VX1742EVENT_HH
 
 
-//#include <sys/types.h>
-
+#include <sys/types.h>
+#include <stdint.h>
 
 class VX1742Event{
   
   public:
 	union header_size {
 	    struct {
-		  u_int A					:4;
-		  u_int eventSize		:28;
+	      u_int eventSize		:28;
+		  u_int A				:4;
 	  };
 		u_int raw;
 	};
@@ -29,19 +29,19 @@ class VX1742Event{
 
 	union header_pattern {
 	    struct{
-		  u_int board_id			:5;
-		  u_int reserved_0		:5;
-		  u_int pattern			:14;
-		  u_int reserved_1		:4;
 		  u_int group_mask		:4;
+		  u_int reserved_1		:4;
+		  u_int pattern			:14;
+		  u_int reserved_0		:5;
+		  u_int board_id		:5;
 		};
 		u_int raw;
 	};
 
 	union header_event_counter {
 		struct {
+		  u_int event_counter		:22;
 		  u_int reserved			:10;
-		  u_int event_counter	:22;  
 		};
 		u_int raw;
 	};
@@ -60,41 +60,40 @@ class VX1742Event{
 	
 	VX1742Event();
 	virtual ~VX1742Event();
-/*
-
-	int setData(st_header* newhead, const u_int* newbuffer, int newbuflen);
+	int setData(header* newhead, const u_int* newbuffer, int newbuflen);
 	void invalidate();
 	bool isValid() const;
 	u_int EventSize() const;	
 	u_int BoardID() const;
-	u_int Pattern() const;		
+	u_int Pattern() const;
 	u_int GroupMask() const;
 	u_int EventCounter() const;	
 	u_int TriggerTimeTag() const;
+	u_int Channels() const;	
 	size_t SamplesPerChannel() const;
-	u_int Channels() const;
+
+
+	//get functions
+	const header* gethead() const;
+	int getGrpPos(unsigned int grp) const;
+
+	uint16_t getSample(unsigned int chan, unsigned int sample, const uint32_t * subbuffer) const;
+	size_t getChannelData(unsigned int grp, unsigned int chan, uint16_t* array, size_t arraylen) const;
+	size_t getChannelVoltage(unsigned int grp, unsigned int chan, float* array, size_t arraylen, uint16_t dac_offset) const;
+	size_t getChannelData(unsigned int chan, uint16_t* array, size_t arraylen) const{
+		return getChannelData(chan/8, chan%8, array, arraylen);}
+	size_t getChannelVoltage(unsigned int chan, float* array, size_t arraylen, uint16_t dac_offset) const{
+		return getChannelVoltage(chan/8, chan%8, array, arraylen,dac_offset);}
 
 
 	int rawdata_size() const;
-	const st_header* gethead() const;
-	size_t getChannelData(unsigned int grp, unsigned int chan, u_int* array, size_t arraylen) const;
-	size_t getChannelVoltage(unsigned int grp, unsigned int chan, float* array, size_t arraylen, u_int dac_offset) const;
-	size_t getChannelData(unsigned int chan, u_int* array, size_t arraylen) const{
-		return getChannelData(chan/8, chan%8, array, arraylen);}
-	size_t getChannelVoltage(unsigned int chan, float* array, size_t arraylen, u_int dac_offset) const{
-		return getChannelVoltage(chan/8, chan%8, array, arraylen,dac_offset);}
-	*/
+	int resize_rawbuffer(int to_bytesize);
+	
 
   private:	
 	u_int	    *buffer;	
-	int		    bufsize;	
+	int		    bufsize; //bytes
 	union 		header head;
-
-	/*
-	int resize_rawbuffer(int to_bytesize);
-	int getGrpPos(unsigned int grp) const;
-	u_int getSample(unsigned int chan, unsigned int sample, const u_int * subbuffer) const;	
-	*/
 
 
 };
