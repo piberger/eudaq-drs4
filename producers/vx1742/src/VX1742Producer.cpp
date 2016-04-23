@@ -27,6 +27,7 @@
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Configuration.hh"
 #include "VX1742Producer.hh"
+//#include "VX1742Event.hh"
 
 
 static const std::string EVENT_TYPE = "VX1742";
@@ -63,6 +64,7 @@ void VX1742Producer::OnConfigure(const eudaq::Configuration& conf) {
     groups[1] = conf.Get("group2", 0);
     groups[2] = conf.Get("group3", 0);
     groups[3] = conf.Get("group4", 0);
+    custom_size = conf.Get("custom_size", 0);
 
     if(caen->isRunning())
       caen->stopAcquisition();
@@ -74,10 +76,9 @@ void VX1742Producer::OnConfigure(const eudaq::Configuration& conf) {
     caen->setPostTriggerSamples(post_trigger_samples);
     caen->setTriggerSource(trigger_source);
     caen->toggleGroups(groups);
-
-    //send busy signal via the TRG OUT Limo connnector
+    caen->setCustomSize(custom_size);
     caen->sendBusyToTRGout();
-    //caen->setTriggerCount(); //count all, not just accepted triggers
+    caen->setTriggerCount(); //count all, not just accepted triggers
 
 
     //individual group configuration here
@@ -87,6 +88,7 @@ void VX1742Producer::OnConfigure(const eudaq::Configuration& conf) {
     //#) Calibration?
 
   std::cout << " [OK]" << std::endl;
+
   
   SetStatus(eudaq::Status::LVL_OK, "Configured VX1742 (" + conf.Name() +")");
 
@@ -111,6 +113,7 @@ void VX1742Producer::OnStartRun(unsigned runnumber){
     bore.SetTag("serial_number", caen->getSerialNumber());
     bore.SetTag("firmware_version", caen->getFirmwareVersion());
     
+    
     /*
         std::string key = "VX1742_CHANNEL_DAC_"+std::to_string(ch);
 	      bore.SetTag(key, m_channel_dac.at(ch));
@@ -126,10 +129,12 @@ void VX1742Producer::OnStartRun(unsigned runnumber){
     */
 
     caen->clearBuffers();
-    caen->printAcquisitionStatus();
-    caen->printAcquisitionControl();
-
     caen->startAcquisition();
+
+    //caen->printAcquisitionStatus();
+    //caen->printAcquisitionControl();
+
+
     SendEvent(bore);
 
     SetStatus(eudaq::Status::LVL_OK, "Running");
@@ -154,7 +159,9 @@ void VX1742Producer::ReadoutLoop() {
     try{
       
       std::cout << "Events stored: " << caen->getEventsStored() << ", size of next event: " << caen->getNextEventSize() << std::endl;
-
+      usleep(500000);
+      if(caen->eventReady()) 
+        caen->BlockTransferEventD64();
 
 
     }catch (...){

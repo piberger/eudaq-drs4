@@ -42,6 +42,7 @@ private:
   u_int trigger_source;
   u_int active_groups;
   u_int groups[4];
+  u_int custom_size;
 
 
 

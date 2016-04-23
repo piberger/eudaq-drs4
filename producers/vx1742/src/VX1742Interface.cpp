@@ -71,6 +71,7 @@ u_int VX1742Interface::openVME(){
     std::cout << std::endl << "***********************************************************************" << std::endl;
     std::cout << "Board serial number: " << this->getSerialNumber() << std::endl;
     std::cout << this->getFirmwareVersion() << std::endl;
+    std::cout << this->getDRS4FirmwareVersion();
     std::cout << "***********************************************************************" << std::endl << std::endl;
 
   }catch(...){
@@ -81,27 +82,44 @@ u_int VX1742Interface::openVME(){
 
 
 u_int VX1742Interface::closeVME(){
-  delete seg;
-  vme->MasterUnmap(vmm);
-  vme->Close();
+    delete seg;
+    vme->MasterUnmap(vmm);
+    vme->Close();
 }
 
 
 std::string VX1742Interface::getSerialNumber(){
-  return std::to_string(vx1742->configuration_rom.sernum0);	
+    return std::to_string(vx1742->configuration_rom.sernum0);	
 }
 
 std::string VX1742Interface::getFirmwareVersion(){
-  std::stringstream firmware;
-  u_int value, value1, value2;
-  value = ((vx1742->mother_roc_firmware)&0xff);
-  value1 = (((vx1742->mother_roc_firmware)>>8)&0xff);
-  value2 = ((vx1742->mother_roc_firmware)>>16);
-  u_int day = (value2&0xf) + 10*((value2>>4)&0xf);
-  u_int month = ((value2>>8)&0xf);
-  u_int year = ((value2>>12)&0xf);
-  firmware << "VX1742 firmware version: " << value1 << "." << value << " from " << day << "." << month << "." << year;
-  return firmware.str();
+    std::stringstream firmware;
+    u_int value, value1, value2;
+    value = ((vx1742->mother_roc_firmware)&0xff);
+    value1 = (((vx1742->mother_roc_firmware)>>8)&0xff);
+    value2 = ((vx1742->mother_roc_firmware)>>16);
+    u_int day = (value2&0xf) + 10*((value2>>4)&0xf);
+    u_int month = ((value2>>8)&0xf);
+    u_int year = ((value2>>12)&0xf);
+    firmware << "VX1742 firmware version: " << value1 << "." << value << " from " << day << "." << month << "." << year;
+    return firmware.str();
+}
+
+
+std::string VX1742Interface::getDRS4FirmwareVersion(){
+	std::stringstream firmware;
+	u_int tmp, value, value1, value2;
+	for(u_int idx=0; idx<VX1742_GROUPS; idx++){
+		tmp = vx1742->group_n_conf[idx].daugther_board_fw;
+		value = (tmp&0xff);
+  		value1 = ((tmp>>8)&0xff);
+  		value2 = (tmp>>16);
+  		u_int day = (value2&0xf) + 10*((value2>>4)&0xf);
+  		u_int month = ((value2>>8)&0xf);
+  		u_int year = ((value2>>12)&0xf);
+  		firmware << "DRS4 firmware version group " << idx << ": " << value1 << "." << value << " from " << day << "." << month << "." << year << std::endl;
+	}
+	return firmware.str();
 }
 
 
@@ -128,12 +146,12 @@ void VX1742Interface::printAcquisitionStatus(){
 }
 
 void VX1742Interface::printAcquisitionControl(){
-	std::cout << "reserved: " << vx1742->acq_control.reserved << std::endl;
+	std::cout << "reserved 0: " << vx1742->acq_control.reserved_0 << std::endl;
 	std::cout << "buffer mode: " << vx1742->acq_control.buffer_mode<< std::endl;
 	std::cout << "reserved 1: " << vx1742->acq_control.reserved_1 << std::endl;
 	std::cout << "trigger count: " << vx1742->acq_control.trigger_count << std::endl;
 	std::cout << "run: " << vx1742->acq_control.run << std::endl;
-	std::cout << "reserved 0: " << vx1742->acq_control.reserved_0 << std::endl;
+	std::cout << "reserved" << vx1742->acq_control.reserved << std::endl;
 
 }
 
@@ -191,8 +209,6 @@ void VX1742Interface::toggleGroups(u_int param[]){
 	param[1]==1 ? vx1742->group_en_mask.group1=1 : vx1742->group_en_mask.group1=0;
 	param[2]==1 ? vx1742->group_en_mask.group2=1 : vx1742->group_en_mask.group2=0;
 	param[3]==1 ? vx1742->group_en_mask.group3=1 : vx1742->group_en_mask.group3=0;
-
-
 }
 
 
@@ -204,6 +220,15 @@ void VX1742Interface::sendBusyToTRGout(){
 	vx1742->front_panel_io_control.busy_unlock = 0; //propagates it to trg_out
 }
 
+
+void VX1742Interface::setCustomSize(u_int param){
+	vx1742->custom_size = param;
+}
+
+u_int VX1742Interface::getCustomSize(){
+	return vx1742->custom_size;
+}
+
 void VX1742Interface::setTriggerCount(){
 	vx1742->acq_control.trigger_count = 1;
 }
@@ -211,6 +236,11 @@ void VX1742Interface::setTriggerCount(){
 void VX1742Interface::setMaxBLTEvents(u_int param){
 	vx1742->blt_event_number = param;
 }
+
+bool VX1742Interface::eventReady(){
+	return vx1742->acq_status.event_ready;
+}
+
 
 u_int VX1742Interface::getEventsStored(){
 	return vx1742->events_stored;
@@ -222,13 +252,45 @@ u_int VX1742Interface::getNextEventSize(){
 
 
 //nEvents needs to be smaller than 255
-u_int VX1742Interface::BlockTransferD64(u_int VX1742Event , u_int nEvents){
-
+u_int VX1742Interface::BlockTransferEventD64(){
 	u_int eventsize = this->getNextEventSize();
-	u_int vme_buffer_address = (size_t)&vx1742->output_buffer;
-	std::cout << "Buffer address: " << vme_buffer_address << std::endl;
-	vme->RunBlockTransfer(*seg, 0x00000000, vme_buffer_address, eventsize, VME_DMA_D64R, 0xffffffff, false);
-}
+	this->setMaxBLTEvents(1);
+
+	if(eventsize > 0){
+		vme->RunBlockTransfer(*seg, 0x0, vmebus_address, eventsize, VME_DMA_D64R, buffer_size, true);
+		u_int* data = (u_int*)seg->VirtualAddress();
+    	//size = (u_int)seg->Size()/sizeof(u_int);
+    	std::printf("CMEM segment, virt = %p, phys = 0x%016lx, size = %d\n", (void*)data, seg->PhysicalAddress(), eventsize);
+    	std::cout <<"Dump data:" << std::endl;
+    	for(u_int i=0; i<eventsize; i++){
+        	std::printf("%6d: 0x%08x\n",i , data[i]);}
+
+        	/*
+		//write data to event
+		VX1742Event::header head;
+		
+		u_int offset = 0;
+		head.size.raw = data[offset];
+		
+		//some checks on the data
+		if(head.size.raw == 0)
+			std::printf("First word of VX1742 event not found!\n");
+		if(head.size.eventSize != eventsize)
+			std::printf("Read event contains %d words instead of the expected %d!\n", head.size.eventSize, eventsize);
+		if(head.size.A != 0xA)
+			std::printf("Event does not start with 0xA!");
+
+		head.pattern.raw= data[(++offset)];
+		head.evnt_cnt.raw= data[(++offset)];
+		head.trigger_time= data[(++offset)];
+
+		printf(" header_size:    0x%08X\n", head.size.raw);
+		printf(" header_pattern: 0x%08X\n", head.pattern.raw);
+		printf(" event_counter:  0x%08X\n", head.evnt_cnt.raw);
+		printf(" trigger_time:   0x%08X\n\n", head.trigger_time);
+
+*/
+}}
 
 
 

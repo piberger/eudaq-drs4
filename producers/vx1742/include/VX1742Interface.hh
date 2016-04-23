@@ -36,6 +36,7 @@ class VX1742Interface{
 
 	std::string getSerialNumber();
 	std::string getFirmwareVersion();
+	std::string getDRS4FirmwareVersion();
 	u_int isRunning();
 	void startAcquisition();
 	void stopAcquisition();
@@ -50,6 +51,9 @@ class VX1742Interface{
 	void setPostTriggerSamples(u_int param);
 	u_int getPostTriggerSamples();
 
+	void setCustomSize(u_int param);
+	u_int getCustomSize();
+
 	void setTriggerSource(u_int param);
 	std::string getTriggerSource();
 
@@ -60,13 +64,14 @@ class VX1742Interface{
 
 	void setTriggerCount();
 	void setMaxBLTEvents(u_int param);
+	bool eventReady();
 	u_int getEventsStored();
 	u_int getNextEventSize();
 
 
 
 	void SetMaxBLTEvents(u_int param);
-	u_int BlockTransferD64(u_int VX1742Event , u_int nEvents);
+	u_int BlockTransferEventD64();
 
 
 

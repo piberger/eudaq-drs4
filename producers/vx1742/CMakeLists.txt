@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 2.8.12)
 set(name "VX1742Producer.exe")
 add_definitions(-std=c++0x)
 set(sourcefiles 
-src/VX1742Producer.cpp src/VX1742Interface.cpp 
+src/VX1742Producer.cpp src/VX1742Interface.cpp
 /ATLAS/src/RCDCmemSegment.cc 
 /ATLAS/src/RCDDataRange.cc 
 /ATLAS/src/RCDUtilities.cc 
