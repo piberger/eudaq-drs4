@@ -154,23 +154,57 @@ void VX1742Producer::ReadoutLoop() {
     if(!m_running){
       sched_yield();} //if not running deprioritize thread
 
-
   while(m_running){
     try{
-      
       std::cout << "Events stored: " << caen->getEventsStored() << ", size of next event: " << caen->getNextEventSize() << std::endl;
       usleep(500000);
       if(caen->eventReady()){
         VX1742Event vxEvent;
         caen->BlockTransferEventD64(&vxEvent);
-      }
+
+        if(vxEvent.isValid()){
+          u_int event_size = vxEvent.EventSize();
+          u_int group_mask = vxEvent.GroupMask();
+          u_int n_channels = vxEvent.Channels();
+          u_int samples_per_channel = vxEvent.SamplesPerChannel();
+          u_int event_counter = vxEvent.EventCounter();
+          u_int trigger_time_tag = vxEvent.TriggerTimeTag();
+
+          //generate EUDAQ event
+          u_int block_no = 0;
+          eudaq::RawDataEvent ev(m_event_type, m_run, event_counter);
+          ev.AddBlock(block_no, reinterpret_cast<const char*>(&event_size), sizeof(u_int));
+          block_no++;
+          ev.AddBlock(block_no, reinterpret_cast<const char*>(&group_mask), sizeof(u_int));
+          block_no++;
+          ev.AddBlock(block_no, reinterpret_cast<const char*>(&n_channels), sizeof(u_int));
+          block_no++;
+          ev.AddBlock(block_no, reinterpret_cast<const char*>(&samples_per_channel), sizeof(u_int));
+          block_no++;
+          ev.AddBlock(block_no, reinterpret_cast<const char*>(&trigger_time_tag), sizeof(u_int));
+          block_no++;  
+        
+
+          if(event_size > 4){
+            for(u_int ch = 0; ch < n_channels; ch++){
+              uint16_t *payload = new uint16_t[samples_per_channel];
+              vxEvent.getChannelData(ch, payload, samples_per_channel);
+              ev.AddBlock(block_no, reinterpret_cast<const char*>(payload), samples_per_channel*sizeof(uint16_t));
+              block_no++;
+              delete payload;
+            }
+          }  
+          SendEvent(ev);
+        }// is valid
+      }// event is ready
 
     }catch (...){
     EUDAQ_ERROR(std::string("Readout error................"));
     SetStatus(eudaq::Status::LVL_ERROR, "Readout error................");}
 
-    }//running
-  }}
+    }// while running
+  }// while not terminated
+}// ReadoutLoop
 
 
 
@@ -235,85 +269,15 @@ void VX1742Producer::SetTimeStamp(){
 }
 
 
+
 /*//put in software trigger
-      //VX1742_handle->SoftwareTrigger();
-      //sleep(1);
-      /*
-      if(VX1742_handle->isEventReady()){ //check acquisition status register
-        //set time stamp:
-        //uint32_t events_stored = VX1742_handle->getEventsStored();
-        this->SetTimeStamp();
-        //sleep(1);
-        
-        bool event_valid = true;
-        //VX1742_event event; //CAEN event:
-
-
-        //VX1742_handle->ReadEvent_D32(event);
-        //if(!event.isValid()){
-        //  event_valid = false;
-       // }
-
-        //uint32_t event_counter = event.EventCounter();
-
-        
-        std::cout << "Events stored:            " << events_stored << std::endl;
-        std::cout << "Event valid:              " << event.isValid() << std::endl;
-        std::cout << "Event size (32bit words): " << event.EventSize() << std::endl;
-        std::cout << "BoardID:                  " << event.BoardID() << std::endl;
-        std::cout << "Group mask:               " << event.GroupMask() << std::endl;
-        //std::cout << "\rEvent Counter:          " << event_counter << "/" << m_ev  << std::flush;
-        std::cout << "Event Counter:            " << event_counter << "/" << m_ev  <<  std::endl;
-        std::cout << "Samples per channel:      " << event.SamplesPerChannel()  << std::endl;
-        std::cout << "Channels:                 " << event.Channels()           << std::endl;
-        std::cout << "TimeStamp:                " << event.TriggerTimeTag()     << std:: endl;
-        std::cout << std::endl << std::endl; 
-        
-
-  //if(m_ev>1){
-    //uint16_t *ar1=new uint16_t(1024);
-    size_t dum=event.getChannelData(0,1,ar1,1024);
-
-    for(int x=0;x<1024;x++){
-      std::cout << "Channel Data (i="<<x<<"):        "<< ar1[x] << std::endl;
-      }
-  //}
-  std::cout<<"m_event_type: "<<m_event_type<<"\tm_run: "<<m_run<<"\tevent_counter: "<<event_counter<<std::endl;
-        eudaq::RawDataEvent ev(m_event_type, m_run, event_counter); //generate a raw event
-        std::cout << "0" << std::endl;  
-        ev.SetTimeStampToNow(); // Let's think whether this information can help us...        
-  std::cout << "1" << std::endl;  
-        //ev.SetTag("TriggerTimeTag", event.TriggerTimeTag());
-
-        std::cout << "2" << std::endl;  
-
-        unsigned int block_no = 0;
-        ev.AddBlock(block_no, reinterpret_cast<const char*>(&event_valid), sizeof(bool)); //valid bit
-        block_no++;
-        std::cout << "3" << std::endl;  
-        ev.AddBlock(block_no, reinterpret_cast<const char*>(&m_timestamp), sizeof(m_timestamp)); //timestamp
-        block_no++;
-        std::cout << "4" << std::endl;  
-        ev.AddBlock(block_no, reinterpret_cast<const char*>(&m_ev), sizeof(uint32_t)); //event counter
-        block_no++;
-
-        //get information regarding the number and size of the events
-        //uint32_t n_channels = event.Channels();
-        //std::cout << "Number of Channels: " << n_channels << std::endl;
-        //size_t n_samples = event.SamplesPerChannel();
-
-        //read out all channels
-        for(uint32_t ch = 0; ch < n_channels; ch++){
-          uint16_t *payload = new uint16_t[n_samples];
-          //event.getChannelData(ch, payload, n_samples);
-          //std::cout << "Size of readout - n_samples: " << n_samples << ", payload [byte]: " << n_samples*sizeof(uint16_t) << std::endl;
-          ev.AddBlock(block_no, reinterpret_cast<const char*>(payload), n_samples*sizeof(uint16_t));
-          block_no++;
-          delete payload;
-        }
-        SendEvent(ev);
-  m_ev++;
-
-        //std::cout << "Event counter (loop): " << m_ev << std::endl;      
+        std::cout << "Event number: " << vxEvent.EventCounter() << std::endl;
+        std::cout << "Event valid: " << vxEvent.isValid() << std::endl;
+        std::cout << "Event size: " << vxEvent.EventSize() << std::endl;
+        std::cout << "Active number of channels: " << vxEvent.Channels() << std::endl;
+        std::cout << "Samples per channel: " << vxEvent.SamplesPerChannel() << std::endl;
+        std::cout << "Group mask: " << vxEvent.GroupMask() << std::endl;
+        std::cout << "Trigger time tag: " << vxEvent.TriggerTimeTag() << std::endl;
+        std::cout << "***********************************************************************" << std::endl << std::endl;    
         */
 

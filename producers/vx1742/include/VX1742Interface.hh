@@ -1,12 +1,13 @@
-/* ---------------------------------------------------------------------------------
+/* --------------------------------------------------------------------------------------------
 ** CAEN VX1742 implementation into the EUDAQ framework
 ** 
 **
-** <VX1742Inteface>.hh
+** <VX1742Interface>.hh
 ** 
 ** Date: April 2016
+** Remarks: This is not a stand-alone driver, which was specifically written for our needs.
 ** Author: Christian Dorfer (dorfer@phys.ethz.ch)
-** ---------------------------------------------------------------------------------*/
+** -------------------------------------------------------------------------------------------- */
 
 
 #ifndef VX1742INTERFACE_HH
@@ -60,7 +61,6 @@ class VX1742Interface{
 
 	void toggleGroups(u_int param[]);
 
-
 	void sendBusyToTRGout();
 
 	void setTriggerCount();
@@ -69,12 +69,8 @@ class VX1742Interface{
 	u_int getEventsStored();
 	u_int getNextEventSize();
 
-
-
 	void SetMaxBLTEvents(u_int param);
 	u_int BlockTransferEventD64(VX1742Event *vxEvent);
-
-
 
 
 

@@ -1,13 +1,13 @@
-/* -----------------------------------------------------------------------------------
+/* --------------------------------------------------------------------------------------------
 ** CAEN VX1742 implementation into the EUDAQ framework
 ** 
 **
 ** <VX1742Interface>.cpp
 ** 
 ** Date: April 2016
-** Info: This is not a stand-alone driver. It was specifically written for our needs.
+** Remarks: This is not a stand-alone driver, which was specifically written for our needs.
 ** Author: Christian Dorfer (dorfer@phys.ethz.ch)
-** -----------------------------------------------------------------------------------*/
+** -------------------------------------------------------------------------------------------- */
 
 
 #include <iostream>
