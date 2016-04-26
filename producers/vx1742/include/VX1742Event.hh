@@ -111,27 +111,14 @@ class VX1742Event{
 	u_int EventCounter() const;	
 	u_int TriggerTimeTag() const;
 	u_int Groups() const;
-	u_int Channels() const;	
+	u_int Channels(u_int grp) const;	
 	
-
+	const header* gethead() const;
 	u_int getGroupSizeInBuffer() const;
 	int getGroupIndexInBuffer(u_int grp) const;
 	void setGroupHeader(unsigned int grp);
-	size_t SamplesPerChannel() const;
-
-
-	//get functions
-	const header* gethead() const;
-	
-	//int getGroupPositionInBuffer(unsigned int grp) const;
-	//uint16_t getSample(unsigned int chan, unsigned int sample, const uint32_t * subbuffer) const;
-	size_t getChannelData(unsigned int grp, unsigned int chan, uint16_t* array, size_t arraylen) const;
-	//size_t getChannelVoltage(unsigned int grp, unsigned int chan, float* array, size_t arraylen, uint16_t dac_offset) const;
-	//size_t getChannelData(unsigned int chan, uint16_t* array, size_t arraylen) const{
-	//	return getChannelData(chan/8, chan%8, array, arraylen);}
-	//size_t getChannelVoltage(unsigned int chan, float* array, size_t arraylen, uint16_t dac_offset) const{
-	//	return getChannelVoltage(chan/8, chan%8, array, arraylen,dac_offset);}
-
+	int SamplesPerChannel(u_int grp) const;
+	int getChannelData(unsigned int grp, unsigned int chan, uint16_t* array, size_t arraylen) const;
 
 	int rawdata_size() const;
 	int resize_rawbuffer(int to_bytesize);

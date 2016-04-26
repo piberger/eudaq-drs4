@@ -44,29 +44,17 @@ int VX1742Event::setData(header* newhead, const u_int* newbuffer, int newbuflen)
 		head.raw[i] = newhead->raw[i];
 	}
 
-	for(int idx=0; idx<(bufsize/4-1); idx=idx+2){
-		printf("%d: %08x %08x\n", idx, buffer[idx], buffer[idx+1]);
-	}
+	//for(int idx=0; idx<(bufsize/4-1); idx=idx+2){
+	//	printf("%d: %08x %08x\n", idx, buffer[idx], buffer[idx+1]);
+	//}
 	
 	u_int group_size = this->getGroupSizeInBuffer();
 	for(u_int grp = 0; grp<VX1742_GROUPS; grp++){
 		int grppos = getGroupIndexInBuffer(grp);
-		if(grppos>=0){
-
-			/*
-			std::printf("###############################################\n");
-			std::printf("This is group: %d\n", grp);
-			std::printf("Group size in buffer: %d\n", group_size);
-			std::printf("Group index in buffer: %d\n", grppos);
-			u_int value = buffer[grppos];
-			u_int size = value&0xFFF;
-			std::printf("Size of event: %d\n", size);
-			std::printf("###############################################\n");
-			*/
-
-			
+		if(grppos>=0){			
 			group_heads.grh[grp].raw = buffer[grppos];
 			group_trails.grt[grp].raw = buffer[grppos+group_size-1];
+			/*
 			std::printf("###############################################\n");
         	std::printf("This is group: %d\n", grp);
         	std::printf("Group size in buffer: %d\n", group_size);
@@ -77,15 +65,9 @@ int VX1742Event::setData(header* newhead, const u_int* newbuffer, int newbuflen)
         	std::printf("Start Index cell: %d\n",  group_heads.grh[grp].index_cell);
         	std::printf("Trigger Time Tag: %d\n",  group_trails.grt[grp].trigger_time);
         	std::printf("###############################################\n");
-        	
-
+        	*/
 		}
 	}
-
-
-
-
-
 	return 0;
 }
 
@@ -171,7 +153,6 @@ int VX1742Event::getGroupIndexInBuffer(u_int grp) const{
 			before++;
 		}
 	}
-
 	if((1<<grp) & this->GroupMask()){
 		return (this->getGroupSizeInBuffer()*before);
 	}else{
@@ -180,144 +161,56 @@ int VX1742Event::getGroupIndexInBuffer(u_int grp) const{
 }
 
 //until here event independent regarding TRn enabled/disabled, now the mess starts:
-
-size_t VX1742Event::SamplesPerChannel() const{
-	u_int channels = this->Channels();
-	if(channels == 0){return 0;}
-	return((bufsize*8-(this->Groups()*2*32))/this->Channels()/VX1742_RESOLUTION);
-}
-
-
-u_int VX1742Event::Channels() const {
-	if (!isValid()) std::printf("Event not valid!");
-	u_int groups = this->GroupMask();
-	u_int temp=0;
-	do {temp += groups&1;} while (groups>>=1);
-	return temp*8; //8 channels per group
-}
-
-
-
-
-
-size_t VX1742Event::getChannelData(unsigned int grp, unsigned int chan, uint16_t* array, size_t arraylen) const{
-	if (!isValid()) std::printf("Event not valid!");
-	if (chan >= VX1742_CHANNELS_PER_GROUP) std::printf("There are only %d channels!\n", VX1742_CHANNELS_PER_GROUP);
-	if (grp > VX1742_GROUPS) std::printf("There are only %d groups!\n", VX1742_GROUPS);
+int VX1742Event::SamplesPerChannel(u_int grp) const{
+	if (grp > VX1742_GROUPS) {std::printf("There are only %d groups!\n", VX1742_GROUPS); return -1;}
 	int grppos = getGroupIndexInBuffer(grp);
-	if (grppos<0) {std::printf("Group %d NOT FOUND in data: 0x%02X\n", grp, this->GroupMask());}
-
-
-
-	//set group data header:
-
-
-
-
-
-
-
-}
-
-
-
-
-
-
-
-//**********************************************************************************************************************
-//Big FIXME from here
-
-/*
-
-uint16_t VX1742Event::getSample(unsigned int chan, unsigned int sample, const uint32_t *subbuffer)const{
-
-	uint16_t value;
-
-	//starting bit number relative to start of 9 word cluster of data
-	int bit_start=3*12*chan+12*(sample%3);
-		
-	size_t word_start=9*(sample/3) + bit_start/32;
-	bit_start%=32;
-		
-	//data values crossing word boundaries either start at bit 24 or 28)
-	if(bit_start==24) {
-		value=(subbuffer[word_start]>>bit_start) & 0xFF;
-		value|= (subbuffer[word_start+1] &0xF)<<8;
-		
-	} else if(bit_start==28){
-		value=(subbuffer[word_start]>>bit_start) & 0xF;
-		value|= (subbuffer[word_start+1] &0xFF) <<4;
-	} else{
-		value=(subbuffer[word_start]>>bit_start) & 0xFFF;
-	}
-	return value;
-}
-
-
-
-
-
-
-
-size_t VX1742Event::getChannelData(unsigned int grp, unsigned int chan, uint16_t* array, size_t arraylen) const{
-
-
-	size_t word_offset = grppos*(this->SamplesPerChannel()*VX1742_CHANNELS_PER_GROUP*VX1742_RESOLUTION/32);
+	if (grppos<0) {std::printf("Group %d NOT FOUND in data!\n", grp); return -1;}
 	
-	for (unsigned int i=0; i<this->SamplesPerChannel() && i<arraylen; i++) {
-		array[i]=getSample(chan, i, buffer+word_offset);
+	bool TRn_enabled = group_heads.grh[grp].tr;
+	u_int gr_size = this->getGroupSizeInBuffer()-2; //-2 for group header and trailer
+	if(TRn_enabled){
+		return (gr_size*32)/((VX1742_CHANNELS_PER_GROUP+1)*VX1742_RESOLUTION);
 	}
+	return (gr_size*32)/((VX1742_CHANNELS_PER_GROUP)*VX1742_RESOLUTION);
+}
 
-	return std::min(arraylen,this->SamplesPerChannel());
+
+//return 9 per group if TRn is enabled
+u_int VX1742Event::Channels(u_int grp) const {
+	u_int groups = this->Groups();
+	if (groups == 0) return 0;
+	bool TRn_enabled = group_heads.grh[grp].tr;
+	if(TRn_enabled){
+		return groups*9;
+	}
+	return groups*8;
 }
 
 
 
+int VX1742Event::getChannelData(unsigned int grp, unsigned int ch, uint16_t* array, size_t arraylen) const{
+	if (ch >= VX1742_CHANNELS_PER_GROUP){std::printf("There are only %d channels!\n", VX1742_CHANNELS_PER_GROUP); return -1;}
+	if (grp > VX1742_GROUPS){std::printf("There are only %d groups!\n", VX1742_GROUPS); return -1;}
+	
+	int grppos = getGroupIndexInBuffer(grp) + 1;
+	if (grppos<0){std::printf("Group %d NOT FOUND in data!\n", grp); return -1;}
+	int samples = this->SamplesPerChannel(grp);
+	if(samples == -1){return -1;}
+	bool TRn_enabled = group_heads.grh[grp].tr;
 
-
-
-
-
-
-
-
-
-
-
-size_t VX1742Event::getChannelVoltage(unsigned int grp, unsigned int chan, float* array, size_t arraylen, uint16_t dac_offset) const{
-	if (!isValid()) std::printf("Event not valid!");
-	if (chan >= VX1742_CHANNELS_PER_GROUP) std::printf("There are only %d channels!\n", VX1742_CHANNELS_PER_GROUP);
-	if (grp > VX1742_GROUPS) std::printf("There are only %d groups!\n", VX1742_GROUPS);
-	int grppos = getGroupPositionInBuffer(grp);
-	if (grppos<0) {
-		printf("Group %d NOT FOUND in available channels: 0x%02X\n", grp, this->GroupMask() );
+	int start_bit = ch*12%32;
+	int line = (int) (12*ch)/32;
+	int temp = 32-start_bit;
+	if(temp<12){
+		for(int idx=0; idx < samples; idx++){
+			array[idx] = (buffer[grppos+idx*3+line+1]&(12-temp))<<temp + (buffer[grppos+idx*3+line])>>start_bit;
+		}
 	}
-	
-	size_t word_offset= grppos*(this->SamplesPerChannel()*VX1742_CHANNELS_PER_GROUP*VX1742_RESOLUTION/32);
-	
-	for (unsigned int i=0; i<this->SamplesPerChannel() && i<arraylen; i++) {
-		uint16_t data=getSample(chan, i, buffer+word_offset);
-		array[i]=2.*(((float)data)/4096. - 1. + ((float)dac_offset)/65536.);
+	if(temp>=12){
+		for(int idx=0; idx < samples; idx++){
+			array[idx] = (buffer[grppos+idx*3+line]>>start_bit)&0xFFF;
+		}
 	}
 
-	return std::min(arraylen,this->SamplesPerChannel());
-}
-
-
-
-
-*/
-
-
-
-
-
-
-
-
-
-
-
-
+}//method end
 

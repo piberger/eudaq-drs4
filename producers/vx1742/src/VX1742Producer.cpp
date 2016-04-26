@@ -60,10 +60,10 @@ void VX1742Producer::OnConfigure(const eudaq::Configuration& conf) {
     sampling_frequency = conf.Get("sampling_frequency", 0);
     post_trigger_samples = conf.Get("post_trigger_samples", 0);
     trigger_source = conf.Get("trigger_source", 0);
-    groups[0] = conf.Get("group1", 0);
-    groups[1] = conf.Get("group2", 0);
-    groups[2] = conf.Get("group3", 0);
-    groups[3] = conf.Get("group4", 0);
+    groups[0] = conf.Get("group0", 0);
+    groups[1] = conf.Get("group1", 0);
+    groups[2] = conf.Get("group2", 0);
+    groups[3] = conf.Get("group3", 0);
     custom_size = conf.Get("custom_size", 0);
 
     if(caen->isRunning())
@@ -165,8 +165,8 @@ void VX1742Producer::ReadoutLoop() {
         if(vxEvent.isValid()){
           u_int event_size = vxEvent.EventSize();
           u_int group_mask = vxEvent.GroupMask();
-          u_int n_channels = vxEvent.Channels();
-          //u_int samples_per_channel = vxEvent.SamplesPerChannel();
+          u_int n_channels = vxEvent.Channels(0);
+          u_int samples_per_channel = vxEvent.SamplesPerChannel(0);
           u_int event_counter = vxEvent.EventCounter();
           u_int trigger_time_tag = vxEvent.TriggerTimeTag();
 
@@ -174,7 +174,7 @@ void VX1742Producer::ReadoutLoop() {
         std::cout << "Event number: " << vxEvent.EventCounter() << std::endl;
         std::cout << "Event valid: " << vxEvent.isValid() << std::endl;
         std::cout << "Event size: " << vxEvent.EventSize() << std::endl;
-        std::cout << "Active number of channels: " << vxEvent.Channels() << std::endl;
+        std::cout << "Active number of channels in group 0: " << vxEvent.Channels(0) << std::endl;
         //std::cout << "Samples per channel: " << vxEvent.SamplesPerChannel() << std::endl;
         std::cout << "Group mask: " << vxEvent.GroupMask() << std::endl;
         std::cout << "Trigger time tag: " << vxEvent.TriggerTimeTag() << std::endl;
@@ -199,19 +199,24 @@ void VX1742Producer::ReadoutLoop() {
 
           std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
           std::cout << "Number of groups: " << vxEvent.Groups() << std::endl;
+          std::cout << "Number of active channels in group 0: " << vxEvent.Channels(0) << std::endl;
           std::cout << "Buffer size: " << vxEvent.rawdata_size() << std::endl;
           std::cout << "Group size in buffer: " << vxEvent.getGroupSizeInBuffer() << std::endl;
           std::cout << "Group 0 position: " << vxEvent.getGroupIndexInBuffer(0) << std::endl;
           std::cout << "Group 1 position: " << vxEvent.getGroupIndexInBuffer(1) << std::endl;
           std::cout << "Group 2 position: " << vxEvent.getGroupIndexInBuffer(2) << std::endl;
           std::cout << "Group 3 position: " << vxEvent.getGroupIndexInBuffer(3) << std::endl;
-          std::cout << "Samples per channel: " << vxEvent.SamplesPerChannel() << std::endl;
+          std::cout << "Samples per channel in group 1: " << vxEvent.SamplesPerChannel(0) << std::endl;
+          std::cout << "Samples per channel in group 2: " << vxEvent.SamplesPerChannel(1) << std::endl;
+          std::cout << "Samples per channel in group 3: " << vxEvent.SamplesPerChannel(2) << std::endl;
+          std::cout << "Samples per channel in group 4: " << vxEvent.SamplesPerChannel(3) << std::endl;
           std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+          
           /*
           if(event_size > 4){
             for(u_int ch = 0; ch < n_channels; ch++){
               uint16_t *payload = new uint16_t[samples_per_channel];
-              vxEvent.getChannelData(ch, payload, samples_per_channel);
+              vxEvent.getChannelData(0, ch, payload, samples_per_channel);
 
 
               for(u_int d = 0; d<samples_per_channel; d++)
@@ -222,7 +227,14 @@ void VX1742Producer::ReadoutLoop() {
               block_no++;
               delete payload;
             }
-          } */
+          }
+          */
+
+          uint16_t *payload = new uint16_t[samples_per_channel];
+          vxEvent.getChannelData(0, 6, payload, samples_per_channel);
+          for(u_int d = 0; d<samples_per_channel; d++)
+                std::cout << "Index " << d << " , data: " << payload[d] << std::endl;
+          delete payload;
 
 
 
