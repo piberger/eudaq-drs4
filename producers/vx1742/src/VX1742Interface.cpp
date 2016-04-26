@@ -275,7 +275,7 @@ u_int VX1742Interface::BlockTransferEventD64(VX1742Event *vxEvent){
 		}
 
 
-		u_int* data = (u_int*)seg->VirtualAddress();
+		uint32_t* data = (uint32_t*)seg->VirtualAddress();
     	//size = (u_int)seg->Size()/sizeof(u_int);
     	
     	#ifdef DEBUG

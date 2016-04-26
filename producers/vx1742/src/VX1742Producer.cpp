@@ -8,6 +8,13 @@
 ** Author: Christian Dorfer (dorfer@phys.ethz.ch)
 ** ---------------------------------------------------------------------------------*/
 
+//wishlist
+//software trigger
+//trigger on signal
+//calibration
+//readout TRn
+
+
 // system includes:
 #include <iostream>
 #include <ostream>
@@ -212,31 +219,22 @@ void VX1742Producer::ReadoutLoop() {
           std::cout << "Samples per channel in group 4: " << vxEvent.SamplesPerChannel(3) << std::endl;
           std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
           
-          /*
+          
           if(event_size > 4){
-            for(u_int ch = 0; ch < n_channels; ch++){
+            for(u_int ch = 0; ch < 4; ch++){ //FIXME: n_channels
               uint16_t *payload = new uint16_t[samples_per_channel];
               vxEvent.getChannelData(0, ch, payload, samples_per_channel);
 
-
+              std::cout << "Now at channel: " << ch << std::endl;
               for(u_int d = 0; d<samples_per_channel; d++)
                 std::cout << "Index " << d << " , data: " << payload[d] << std::endl;
-
 
               ev.AddBlock(block_no, reinterpret_cast<const char*>(payload), samples_per_channel*sizeof(uint16_t));
               block_no++;
               delete payload;
             }
           }
-          */
-
-          uint16_t *payload = new uint16_t[samples_per_channel];
-          vxEvent.getChannelData(0, 6, payload, samples_per_channel);
-          for(u_int d = 0; d<samples_per_channel; d++)
-                std::cout << "Index " << d << " , data: " << payload[d] << std::endl;
-          delete payload;
-
-
+          
 
           SendEvent(ev);
         }// is valid

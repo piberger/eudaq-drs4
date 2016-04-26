@@ -20,30 +20,30 @@ class VX1742Event{
   public:
 	union header_size {
 	    struct {
-	      u_int eventSize		:28;
-		  u_int A				:4;
+	      uint32_t eventSize		:28;
+		  uint32_t A				:4;
 	  };
-		u_int raw;
+		uint32_t raw;
 	};
 
 
 	union header_pattern {
 	    struct{
-		  u_int group_mask		:4;
-		  u_int reserved_1		:4;
-		  u_int pattern			:14;
-		  u_int reserved_0		:5;
-		  u_int board_id		:5;
+		  uint32_t group_mask		:4;
+		  uint32_t reserved_1		:4;
+		  uint32_t pattern			:14;
+		  uint32_t reserved_0		:5;
+		  uint32_t board_id		:5;
 		};
-		u_int raw;
+		uint32_t raw;
 	};
 
 	union header_event_counter {
 		struct {
-		  u_int event_counter		:22;
-		  u_int reserved			:10;
+		  uint32_t event_counter		:22;
+		  uint32_t reserved			:10;
 		};
-		u_int raw;
+		uint32_t raw;
 	};
 
 
@@ -52,9 +52,9 @@ class VX1742Event{
 		union header_size size;
 		union header_pattern pattern;
 		union header_event_counter evnt_cnt;
-		u_int trigger_time;
+		uint32_t trigger_time;
 	  };
-	  u_int raw[4];
+	  uint32_t raw[4];
 	};
 
 
@@ -62,15 +62,15 @@ class VX1742Event{
 	//specific event based group stuff:
 	union group_header{
 	  struct{
-	  	u_int groupSize 	   :12;
-	  	u_int tr 				:1;
-	  	u_int reserved_3		:3;
-	  	u_int frequency			:2;
-	  	u_int reserved_2		:2;
-	  	u_int index_cell	   :10;
-	  	u_int reserved_1		:2;
+	  	uint32_t groupSize 	   :12;
+	  	uint32_t tr 				:1;
+	  	uint32_t reserved_3		:3;
+	  	uint32_t frequency			:2;
+	  	uint32_t reserved_2		:2;
+	  	uint32_t index_cell	   :10;
+	  	uint32_t reserved_1		:2;
 	  };
-	  u_int raw;
+	  uint32_t raw;
 	};
 
 
@@ -78,16 +78,16 @@ class VX1742Event{
 		struct{
 			union group_header grh[4];
 		};
-		u_int raw[4];
+		uint32_t raw[4];
 	};
 
 
 	union group_trailer{
 		struct{
-			u_int trigger_time		:30;
-			u_int reserved 			 :2;
+			uint32_t trigger_time		:30;
+			uint32_t reserved 			 :2;
 		};
-		u_int raw;
+		uint32_t raw;
 	};
 
 
@@ -95,29 +95,29 @@ class VX1742Event{
 		struct{
 			union group_trailer grt[4];
 		};
-		u_int raw[4];
+		uint32_t raw[4];
 	};
 
 
 	VX1742Event();
 	virtual ~VX1742Event();
-	int setData(header* newhead, const u_int* newbuffer, int newbuflen);
+	int setData(header* newhead, const uint32_t* newbuffer, int newbuflen);
 	void invalidate();
 	bool isValid() const;
-	u_int EventSize() const;	
-	u_int BoardID() const;
-	u_int Pattern() const;
-	u_int GroupMask() const;
-	u_int EventCounter() const;	
-	u_int TriggerTimeTag() const;
-	u_int Groups() const;
-	u_int Channels(u_int grp) const;	
+	uint32_t EventSize() const;	
+	uint32_t BoardID() const;
+	uint32_t Pattern() const;
+	uint32_t GroupMask() const;
+	uint32_t EventCounter() const;	
+	uint32_t TriggerTimeTag() const;
+	uint32_t Groups() const;
+	uint32_t Channels(uint32_t grp) const;	
 	
 	const header* gethead() const;
-	u_int getGroupSizeInBuffer() const;
-	int getGroupIndexInBuffer(u_int grp) const;
+	uint32_t getGroupSizeInBuffer() const;
+	int getGroupIndexInBuffer(uint32_t grp) const;
 	void setGroupHeader(unsigned int grp);
-	int SamplesPerChannel(u_int grp) const;
+	int SamplesPerChannel(uint32_t grp) const;
 	int getChannelData(unsigned int grp, unsigned int chan, uint16_t* array, size_t arraylen) const;
 
 	int rawdata_size() const;
@@ -125,7 +125,7 @@ class VX1742Event{
 	
 	
   private:	
-	u_int	    *buffer;	
+	uint32_t	*buffer;	
 	int		    bufsize; //bytes
 	union 		header head;
 	union		gr_headers group_heads;

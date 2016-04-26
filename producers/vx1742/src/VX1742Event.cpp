@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <algorithm>
 #include <iostream>
+#include <stdint.h>
 
 
 VX1742Event::VX1742Event(){
@@ -30,8 +31,8 @@ VX1742Event::~VX1742Event(){
 		buffer=NULL;}
 }
 
-int VX1742Event::setData(header* newhead, const u_int* newbuffer, int newbuflen) {
-	newbuflen *= sizeof(u_int);
+int VX1742Event::setData(header* newhead, const uint32_t* newbuffer, int newbuflen) {
+	newbuflen *= sizeof(uint32_t);
 	resize_rawbuffer(newbuflen);
 	if (buffer == NULL) {
 		printf("VX1742Event: could not (re)allocate event data buffer of size %d\n!", newbuflen);
@@ -48,8 +49,8 @@ int VX1742Event::setData(header* newhead, const u_int* newbuffer, int newbuflen)
 	//	printf("%d: %08x %08x\n", idx, buffer[idx], buffer[idx+1]);
 	//}
 	
-	u_int group_size = this->getGroupSizeInBuffer();
-	for(u_int grp = 0; grp<VX1742_GROUPS; grp++){
+	uint32_t group_size = this->getGroupSizeInBuffer();
+	for(uint32_t grp = 0; grp<VX1742_GROUPS; grp++){
 		int grppos = getGroupIndexInBuffer(grp);
 		if(grppos>=0){			
 			group_heads.grh[grp].raw = buffer[grppos];
@@ -74,10 +75,10 @@ int VX1742Event::setData(header* newhead, const u_int* newbuffer, int newbuflen)
 
 int VX1742Event::resize_rawbuffer(int to_bytesize){
 	if (buffer == NULL) {
-		buffer = (u_int*)malloc(to_bytesize);
+		buffer = (uint32_t*)malloc(to_bytesize);
 		bufsize=to_bytesize;
 	}else{
-		buffer = (u_int*)realloc(buffer, to_bytesize);
+		buffer = (uint32_t*)realloc(buffer, to_bytesize);
 		bufsize=to_bytesize;
 		if ( bufsize == 0 ) buffer=NULL;
 	}
@@ -100,35 +101,35 @@ bool VX1742Event::isValid() const {
 	if (head.size.eventSize == 0 ) return false;
 	return true;
 }
-u_int VX1742Event::EventSize() const {
+uint32_t VX1742Event::EventSize() const {
 	if (!isValid()) std::printf("Event not valid!");
 	return head.size.eventSize;
 }
-u_int VX1742Event::BoardID() const {
+uint32_t VX1742Event::BoardID() const {
 	if (!isValid()) std::printf("Event not valid!");
 	return head.pattern.board_id;
 }
-u_int VX1742Event::Pattern() const {
+uint32_t VX1742Event::Pattern() const {
 	if (!isValid()) std::printf("Event not valid!");
 	return head.pattern.pattern;
 }
-u_int VX1742Event::GroupMask() const {
+uint32_t VX1742Event::GroupMask() const {
 	if (!isValid()) std::printf("Event not valid!");
 	return head.pattern.group_mask; //channel_mask;
 }
-u_int VX1742Event::EventCounter() const {
+uint32_t VX1742Event::EventCounter() const {
 	if (!isValid()) std::printf("Event not valid!");
 	return head.evnt_cnt.event_counter;
 }
-u_int VX1742Event::TriggerTimeTag() const {
+uint32_t VX1742Event::TriggerTimeTag() const {
 	if (!isValid()) std::printf("Event not valid!");
 	return head.trigger_time; 
 }
 
-u_int VX1742Event::Groups() const {
+uint32_t VX1742Event::Groups() const {
 	if (!isValid()) std::printf("Event not valid!");
-	u_int groups = this->GroupMask();
-	u_int temp=0;
+	uint32_t groups = this->GroupMask();
+	uint32_t temp=0;
 	do {temp += groups&1;} while (groups>>=1);
 	return temp;
 }
@@ -139,14 +140,14 @@ const VX1742Event::header* VX1742Event::gethead() const{
 }
 
 
-u_int VX1742Event::getGroupSizeInBuffer() const{
+uint32_t VX1742Event::getGroupSizeInBuffer() const{
 	if(this->Groups() > 0)
 		return (bufsize/4)/(this->Groups()); //number of 32bit integers
 	return 0;
 }
 
 
-int VX1742Event::getGroupIndexInBuffer(u_int grp) const{
+int VX1742Event::getGroupIndexInBuffer(uint32_t grp) const{
 	int before = 0;
 	for(int i=0; i<grp; i++){
 		if((1<<i) & this->GroupMask()){
@@ -161,13 +162,13 @@ int VX1742Event::getGroupIndexInBuffer(u_int grp) const{
 }
 
 //until here event independent regarding TRn enabled/disabled, now the mess starts:
-int VX1742Event::SamplesPerChannel(u_int grp) const{
+int VX1742Event::SamplesPerChannel(uint32_t grp) const{
 	if (grp > VX1742_GROUPS) {std::printf("There are only %d groups!\n", VX1742_GROUPS); return -1;}
 	int grppos = getGroupIndexInBuffer(grp);
 	if (grppos<0) {std::printf("Group %d NOT FOUND in data!\n", grp); return -1;}
 	
 	bool TRn_enabled = group_heads.grh[grp].tr;
-	u_int gr_size = this->getGroupSizeInBuffer()-2; //-2 for group header and trailer
+	uint32_t gr_size = this->getGroupSizeInBuffer()-2; //-2 for group header and trailer
 	if(TRn_enabled){
 		return (gr_size*32)/((VX1742_CHANNELS_PER_GROUP+1)*VX1742_RESOLUTION);
 	}
@@ -176,8 +177,8 @@ int VX1742Event::SamplesPerChannel(u_int grp) const{
 
 
 //return 9 per group if TRn is enabled
-u_int VX1742Event::Channels(u_int grp) const {
-	u_int groups = this->Groups();
+uint32_t VX1742Event::Channels(uint32_t grp) const {
+	uint32_t groups = this->Groups();
 	if (groups == 0) return 0;
 	bool TRn_enabled = group_heads.grh[grp].tr;
 	if(TRn_enabled){
@@ -198,16 +199,18 @@ int VX1742Event::getChannelData(unsigned int grp, unsigned int ch, uint16_t* arr
 	if(samples == -1){return -1;}
 	bool TRn_enabled = group_heads.grh[grp].tr;
 
-	int start_bit = ch*12%32;
-	int line = (int) (12*ch)/32;
-	int temp = 32-start_bit;
+	uint32_t start_bit = ch*12%32;
+	uint32_t line = (uint32_t) (12*ch)/32;
+	uint32_t temp = 32-start_bit;
 	if(temp<12){
-		for(int idx=0; idx < samples; idx++){
-			array[idx] = (buffer[grppos+idx*3+line+1]&(12-temp))<<temp + (buffer[grppos+idx*3+line])>>start_bit;
+		for(uint32_t idx=0; idx < samples; idx++){
+			uint32_t low = buffer[grppos+idx*3+line]>>start_bit;
+			uint32_t high = (buffer[grppos+idx*3+line+1]&((1<<(12-temp))-1))<<temp;
+			array[idx] = high + low;
 		}
 	}
 	if(temp>=12){
-		for(int idx=0; idx < samples; idx++){
+		for(uint32_t idx=0; idx < samples; idx++){
 			array[idx] = (buffer[grppos+idx*3+line]>>start_bit)&0xFFF;
 		}
 	}
