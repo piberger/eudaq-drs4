@@ -255,10 +255,26 @@ u_int VX1742Interface::getNextEventSize(){
 //nEvents needs to be smaller than 255
 u_int VX1742Interface::BlockTransferEventD64(VX1742Event *vxEvent){
 	u_int eventsize = this->getNextEventSize();
+	u_int eventsize_history = eventsize;
 	this->setMaxBLTEvents(1); //raise BE if more than 1 event is read out
 
 	if(eventsize > 0){
-		vme->RunBlockTransfer(*seg, 0x0, vmebus_address, eventsize, VME_DMA_D64R, buffer_size, true);
+
+		u_int increment = 0;
+		bool remaining = false;
+		while(eventsize > 1024){
+			vme->RunBlockTransfer(*seg, increment, vmebus_address, 0x400, VME_DMA_D64R, buffer_size, true);
+			increment += 0x400;
+			eventsize -= 0x400;
+			remaining = true;
+		}
+		if(remaining){
+			vme->RunBlockTransfer(*seg, increment, vmebus_address, eventsize, VME_DMA_D64R, buffer_size, true); //get the rest
+		}else{
+			vme->RunBlockTransfer(*seg, 0x0, vmebus_address, eventsize, VME_DMA_D64R, buffer_size, true); //get small event
+		}
+
+
 		u_int* data = (u_int*)seg->VirtualAddress();
     	//size = (u_int)seg->Size()/sizeof(u_int);
     	
@@ -278,8 +294,8 @@ u_int VX1742Interface::BlockTransferEventD64(VX1742Event *vxEvent){
 		//some checks on the data
 		if(head.size.raw == 0)
 			std::printf("First word of VX1742 event not found!\n");
-		if(head.size.eventSize != eventsize)
-			std::printf("Read event contains %d words instead of the expected %d!\n", head.size.eventSize, eventsize);
+		if(head.size.eventSize != eventsize_history)
+			std::printf("Read event contains %d words instead of the expected %d!\n", head.size.eventSize, eventsize_history);
 		if(head.size.A != 0xA)
 			std::printf("Event does not start with 0xA!");
 
@@ -305,7 +321,7 @@ u_int VX1742Interface::BlockTransferEventD64(VX1742Event *vxEvent){
 			printf("******************************************************\n\n");
 		#endif
 
-		vxEvent->setData(&head, data, (head.size.eventSize-4));
+		vxEvent->setData(&head, data+4, (head.size.eventSize-4));
 	}
 
 	return 0;
