@@ -2,6 +2,7 @@
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/Utils.hh"
 #include <string.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <algorithm>
 
@@ -27,7 +28,6 @@ public:
   virtual bool GetStandardSubEvent(StandardEvent & sev, const Event & ev) const {
 	const RawDataEvent &in_raw = dynamic_cast<const RawDataEvent &>(ev);
 	int nblocks = in_raw.NumBlocks();
-
 	//get data:
 	int id = 0;
 	RawDataEvent::data_t data = in_raw.GetBlock(id);
@@ -51,26 +51,36 @@ public:
 	id++;
 
 
-	for(u_int ch = 0; ch < n_channels; ch++){
-	  data = in_raw.GetBlock(id);
+	for(u_int ch = 0; ch < 8; ch++){ //FIXME!!!!
+	  data = in_raw.GetBlock(id); // not there
+
 	  int data_size = data.size(); 
+	  	  std::cout << "hello fuckers..." << std::endl;
 	  samples_per_channel =  data_size/sizeof(uint16_t);
+	  	  std::cout << "hello fuckers...." << std::endl;
 	  uint16_t wave_array[samples_per_channel];
 	  uint16_t *raw_wave_array = (uint16_t*)(&data[0]);
 
+
+	  std::cout << "hello fuckers..." << std::endl;
 	  for (int i = 0; i < samples_per_channel; i++){
-	  	wave_array[i] = (uint16_t)(m_range*1000*raw_wave_array[i]/16384); //m_range=0.5V, 1000 fuer mV.
+	  	wave_array[i] = (uint16_t)(raw_wave_array[i]); //fixme: ranges etc
+	  	//std::cout << wave_array[i] << std::endl;
 	  	if(wave_array[i] == 0){
 	  		std::cout << "data is zero at channel " << ch << "at sample " << i << std::endl;
 	  	}
 	  }
-
-	  StandardWaveform wf(ch, EVENT_TYPE, "CH" + std::to_string(ch));
+	  	std::cout << "hello fuckers...." << std::endl;
+	  StandardWaveform wf(ch, EVENT_TYPE, " VX1742 CH" + std::to_string(ch));
 	  wf.SetChannelName("CH" + std::to_string(ch));
 	  wf.SetChannelNumber(ch);
 	  wf.SetNSamples(samples_per_channel);
-	  wf.SetWaveform((uint16_t*) wave_array);
+	  wf.SetWaveform((uint16_t*) wave_array); //cast (uint16_t*)  war drinnen
+	  //wf.SetTimeStamp(timestamp);
+	  //wf.SetTriggerCell(trigger_cell);
+	  	std::cout << "hello fuckers....." << std::endl;
 	  sev.AddWaveform(wf);
+	  	std::cout << "hello fuckers......" << std::endl;
 	  id++;
 	}//end ch loop
 

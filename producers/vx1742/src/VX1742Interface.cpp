@@ -290,6 +290,7 @@ u_int VX1742Interface::BlockTransferEventD64(VX1742Event *vxEvent){
 		
 		u_int offset = 0;
 		head.size.raw = data[offset];
+		//std::cout << "Header size raw: " << data[offset] << std::endl;
 		
 		//some checks on the data
 		if(head.size.raw == 0)
