@@ -31,6 +31,7 @@ public:
   void OnTerminate();
   void SetTimeStamp();
   void ReadoutLoop();
+  int SamplesInCustomSize();
 
 private:
   VX1742Interface *caen;
@@ -44,32 +45,14 @@ private:
   u_int groups[4];
   u_int custom_size;
 
-
-
-
   std::string m_producerName, m_event_type;
-  
-  uint32_t m_serialno, m_active_channels, m_ev, m_trigger_source, m_post_trigger_samples;
-  float m_firmware;
+  uint32_t m_ev;
   uint64_t m_timestamp;
   int m_run;
   bool m_running, m_terminated;
-  uint16_t m_trigger_threshold;
-  std::map<uint8_t,float> m_dynamic_range;
-  std::map<uint8_t,uint16_t> m_channel_gain;
-  std::map<uint8_t,uint16_t> m_channel_dac;
-
-
-
-
-
-
 
 };
 
-
-
 int main(int /*argc*/, const char ** argv);
-
 
 #endif

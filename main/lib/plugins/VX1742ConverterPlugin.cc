@@ -55,14 +55,10 @@ public:
 	  data = in_raw.GetBlock(id); // not there
 
 	  int data_size = data.size(); 
-	  	  std::cout << "hello fuckers..." << std::endl;
 	  samples_per_channel =  data_size/sizeof(uint16_t);
-	  	  std::cout << "hello fuckers...." << std::endl;
 	  uint16_t wave_array[samples_per_channel];
 	  uint16_t *raw_wave_array = (uint16_t*)(&data[0]);
 
-
-	  std::cout << "hello fuckers..." << std::endl;
 	  for (int i = 0; i < samples_per_channel; i++){
 	  	wave_array[i] = (uint16_t)(raw_wave_array[i]); //fixme: ranges etc
 	  	//std::cout << wave_array[i] << std::endl;
@@ -70,7 +66,6 @@ public:
 	  		std::cout << "data is zero at channel " << ch << "at sample " << i << std::endl;
 	  	}
 	  }
-	  	std::cout << "hello fuckers...." << std::endl;
 	  StandardWaveform wf(ch, EVENT_TYPE, " VX1742 CH" + std::to_string(ch));
 	  wf.SetChannelName("CH" + std::to_string(ch));
 	  wf.SetChannelNumber(ch);
@@ -78,9 +73,7 @@ public:
 	  wf.SetWaveform((uint16_t*) wave_array); //cast (uint16_t*)  war drinnen
 	  //wf.SetTimeStamp(timestamp);
 	  //wf.SetTriggerCell(trigger_cell);
-	  	std::cout << "hello fuckers....." << std::endl;
 	  sev.AddWaveform(wf);
-	  	std::cout << "hello fuckers......" << std::endl;
 	  id++;
 	}//end ch loop
 

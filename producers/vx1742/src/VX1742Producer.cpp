@@ -13,6 +13,8 @@
 //trigger on signal
 //calibration
 //readout TRn
+//send info in bore event!
+//give channels names!
 
 
 // system includes:
@@ -24,6 +26,7 @@
 #include <string>
 #include <unistd.h>
 #include <algorithm>
+#include <stdlib.h>
 
 // EUDAQ includes:
 #include "eudaq/Producer.hh"
@@ -154,8 +157,6 @@ void VX1742Producer::OnStartRun(unsigned runnumber){
 
 
 
-
-
 void VX1742Producer::ReadoutLoop() {
   while(!m_terminated){
     if(!m_running){
@@ -164,30 +165,45 @@ void VX1742Producer::ReadoutLoop() {
   while(m_running){
     try{
       std::cout << "Events stored: " << caen->getEventsStored() << ", size of next event: " << caen->getNextEventSize() << std::endl;
-      usleep(50);
+      usleep(500000);
       if(caen->eventReady()){
         VX1742Event vxEvent;
         caen->BlockTransferEventD64(&vxEvent);
 
         if(vxEvent.isValid()){
-          u_int event_size = vxEvent.EventSize();
-          u_int group_mask = vxEvent.GroupMask();
-          u_int n_channels = vxEvent.Channels(0);
-          u_int samples_per_channel = vxEvent.SamplesPerChannel(0);
           u_int event_counter = vxEvent.EventCounter();
           u_int trigger_time_tag = vxEvent.TriggerTimeTag();
-
-        std::cout << "***********************************************************************" << std::endl << std::endl;
-        std::cout << "Event number: " << vxEvent.EventCounter() << std::endl;
-        std::cout << "Event valid: " << vxEvent.isValid() << std::endl;
-        std::cout << "Event size: " << vxEvent.EventSize() << std::endl;
-        std::cout << "Active number of channels in group 0: " << vxEvent.Channels(0) << std::endl;
-        //std::cout << "Samples per channel: " << vxEvent.SamplesPerChannel() << std::endl;
-        std::cout << "Group mask: " << vxEvent.GroupMask() << std::endl;
-        std::cout << "Trigger time tag: " << vxEvent.TriggerTimeTag() << std::endl;
-        std::cout << "***********************************************************************" << std::endl << std::endl; 
+          u_int n_groups = vxEvent.Groups();
+          u_int group_mask = vxEvent.GroupMask();
+          u_int event_size = vxEvent.EventSize();
+          
 
 
+
+
+
+
+
+
+          
+          //loop over group mask
+
+          
+
+
+          u_int n_channels = vxEvent.Channels(0);
+          u_int samples_per_channel = vxEvent.SamplesPerChannel(0);
+
+          std::cout << "***********************************************************************" << std::endl << std::endl;
+          std::cout << "Event number: " << event_counter << std::endl;
+          std::cout << "Event valid: " << vxEvent.isValid() << std::endl;
+          std::cout << "Event size: " << vxEvent.EventSize() << std::endl;
+          std::cout << "Number of groups: " << n_groups << std::endl;
+          std::cout << "Active number of channels in group 0: " << vxEvent.Channels(0) << std::endl;
+          std::cout << "Samples per channel: " << vxEvent.SamplesPerChannel(0) << std::endl;
+          std::cout << "Group mask: " << vxEvent.GroupMask() << std::endl;
+          std::cout << "Trigger time tag: " << vxEvent.TriggerTimeTag() << std::endl;
+          std::cout << "***********************************************************************" << std::endl << std::endl; 
 
 
           //generate EUDAQ event
@@ -204,33 +220,33 @@ void VX1742Producer::ReadoutLoop() {
           ev.AddBlock(block_no, reinterpret_cast<const char*>(&trigger_time_tag), sizeof(u_int));
           block_no++;  
           
-          if(event_size > 4){
-            std::cout << "#####I send actual data for event: " << event_counter << std::endl;
+
+          if(n_groups > 0){
             for(u_int ch = 0; ch < n_channels; ch++){ //fixme: loop over groups and channels!
               uint16_t *payload = new uint16_t[samples_per_channel];
-              vxEvent.getChannelData(0, ch, payload, samples_per_channel);
+              vxEvent.getChannelData(0, ch, payload, samples_per_channel); //fixme
               ev.AddBlock(block_no, reinterpret_cast<const char*>(payload), samples_per_channel*sizeof(uint16_t));
               block_no++;
               delete payload;
             }
           }
 
-          if(event_size == 4){ //first two sucker events have no channel data for whatever reason which then fucks up the OnlineMonitor - just send zeros
-            std::cout << "#####I send zeros for event: " << event_counter << std::endl;
+          
+          if(n_groups ==0){ //first two sucker events have no channel data for whatever reason which then fucks up the OnlineMonitor - just send zeros
+            int samples = this->SamplesInCustomSize();
             for(u_int ch = 0; ch < 8; ch++){ //fixme: loop over groups and channels!
-              uint16_t *payload = new uint16_t[samples_per_channel];
-              for(int idx = 0; idx<samples_per_channel; idx++){
+              uint16_t *payload = new uint16_t[samples];
+              for(int idx = 0; idx<samples; idx++){
                 payload[idx] = 0;
               }
-              ev.AddBlock(block_no, reinterpret_cast<const char*>(payload), samples_per_channel*sizeof(uint16_t));
+              ev.AddBlock(block_no, reinterpret_cast<const char*>(payload), samples*sizeof(uint16_t));
               block_no++;
-              delete payload;
+              //delete payload;
             }
           }
-
-
-
+          
           SendEvent(ev);
+          
         }// is valid
       }// event is ready
 
@@ -241,42 +257,6 @@ void VX1742Producer::ReadoutLoop() {
     }// while running
   }// while not terminated
 }// ReadoutLoop
-
-
-/*
-
-
-
-eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
-  unsigned int block_no = 0;
-  ev.AddBlock(block_no, reinterpret_cast<const char*>(&trigger_cell), sizeof( trigger_cell));       //        ev.AddBlock(block_no,"EHDR");
-  block_no++;
-  ev.AddBlock(block_no, reinterpret_cast<const char*>(&m_timestamp), sizeof( m_timestamp));       //        ev.AddBlock(block_no,"EHDR");
-  block_no++;
-  for (int ch = 0; ch < n_channels; ch++){
-    if (!m_chnOn[ch])
-      continue;
-    char buffer [6];
-    sprintf(buffer, "C%03d\n", ch+1);
-    ev.AddBlock(block_no++, reinterpret_cast<const char*>(buffer),sizeof(buffer));
-    Set data block of ch, each channel ist connected to to DRS channels
-    int n_samples = 1024;
-    int n_drs_channels = 1;
-    unsigned short raw_wave_array[n_samples];
-    //Merge both drs channels to the output of the channel
-    for (int drs_ch = 0; drs_ch < n_drs_channels; drs_ch++){
-      for (int i =0; i<n_samples/n_drs_channels; i++)
-        raw_wave_array[i+1024*drs_ch] = (unsigned short)((wave_array[ch+drs_ch][i]/1000.0 - m_inputRange + 0.5) * 65535);
-    }
-    ev.AddBlock(block_no++, reinterpret_cast<const char*>(&raw_wave_array), sizeof( raw_wave_array[0])*n_samples);
-  }
-    if ( m_ev < 50 || m_ev % 100 == 0) {
-      cout<< "\rSend Event" << std::setw(7) << m_ev << " " << std::setw(1) <<  m_self_triggering << "Trigger cell: " << std::setw(4) << trigger_cell << ", " << std::flush;
-    }
-  SendEvent(ev);
-  m_ev++;
-
-  */
 
 
 
@@ -335,6 +315,12 @@ void VX1742Producer::SetTimeStamp(){
   auto now = std::chrono::high_resolution_clock::now();
   auto elapsed = now - epoch;
   m_timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(elapsed).count()/100u;
+}
+
+
+int VX1742Producer::SamplesInCustomSize(){
+  int csizes[4] = {1024, 520, 256, 136};
+  return csizes[custom_size];
 }
 
 
