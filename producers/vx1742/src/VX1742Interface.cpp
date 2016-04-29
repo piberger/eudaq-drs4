@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <stdint.h>
 #include "VX1742Interface.hh"
 #include "VX1742Event.hh"
 
@@ -252,38 +253,43 @@ u_int VX1742Interface::getNextEventSize(){
 }
 
 
+
 //nEvents needs to be smaller than 255
 u_int VX1742Interface::BlockTransferEventD64(VX1742Event *vxEvent){
 	u_int eventsize = this->getNextEventSize();
 	u_int eventsize_history = eventsize;
-	this->setMaxBLTEvents(1); //raise BE if more than 1 event is read out
+	
+	//this->setMaxBLTEvents(1); //raise BE if more than 1 event is read out
 
 	if(eventsize > 0){
-
+		u_int ret;
 		u_int increment = 0;
 		bool remaining = false;
 		while(eventsize > 1024){
-			vme->RunBlockTransfer(*seg, increment, vmebus_address, 0x400, VME_DMA_D64R, buffer_size, true);
+			ret = vme->RunBlockTransfer(*seg, increment, vmebus_address, 0x400, VME_DMA_D64R, buffer_size, true);
+			std::cout << "RETURN BlockTransfer 0: " << ret;
 			increment += 0x400;
 			eventsize -= 0x400;
 			remaining = true;
 		}
 		if(remaining){
-			vme->RunBlockTransfer(*seg, increment, vmebus_address, eventsize, VME_DMA_D64R, buffer_size, true); //get the rest
+			ret = vme->RunBlockTransfer(*seg, increment, vmebus_address, eventsize, VME_DMA_D64R, buffer_size, true); //get the rest
+			std::cout << "RETURN BlockTransfer 1: " << ret;
 		}else{
-			vme->RunBlockTransfer(*seg, 0x0, vmebus_address, eventsize, VME_DMA_D64R, buffer_size, true); //get small event
+			ret = vme->RunBlockTransfer(*seg, 0x0, vmebus_address, eventsize, VME_DMA_D64R, buffer_size, true); //get small event
+			std::cout << "RETURN BlockTransfer 2: " << ret;
 		}
 
-
 		uint32_t* data = (uint32_t*)seg->VirtualAddress();
+
     	//size = (u_int)seg->Size()/sizeof(u_int);
     	
-    	#ifdef DEBUG
+    	//#ifdef DEBUG
     		std::printf("CMEM segment, virt = %p, phys = 0x%016lx, size = %d\n", (void*)data, seg->PhysicalAddress(), eventsize);
     		std::cout <<"Dump data:" << std::endl;
     		for(u_int i=0; i<eventsize; i++){
         		std::printf("%6d: 0x%08x\n",i , data[i]);}
-        #endif
+        //#endif
         
 		//write data to event class
 		VX1742Event::header head;
@@ -304,7 +310,7 @@ u_int VX1742Interface::BlockTransferEventD64(VX1742Event *vxEvent){
 		head.evnt_cnt.raw= data[(++offset)];
 		head.trigger_time= data[(++offset)];
 
-		#ifdef DEBUG
+		//#ifdef DEBUG
 			printf("******************************************************\n");
 			printf("RAW header:         0x%08X\n", head.size.raw);
 			printf("0xA:                0x%01X\n", head.size.A);
@@ -320,7 +326,7 @@ u_int VX1742Interface::BlockTransferEventD64(VX1742Event *vxEvent){
 			printf("------------------------------------------------------\n");
 			printf("Trigger time:       %d\n", head.trigger_time);
 			printf("******************************************************\n\n");
-		#endif
+		//#endif
 
 		vxEvent->setData(&head, data+4, (head.size.eventSize-4));
 	}

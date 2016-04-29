@@ -177,7 +177,7 @@ int VX1742Event::SamplesPerChannel(uint32_t grp) const{
 
 
 //return 9 per group if TRn is enabled
-uint32_t VX1742Event::Channels(uint32_t grp) const {
+uint32_t VX1742Event::Channels(uint32_t grp) const{
 	uint32_t groups = this->Groups();
 	if (groups == 0) return 0;
 	bool TRn_enabled = group_heads.grh[grp].tr;
@@ -187,6 +187,18 @@ uint32_t VX1742Event::Channels(uint32_t grp) const {
 	return groups*8;
 }
 
+
+uint32_t VX1742Event::GetStartIndexCell(uint32_t grp) const{
+	int grppos = getGroupIndexInBuffer(grp);
+	if (grppos<0) {std::printf("Group %d NOT FOUND in data!\n", grp); return -1;}
+	return group_heads.grh[grp].index_cell;
+}
+
+uint32_t VX1742Event::GetEventTimeStamp(uint32_t grp) const{
+	int grppos = getGroupIndexInBuffer(grp);
+	if (grppos<0) {std::printf("Group %d NOT FOUND in data!\n", grp); return -1;}
+	return group_trails.grt[grp].trigger_time;
+}
 
 
 int VX1742Event::getChannelData(unsigned int grp, unsigned int ch, uint16_t* array, size_t arraylen) const{

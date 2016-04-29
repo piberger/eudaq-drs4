@@ -12,12 +12,9 @@
 #ifndef VX1742PRODUCER_HH
 #define VX1742PRODUCER_HH
 
-// VME includes
-#include "RCDVme/RCDVme.h"
-#include "RCDVme/RCDCmemSegment.h"
-#include "VX1742DEFS.hh"
+#include <stdint.h>
 #include "VX1742Interface.hh"
-
+#include "eudaq/Configuration.hh"
 
 class Producer;
 class Configuration;
@@ -31,7 +28,7 @@ public:
   void OnTerminate();
   void SetTimeStamp();
   void ReadoutLoop();
-  int SamplesInCustomSize();
+  uint32_t SamplesInCustomSize();
 
 private:
   VX1742Interface *caen;
@@ -50,6 +47,7 @@ private:
   uint64_t m_timestamp;
   int m_run;
   bool m_running, m_terminated;
+  uint32_t m_group_mask;
 
 };
 
