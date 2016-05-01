@@ -16,16 +16,19 @@
 //send info in bore event!
 //give channels names!
 
+
+
 #include "VX1742Producer.hh"
 #include "VX1742Interface.hh"
 #include "VX1742Event.hh"
 #include "VX1742DEFS.hh"
 
+
 #include "eudaq/Logger.hh"
 #include "eudaq/RawDataEvent.hh"
-#include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Configuration.hh"
+#include "eudaq/Utils.hh"
 
 #include <unistd.h> //usleep
 
@@ -155,14 +158,14 @@ void VX1742Producer::ReadoutLoop() {
 
   while(m_running){
     try{
-      std::cout << "Events stored: " << caen->getEventsStored() << ", size of next event: " << caen->getNextEventSize() << std::endl;
+      //std::cout << "Events stored: " << caen->getEventsStored() << ", size of next event: " << caen->getNextEventSize() << std::endl;
       usleep(500000);
       if(caen->eventReady()){
         VX1742Event vxEvent;
         caen->BlockTransferEventD64(&vxEvent);
 
         if(vxEvent.isValid()){
-          uint32_t event_counter = vxEvent.EventCounter();
+          unsigned int event_counter = vxEvent.EventCounter();
           uint32_t trigger_time_tag = vxEvent.TriggerTimeTag();
           uint32_t n_groups = vxEvent.Groups();
           uint32_t group_mask = vxEvent.GroupMask();
@@ -174,19 +177,21 @@ void VX1742Producer::ReadoutLoop() {
           }
 
           uint32_t block_no = 0;
-          eudaq::RawDataEvent ev(m_event_type, m_run, event_counter);
-          ev.AddBlock(block_no, reinterpret_cast<const char*>(&event_size), sizeof(uint32_t));
+          eudaq::RawDataEvent ev(m_event_type, m_run, event_counter);          
+
+          ev.AddBlock(block_no, reinterpret_cast<const char*>(&event_size), sizeof(event_size));
           block_no++;
-          ev.AddBlock(block_no, reinterpret_cast<const char*>(&n_groups), sizeof(uint32_t));
+          ev.AddBlock(block_no, reinterpret_cast<const char*>(&n_groups), sizeof(n_groups));
           block_no++;
-          ev.AddBlock(block_no, reinterpret_cast<const char*>(&group_mask), sizeof(uint32_t));
+          ev.AddBlock(block_no, reinterpret_cast<const char*>(&group_mask), sizeof(group_mask));
           block_no++;
-          ev.AddBlock(block_no, reinterpret_cast<const char*>(&trigger_time_tag), sizeof(uint32_t));
+          ev.AddBlock(block_no, reinterpret_cast<const char*>(&trigger_time_tag), sizeof(trigger_time_tag));
           block_no++;
 
 
           //loop over all groups
           for(uint32_t grp = 0; grp < 4; grp++){
+            
             if(group_mask & (1<<grp)){ 
 
               uint32_t samples_per_channel = vxEvent.SamplesPerChannel(grp);
@@ -200,6 +205,7 @@ void VX1742Producer::ReadoutLoop() {
                 event_timestamp = 0;
               }
 
+              
               std::cout << "***********************************************************************" << std::endl << std::endl;
               std::cout << "Event number: " << event_counter << std::endl;
               std::cout << "Event size: " << event_size << std::endl;
@@ -210,8 +216,7 @@ void VX1742Producer::ReadoutLoop() {
               std::cout << "Start index cell : " << start_index_cell << std::endl;
               std::cout << "Event trigger time tag: " << event_timestamp << std::endl;
               std::cout << "***********************************************************************" << std::endl << std::endl; 
-
-
+              
 
               ev.AddBlock(block_no, reinterpret_cast<const char*>(&samples_per_channel), sizeof(uint32_t));
               block_no++;
@@ -219,9 +224,7 @@ void VX1742Producer::ReadoutLoop() {
               block_no++;
               ev.AddBlock(block_no, reinterpret_cast<const char*>(&event_timestamp), sizeof(uint32_t));
               block_no++;
-              std::cout << "Event trigger time tag: " << event_timestamp << std::endl;
 
- 
               for(u_int ch = 0; ch < 8; ch++){
                 uint16_t *payload = new uint16_t[samples_per_channel];
                   

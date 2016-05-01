@@ -1,10 +1,19 @@
+/* ---------------------------------------------------------------------------------
+** CAEN VX1742 implementation into the EUDAQ framework - Event Structure
+** 
+** <VX1742ConverterPlugin>.cc
+** 
+** Date: April 2016
+** Fixme: replace c-style casts with static_cast<type> and understand the problem.
+** Author: Christian Dorfer (dorfer@phys.ethz.ch)
+** ---------------------------------------------------------------------------------*/
+
+
 #include "eudaq/DataConverterPlugin.hh"
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/Utils.hh"
 #include <string.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <algorithm>
+#include <cstdint>
 
 
 namespace eudaq{
@@ -28,42 +37,36 @@ public:
   virtual bool GetStandardSubEvent(StandardEvent & sev, const Event & ev) const {
 	const RawDataEvent &in_raw = dynamic_cast<const RawDataEvent &>(ev);
 	int nblocks = in_raw.NumBlocks();
+
 	//get data:
 	uint32_t id = 0;
-	RawDataEvent::data_t data = in_raw.GetBlock(id);
-	uint32_t event_size = static_cast<uint32_t>(data[0]);
-	id++;
+	RawDataEvent::data_t data = in_raw.GetBlock(id++);
+	uint32_t event_size = *((uint32_t*) &data[0]);
 
-	data = in_raw.GetBlock(id);
-	uint32_t n_groups = static_cast<uint32_t>(data[0]);
-	id++;
+	data = in_raw.GetBlock(id++);
+	uint32_t n_groups = *((uint32_t*) &data[0]);
 
-	data = in_raw.GetBlock(id);
-	uint32_t group_mask = static_cast<uint32_t>(data[0]);
-	id++;
+	data = in_raw.GetBlock(id++);
+	uint32_t group_mask = *((uint32_t*) &data[0]);
 
-	data = in_raw.GetBlock(id);
-	uint32_t trigger_time_tag = static_cast<uint32_t>(data[0]);
-	id++;
+	data = in_raw.GetBlock(id++);
+	uint32_t trigger_time_tag = *((uint32_t*) &data[0]);
 
 
 	//loop over all groups
     for(uint32_t grp = 0; grp < 4; grp++){
     	if(group_mask & (1<<grp)){ 
 
-          data = in_raw.GetBlock(id);
-       	  uint32_t samples_per_channel = static_cast<uint32_t>(data[0]);
-       	  id++;
+          data = in_raw.GetBlock(id++);
+       	  uint32_t samples_per_channel = *((uint32_t*) &data[0]);
+
+       	  data = in_raw.GetBlock(id++);
+       	  uint32_t start_index_cell = *((uint32_t*) &data[0]);
        	  
 
-       	  data = in_raw.GetBlock(id);
-       	  uint32_t start_index_cell = static_cast<uint32_t>(data[0]);
-       	  id++;
-       	  
+       	  data = in_raw.GetBlock(id++);
+       	  uint32_t event_timestamp = *((uint32_t*) &data[0]);
 
-       	  data = in_raw.GetBlock(id);
-       	  uint32_t event_timestamp = static_cast<uint32_t>(data[0]);
-       	  id++;
 
        	  std::cout << "***********************************************************************" << std::endl << std::endl;
        	  std::cout << "Event size: " << event_size << std::endl;
@@ -74,6 +77,7 @@ public:
           std::cout << "Start index cell : " << start_index_cell << std::endl;
           std::cout << "Event trigger time tag: " << event_timestamp << std::endl;
           std::cout << "***********************************************************************" << std::endl << std::endl; 
+
 
     	  for(u_int ch = 0; ch < 8; ch++){
     		data = in_raw.GetBlock(id);

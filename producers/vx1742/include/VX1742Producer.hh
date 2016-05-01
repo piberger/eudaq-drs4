@@ -38,10 +38,10 @@ private:
   u_int groups[4];
   u_int custom_size;
 
-  std::string m_producerName, m_event_type;
+  std::string m_event_type, m_producerName;
   uint32_t m_ev;
   uint64_t m_timestamp;
-  int m_run;
+  unsigned int m_run;
   bool m_running, m_terminated;
   uint32_t m_group_mask;
 
