@@ -10,12 +10,8 @@
 #include "VX1742Event.hh"
 #include "VX1742DEFS.hh"
 
-#include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
-#include <algorithm>
 #include <iostream>
-#include <stdint.h>
 
 
 VX1742Event::VX1742Event(){
@@ -50,7 +46,7 @@ int VX1742Event::setData(header* newhead, const uint32_t* newbuffer, int newbufl
 	//}
 	
 	uint32_t group_size = this->getGroupSizeInBuffer();
-	for(uint32_t grp = 0; grp<VX1742_GROUPS; grp++){
+	for(uint32_t grp = 0; grp<vmec::VX1742_GROUPS; grp++){
 		int grppos = getGroupIndexInBuffer(grp);
 		if(grppos>=0){			
 			group_heads.grh[grp].raw = buffer[grppos];
@@ -163,16 +159,16 @@ int VX1742Event::getGroupIndexInBuffer(uint32_t grp) const{
 
 //until here event independent regarding TRn enabled/disabled, now the mess starts:
 int VX1742Event::SamplesPerChannel(uint32_t grp) const{
-	if (grp > VX1742_GROUPS) {std::printf("There are only %d groups!\n", VX1742_GROUPS); return -1;}
+	if (grp > vmec::VX1742_GROUPS) {std::printf("There are only %d groups!\n", vmec::VX1742_GROUPS); return -1;}
 	int grppos = getGroupIndexInBuffer(grp);
 	if (grppos<0) {std::printf("Group %d NOT FOUND in data!\n", grp); return -1;}
 	
 	bool TRn_enabled = group_heads.grh[grp].tr;
 	uint32_t gr_size = this->getGroupSizeInBuffer()-2; //-2 for group header and trailer
 	if(TRn_enabled){
-		return (gr_size*32)/((VX1742_CHANNELS_PER_GROUP+1)*VX1742_RESOLUTION);
+		return (gr_size*32)/((vmec::VX1742_CHANNELS_PER_GROUP+1)*vmec::VX1742_RESOLUTION);
 	}
-	return (gr_size*32)/((VX1742_CHANNELS_PER_GROUP)*VX1742_RESOLUTION);
+	return (gr_size*32)/((vmec::VX1742_CHANNELS_PER_GROUP)*vmec::VX1742_RESOLUTION);
 }
 
 
@@ -201,9 +197,9 @@ uint32_t VX1742Event::GetEventTimeStamp(uint32_t grp) const{
 }
 
 
-int VX1742Event::getChannelData(unsigned int grp, unsigned int ch, uint16_t* array, size_t arraylen) const{
-	if (ch >= VX1742_CHANNELS_PER_GROUP){std::printf("There are only %d channels!\n", VX1742_CHANNELS_PER_GROUP); return -1;}
-	if (grp > VX1742_GROUPS){std::printf("There are only %d groups!\n", VX1742_GROUPS); return -1;}
+int VX1742Event::getChannelData(unsigned int grp, unsigned int ch, uint16_t* array, unsigned int arraylen) const{
+	if (ch >= vmec::VX1742_CHANNELS_PER_GROUP){std::printf("There are only %d channels!\n", vmec::VX1742_CHANNELS_PER_GROUP); return -1;}
+	if (grp > vmec::VX1742_GROUPS){std::printf("There are only %d groups!\n", vmec::VX1742_GROUPS); return -1;}
 	
 	int grppos = getGroupIndexInBuffer(grp) + 1;
 	if (grppos<0){std::printf("Group %d NOT FOUND in data!\n", grp); return -1;}

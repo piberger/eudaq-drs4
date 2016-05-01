@@ -12,12 +12,9 @@
 #ifndef VX1742PRODUCER_HH
 #define VX1742PRODUCER_HH
 
-#include <stdint.h>
-#include "VX1742Interface.hh"
-#include "eudaq/Configuration.hh"
+class VX1742Interface;
 
-class Producer;
-class Configuration;
+#include "eudaq/Producer.hh"
 
 class VX1742Producer: public eudaq::Producer{
 public:
@@ -32,7 +29,6 @@ public:
 
 private:
   VX1742Interface *caen;
-  eudaq::Configuration m_config;
 
   //config values
   u_int sampling_frequency;

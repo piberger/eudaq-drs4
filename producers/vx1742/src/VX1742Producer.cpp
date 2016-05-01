@@ -8,7 +8,7 @@
 ** Author: Christian Dorfer (dorfer@phys.ethz.ch)
 ** ---------------------------------------------------------------------------------*/
 
-//wishlist
+//wishlist:
 //software trigger
 //trigger on signal
 //calibration
@@ -16,33 +16,21 @@
 //send info in bore event!
 //give channels names!
 
+#include "VX1742Producer.hh"
+#include "VX1742Interface.hh"
+#include "VX1742Event.hh"
+#include "VX1742DEFS.hh"
 
-// system includes:
-#include <iostream>
-#include <ostream>
-#include <vector>
-#include <mutex>
-#include <cmath>
-#include <string>
-#include <unistd.h>
-#include <algorithm>
-#include <stdlib.h>
-
-// EUDAQ includes:
-#include "eudaq/Producer.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/RawDataEvent.hh"
-#include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Configuration.hh"
-#include "VX1742Producer.hh"
-#include "VX1742Event.hh"
-//#include "VX1742DEFS.hh"
+
+#include <unistd.h> //usleep
 
 
 static const std::string EVENT_TYPE = "VX1742";
-
 
 VX1742Producer::VX1742Producer(const std::string & name, const std::string & runcontrol, const std::string & verbosity)
 :eudaq::Producer(name, runcontrol),

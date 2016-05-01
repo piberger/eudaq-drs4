@@ -11,9 +11,10 @@
 #ifndef VX1742EVENT_HH
 #define VX1742EVENT_HH
 
+//#include <sys/types.h>
+//#include <stdint.h>
 
-#include <sys/types.h>
-#include <stdint.h>
+#include <cstdint>
 
 class VX1742Event{
   
@@ -112,13 +113,14 @@ class VX1742Event{
 	uint32_t TriggerTimeTag() const;
 	uint32_t Groups() const;
 	uint32_t Channels(uint32_t grp) const;	
+	uint32_t GetEventTimeStamp(uint32_t grp) const;
+	uint32_t GetStartIndexCell(uint32_t grp) const;
 	
 	const header* gethead() const;
 	uint32_t getGroupSizeInBuffer() const;
 	int getGroupIndexInBuffer(uint32_t grp) const;
-	void setGroupHeader(unsigned int grp);
 	int SamplesPerChannel(uint32_t grp) const;
-	int getChannelData(unsigned int grp, unsigned int chan, uint16_t* array, size_t arraylen) const;
+	int getChannelData(unsigned int grp, unsigned int chan, uint16_t* array, unsigned int arraylen) const;
 
 	int rawdata_size() const;
 	int resize_rawbuffer(int to_bytesize);
