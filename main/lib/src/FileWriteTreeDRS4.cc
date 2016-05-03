@@ -321,6 +321,12 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         eudaq::PluginManager::Initialize(ev);
         tcal = PluginManager::GetTimeCalibration(ev);
         FillFullTime();
+        stringstream ss;
+        ss << "tcal [";
+        for (auto i:tcal.at(0)) ss << i << ", ";
+        ss << "\b\b]";
+        cout << ss.str() << endl;
+        macro->AddLine(ss.str().c_str());
         cout << "loading the first event...." << endl;
         return;
     }
