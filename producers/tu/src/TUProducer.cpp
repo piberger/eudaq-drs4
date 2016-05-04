@@ -71,45 +71,44 @@ void TUProducer::MainLoop(){
 		}
 			    	
 		if(TUStarted || TUJustStopped){
-			eudaq::mSleep(250); //only read out every second
-			
-			//auto start0 = std::chrono::high_resolution_clock::now(); //debugging
+			eudaq::mSleep(500); //only read out every 1/2 second
 
 			Readout_Data *rd;
 			rd = stream->timer_handler();
 			if (rd){
 
+				/******************************************** start get all the data ********************************************/
 				coincidence_count_no_sin = rd->coincidence_count_no_sin;
 				coincidence_count = rd->coincidence_count;
 				prescaler_count = rd->prescaler_count;
 				prescaler_count_xor_pulser_count = rd->prescaler_count_xor_pulser_count;
-				pulser_delay_and_xor_pulser_count = rd->pulser_delay_and_xor_pulser_count;
-				handshake_count = rd->handshake_count;
+				accepted_prescaled_events = rd->prescaler_xor_pulser_and_prescaler_delayed_count;
+				accepted_pulser_events = rd->pulser_delay_and_xor_pulser_count;
+				handshake_count = rd->handshake_count; //equivalent to event count
 				beam_current[0] = beam_current[1]; //save old beam current monitor count for frequency calculations
-				beam_current[1] = rd->beam_curent;
+				beam_current[1] = rd->beam_curent; //save new
 				time_stamps[0] = time_stamps[1]; //save old timestamp for frequency calculations
-				time_stamps[1] = rd->time_stamp;
-
+				time_stamps[1] = rd->time_stamp; //save new
 				cal_beam_current = SlidingWindow(0.01*((beam_current[1]-beam_current[0])/(time_stamps[1] - time_stamps[0])));
 
 				for(int idx=0; idx<10; idx++){
 					//check if there was a fallover
 					unsigned int new_tc = rd->trigger_counts[idx]; //data from readout
-					unsigned int old_tc = trigger_counts[idx]%bit_16; //data from stored array (2 different things..)					
+					unsigned int old_tc = trigger_counts[idx]%bit_16; //data from previous readout	
+
+					//check for fallover
 					if (old_tc > limit && new_tc < limit){
 						trigger_counts_multiplicity[idx]++;
 					}
+
 					prev_trigger_counts[idx] = trigger_counts[idx];
 					trigger_counts[idx] = trigger_counts_multiplicity[idx]*bit_16 + new_tc;
 					input_frequencies[idx] = 1000*(trigger_counts[idx] - prev_trigger_counts[idx])/(time_stamps[1] - time_stamps[0]);
 				}
-
-				//auto elapsed0 = std::chrono::high_resolution_clock::now() - start0;//debugging
-				//long long readout = std::chrono::duration_cast<std::chrono::microseconds>(elapsed0).count();//debugging
-				//std::cout << readout;
+				/******************************************** end get all the data ********************************************/
 
 				//check if eventnumber has changed since last readout:
-				if(coincidence_count != prev_coincidence_count){
+				if(handshake_count != prev_handshake_count){
 				
 					/*
 					std::cout << "Coincidence count without scintillator: " << coincidence_count_no_sin << std::endl;
@@ -122,44 +121,47 @@ void TUProducer::MainLoop(){
 					*/
 					
 					//send fake events for events we are missing out between readout cycles
-					if(coincidence_count > m_ev_prev){
+					if(handshake_count > m_ev_prev){
 						int tmp =0;
-						//auto start1 = std::chrono::high_resolution_clock::now();//debugging
-						for (unsigned int id = m_ev_prev; id < coincidence_count; id++){
+						for (unsigned int id = m_ev_prev; id < handshake_count; id++){
 							eudaq::RawDataEvent f_ev(event_type, m_run, id);
 							f_ev.SetTag("valid", std::to_string(0));
 							SendEvent(f_ev);
 							tmp++;
 							//std::cout << "----- fake event " << id << " sent." << std::endl;
 						}
-					    //auto elapsed1 = std::chrono::high_resolution_clock::now() - start1; //debugging
-						//long long fakes = std::chrono::duration_cast<std::chrono::microseconds>(elapsed1).count();//debugging
-						//std::cout << " " << fakes << "(" << tmp << ")"; //debugging
 					}
-					//auto start2 = std::chrono::high_resolution_clock::now();
 
-					int64_t ts = (int64_t) time_stamps[1]; //type required by EUDAQ 
-					m_ev = coincidence_count;
+
+					unsigned int ts = time_stamps[1];
+					m_ev = handshake_count;
 					
 					//real data event
 					eudaq::RawDataEvent ev(event_type, m_run, m_ev); //generate a raw event
 					ev.SetTag("valid", std::to_string(1));
+
         			unsigned int block_no = 0;
         			ev.AddBlock(block_no, reinterpret_cast<const char*>(&ts), sizeof(ts)); //timestamp
         			block_no++;
-        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&coincidence_count), sizeof(coincidence_count)); //coincidence count
+        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&coincidence_count), sizeof(coincidence_count));
         			block_no++;
-        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&coincidence_count_no_sin), sizeof(coincidence_count_no_sin)); //coincidence count, no scint
+        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&coincidence_count_no_sin), sizeof(coincidence_count_no_sin));
         			block_no++;
-        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&prescaler_count), sizeof(prescaler_count)); //prescaler_count
+        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&prescaler_count), sizeof(prescaler_count));
         			block_no++;
-        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&handshake_count), sizeof(handshake_count)); //handshake count
+        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&prescaler_count_xor_pulser_count), sizeof(prescaler_count_xor_pulser_count));
         			block_no++;
-        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&cal_beam_current), sizeof(cal_beam_current)); //beam current
+        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&accepted_prescaled_events), sizeof(accepted_prescaled_events));
+        			block_no++;
+        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&accepted_pulser_events), sizeof(accepted_pulser_events));
+        			block_no++;
+        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&handshake_count), sizeof(handshake_count));
+        			block_no++;
+        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&cal_beam_current), sizeof(cal_beam_current));
         			SendEvent(ev);
 
         			m_ev_prev = m_ev+1;
-					prev_coincidence_count = coincidence_count;
+					prev_handshake_count = handshake_count;
 				
 				}//end if (prev event count)
 
@@ -269,9 +271,9 @@ void TUProducer::OnReset(){
 			cal_beam_current = 0;
 			prescaler_count = 0;
 			prescaler_count_xor_pulser_count = 0;
-			pulser_delay_and_xor_pulser_count = 0;
+			accepted_pulser_events = 0;
 			handshake_count = 0;
-			prev_coincidence_count = 99999;
+			prev_handshake_count = 99999;
 			m_ev_prev = 0;
 			SetStatus(eudaq::Status::LVL_OK);
 		}catch(const std::exception & e){
@@ -286,15 +288,14 @@ void TUProducer::OnReset(){
 
 
 void TUProducer::OnStatus(){
-	if(TUStarted && coincidence_count > 0)
-		m_status.SetTag("COINC_COUNT", std::to_string(coincidence_count));
+	if(TUStarted && handshake_count > 0)
+		m_status.SetTag("COINC_COUNT", std::to_string(handshake_count));
 	else 
 		m_status.SetTag("TRIG", std::to_string(0));
 
 	if (tc){
 		m_status.SetTag("TIMESTAMP", std::to_string(time_stamps[1]/1000.0));
 		m_status.SetTag("LASTTIME", std::to_string((time_stamps[0])/1000.0));
-		//m_status.SetTag("PARTICLES", std::to_string(coincidence_count));
 
 		if(TUStarted)
 			m_status.SetTag("STATUS", "OK");
@@ -305,10 +306,12 @@ void TUProducer::OnStatus(){
 			m_status.SetTag("SCALER" + std::to_string(i), std::to_string(input_frequencies[i]));
 		}
 
-		m_status.SetTag("BEAM_CURR", std::to_string(cal_beam_current)); //ok
+		if(cal_beam_current > 0)
+			m_status.SetTag("BEAM_CURR", std::to_string(cal_beam_current));
+		else
+			m_status.SetTag("BEAM_CURR", std::to_string(0));
 	}
 }
-
 
 
 void TUProducer::OnConfigure(const eudaq::Configuration& conf) {

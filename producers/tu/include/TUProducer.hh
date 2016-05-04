@@ -35,7 +35,7 @@ public:
 
 private:
 	std::string event_type;
-	unsigned int m_run, m_ev, m_ev_prev, prev_coincidence_count; //run & event number
+	unsigned int m_run, m_ev, m_ev_prev, prev_handshake_count; //run & event number
 	bool done, TUStarted, TUJustStopped;
 	trigger_controll *tc; //class for TU control from trigger_controll.h
 	Triger_Logic_tpc_Stream *stream; //class for handling communication from triger_logic_tpc_stream.h
@@ -54,7 +54,8 @@ private:
 	unsigned int beam_current[2]; //first entry = old, second entry = new
 	unsigned int prescaler_count;
 	unsigned int prescaler_count_xor_pulser_count;
-	unsigned int pulser_delay_and_xor_pulser_count;
+	unsigned int accepted_pulser_events;
+	unsigned int accepted_prescaled_events;
 	unsigned int handshake_count;
 	unsigned long time_stamps[2]; //first entry = old, second entry = new timestamp
 
