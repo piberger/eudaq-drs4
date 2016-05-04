@@ -410,6 +410,9 @@ template std::vector<double> StandardPlane::GetPixels<>() const;
 
 
 eudaq::StandardTUEvent::StandardTUEvent(const std::string& type){
+	std::cout << "#################################################" << std::endl;
+	std::cout << "I got: " << type << std::cout;
+	std::cout << "#################################################" << std::endl;
 	m_type = type;
 }
 
@@ -437,19 +440,11 @@ void StandardTUEvent::Print(std::ostream & os) const {
 /*************************************** Standard Event *****************************************/
 /************************************************************************************************/
 
-StandardEvent::StandardEvent(unsigned run, unsigned evnum, uint64_t timestamp)
-: Event(run, evnum, timestamp)
-{
-}
+StandardEvent::StandardEvent(unsigned run, unsigned evnum, uint64_t timestamp):Event(run, evnum, timestamp){}
 
-StandardEvent::StandardEvent(const Event & e)
-: Event(e)
-{
-}
+StandardEvent::StandardEvent(const Event & e):Event(e){}
 
-StandardEvent::StandardEvent(Deserializer & ds)
-: Event(ds)
-{
+StandardEvent::StandardEvent(Deserializer & ds):Event(ds){
 	ds.read(m_planes);
 	ds.read(m_waveforms);
 }
@@ -493,19 +488,24 @@ StandardPlane & StandardEvent::AddPlane(const StandardPlane & plane) {
 }
 
 
-StandardTUEvent & StandardEvent::AddTUEvent(const StandardTUEvent & tuev){
-	m_tuevents.push_back(tuev);
-	return m_tuevents.back();
+
+
+
+void StandardEvent::AddTUEvent(const StandardTUEvent tuev){
+	m_tuevent = tuev;
 }
 
 
-StandardTUEvent & StandardEvent::GetTUEvent(size_t i) {
-	return m_tuevents[i];
+StandardTUEvent StandardEvent::GetTUEvent() {
+	return m_tuevent;
 }
 
-const StandardTUEvent & StandardEvent::GetTUEvent(size_t i) const {
-	return m_tuevents[i];
+const StandardTUEvent StandardEvent::GetTUEvent() const {
+	return m_tuevent;
 }
+
+
+
 
 
 size_t StandardEvent::NumWaveforms() const {

@@ -236,7 +236,12 @@ public:
 	void SetValid(bool in){m_valid=in;}
 	bool GetValid(){return m_valid;}
 
-	std::string GetType() const {return m_type;}
+	std::string GetType() const {
+			std::cout << "#################################################" << std::endl;
+	std::cout << "I returned: " << m_type << std::cout;
+	std::cout << "#################################################" << std::endl;
+
+		return m_type;}
 	void Print(std::ostream &) const;
 
 private:
@@ -261,10 +266,9 @@ public:
 	StandardEvent(Deserializer &);
 	void SetTimestamp(uint64_t);
 
-
-	StandardTUEvent & AddTUEvent(const StandardTUEvent &);
-	const StandardTUEvent & GetTUEvent(size_t i) const;
-	StandardTUEvent & GetTUEvent(size_t i);
+	void AddTUEvent(const StandardTUEvent);
+	const StandardTUEvent GetTUEvent() const;
+	StandardTUEvent GetTUEvent();
 
 
 	StandardPlane & AddPlane(const StandardPlane &);
@@ -283,7 +287,7 @@ public:
 private:
 	std::vector<StandardPlane> m_planes;
 	std::vector<StandardWaveform> m_waveforms;
-	std::vector<StandardTUEvent> m_tuevents;
+	StandardTUEvent m_tuevent;
 };
 
 inline std::ostream & operator << (std::ostream & os, const StandardTUEvent & tuev) {
