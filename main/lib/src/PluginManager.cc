@@ -153,7 +153,7 @@ namespace eudaq {
 
   StandardEvent PluginManager::ConvertToStandard(const DetectorEvent & dev) {
     //StandardEvent event(dev.GetRunNumber(), dev.GetEventNumber(), dev.GetTimestamp());
-    //fuuuck!
+
     std::cout << "DEBUG 0" << std::endl;
     StandardEvent event(dev);
     std::cout << "DEBUG 1" << std::endl;

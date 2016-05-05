@@ -215,8 +215,8 @@ public:
 	StandardTUEvent();
 	void Serialize(Serializer &) const;
 
-	void SetTimeStamp(uint64_t timestamp){m_timestamp=timestamp;}
-	uint64_t GetTimeStamp() const {return m_timestamp;}
+	void SetTimeStamp(unsigned long timestamp){m_timestamp=timestamp;}
+	unsigned long GetTimeStamp() const {return m_timestamp;}
 
 	void SetCoincCount(unsigned int cc){coincidence_count=cc;}
 	unsigned int GetCoincCount() const {return coincidence_count;}
@@ -227,32 +227,45 @@ public:
     void SetPrescalerCount(unsigned int cc){prescaler_count=cc;}
 	unsigned int GetPrescalerCount() const {return prescaler_count;}
 
+	void SetPrescalerCountXorPulserCount(unsigned int cc){prescaler_count_xor_pulser_count=cc;}
+	unsigned int GetPrescalerCountXorPulserCount() const {return prescaler_count_xor_pulser_count;}
+
+	void SetAcceptedPrescaledEvents(unsigned int cc){accepted_prescaled_events=cc;}
+	unsigned int GetAcceptedPrescaledEvents() const {return accepted_prescaled_events;}
+
+	void SetAcceptedPulserCount(unsigned int cc){accepted_pulser_events=cc;}
+	unsigned int GetAcceptedPulserCount() const {return accepted_pulser_events;}
+
 	void SetHandshakeCount(unsigned int cc){handshake_count=cc;}
 	unsigned int GetHandshakeCount() const {return handshake_count;}
 
 	void SetBeamCurrent(unsigned int cc){cal_beam_current=cc;}
 	unsigned int GetBeamCurrent() const {return cal_beam_current;}
 
+	void SetScalerValue(int idx, unsigned long val){scaler_values[idx] = val;}
+	unsigned long GetScalerValue(int idx){return scaler_values[idx];}
+
 	void SetValid(bool in){m_valid=in;}
 	bool GetValid(){return m_valid;}
 
 	std::string GetType() const {
-			std::cout << "#################################################" << std::endl;
-	std::cout << "I returned: " << m_type << std::cout;
-	std::cout << "#################################################" << std::endl;
-
 		return m_type;}
+
 	void Print(std::ostream &) const;
 
 private:
 	bool m_valid;
 	std::string m_type;
-	uint64_t m_timestamp;
+	unsigned long m_timestamp;
 	unsigned int coincidence_count;
 	unsigned int coincidence_count_no_sin;
-    unsigned int prescaler_count;                
+    unsigned int prescaler_count; 
+    unsigned int prescaler_count_xor_pulser_count;
+    unsigned int accepted_prescaled_events;
+    unsigned int accepted_pulser_events;
     unsigned int handshake_count;
 	unsigned int cal_beam_current;
+	unsigned long scaler_values[10];
 };
 
 
@@ -266,9 +279,11 @@ public:
 	StandardEvent(Deserializer &);
 	void SetTimestamp(uint64_t);
 
-	void AddTUEvent(const StandardTUEvent);
-	const StandardTUEvent GetTUEvent() const;
-	StandardTUEvent GetTUEvent();
+	//also implemented as vector, even though there will most likely only be one event per event ;)
+	StandardTUEvent & AddTUEvent(const StandardTUEvent &);
+	size_t NumTUEvents() const;
+	const StandardTUEvent & GetTUEvent(size_t i) const;
+	StandardTUEvent & GetTUEvent(size_t i);
 
 
 	StandardPlane & AddPlane(const StandardPlane &);
@@ -284,11 +299,13 @@ public:
 	const StandardWaveform & GetWaveform(size_t i) const;
 	StandardWaveform & GetWaveform(size_t i);
 
+
 private:
 	std::vector<StandardPlane> m_planes;
 	std::vector<StandardWaveform> m_waveforms;
-	StandardTUEvent m_tuevent;
+	std::vector<StandardTUEvent> m_tuevent;
 };
+
 
 inline std::ostream & operator << (std::ostream & os, const StandardTUEvent & tuev) {
 	tuev.Print(os);

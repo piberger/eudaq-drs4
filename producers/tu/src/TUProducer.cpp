@@ -132,8 +132,7 @@ void TUProducer::MainLoop(){
 						}
 					}
 
-
-					unsigned int ts = time_stamps[1];
+					unsigned long ts = time_stamps[1];
 					m_ev = handshake_count;
 					
 					//real data event
@@ -158,6 +157,12 @@ void TUProducer::MainLoop(){
         			ev.AddBlock(block_no, reinterpret_cast<const char*>(&handshake_count), sizeof(handshake_count));
         			block_no++;
         			ev.AddBlock(block_no, reinterpret_cast<const char*>(&cal_beam_current), sizeof(cal_beam_current));
+        			block_no++;
+
+        			//also send individual event scalers
+        			unsigned long *cnts = trigger_counts;
+        			ev.AddBlock(block_no, reinterpret_cast<const char*>(cnts), 10*sizeof(unsigned long));
+
         			SendEvent(ev);
 
         			m_ev_prev = m_ev+1;

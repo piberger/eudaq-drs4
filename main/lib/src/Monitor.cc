@@ -61,11 +61,14 @@ namespace eudaq {
     if (evt_number < start_event){
         return true;
     }
+    std::cout << "hello fuckers." << std::endl;
 
     try {
       const DetectorEvent & dev = m_reader->GetDetectorEvent();
       if (dev.IsBORE()) m_lastbore =std::shared_ptr<DetectorEvent>(new DetectorEvent(dev));
+      std::cout << "hello fuckers.." << std::endl;
       OnEvent(PluginManager::ConvertToStandard(dev));
+      std::cout << "hello fuckers..." << std::endl;
       //        ++counter_events_for_online_monitor;
     } catch (const InterruptedException &) {
       return false;
