@@ -45,7 +45,7 @@ private:
 	eudaq::Configuration m_config;
 
 	//data read back from TU
-	unsigned int trigger_counts[10];
+	unsigned long trigger_counts[10];
 	unsigned int prev_trigger_counts[10];
 	unsigned int input_frequencies[10];
 	unsigned int trigger_counts_multiplicity[10];

@@ -57,9 +57,9 @@ TUProducer::TUProducer(const std::string &name, const std::string &runcontrol, c
 
 void TUProducer::MainLoop(){
 	//variables for trigger-fallover check:
-	unsigned int bit_16 = 65535;
-	unsigned int limit = 32000; //16bit counter
-	
+	const unsigned int bit_28 = 268435456; //28bit counter
+	const unsigned int limit = bit_28/2;
+
 	do{
 	  	if(!tc){
 			eudaq::mSleep(500);
@@ -94,7 +94,7 @@ void TUProducer::MainLoop(){
 				for(int idx=0; idx<10; idx++){
 					//check if there was a fallover
 					unsigned int new_tc = rd->trigger_counts[idx]; //data from readout
-					unsigned int old_tc = trigger_counts[idx]%bit_16; //data from previous readout	
+					unsigned int old_tc = trigger_counts[idx]%bit_28; //data from previous readout	
 
 					//check for fallover
 					if (old_tc > limit && new_tc < limit){
@@ -102,7 +102,7 @@ void TUProducer::MainLoop(){
 					}
 
 					prev_trigger_counts[idx] = trigger_counts[idx];
-					trigger_counts[idx] = trigger_counts_multiplicity[idx]*bit_16 + new_tc;
+					trigger_counts[idx] = trigger_counts_multiplicity[idx]*bit_28 + new_tc;
 					input_frequencies[idx] = 1000*(trigger_counts[idx] - prev_trigger_counts[idx])/(time_stamps[1] - time_stamps[0]);
 				}
 				/******************************************** end get all the data ********************************************/
