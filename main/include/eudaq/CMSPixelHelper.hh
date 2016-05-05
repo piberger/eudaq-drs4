@@ -49,8 +49,8 @@ namespace eudaq {
 
   class CMSPixelHelper {
   public:
-    std::map<std::string, float >roc_calibrations = {{"psi46v2",65},{"psi46digv21respin",47}};
-    CMSPixelHelper(std::string event_type) : do_conversion(false),m_event_type(event_type) {};
+    std::map<std::string, float > roc_calibrations = {{"psi46v2", 65}, {"psi46digv21respin", 47}, {"proc600", 47}};
+    CMSPixelHelper(std::string event_type) : do_conversion(false), m_event_type(event_type), m_conv_cfg(0) {};
     void set_conversion(bool val){do_conversion = val;}
     bool get_conversion(){return do_conversion;}
     std::map< std::string, VCALDict> vcal_vals;
@@ -102,7 +102,7 @@ namespace eudaq {
         if (roctype == "") continue;
         bool is_digital = (roctype.find("dig") == -1) ? false : true;
 
-        std::string fname = m_conv_cfg->Get("phCalibrationFile", "");
+        std::string fname = m_conv_cfg ? m_conv_cfg->Get("phCalibrationFile", "") : "";
         if (fname == "") fname = cnf.Get("phCalibrationFile","");
         if (fname == "") {
           fname = cnf.Get("dacFile", "");
