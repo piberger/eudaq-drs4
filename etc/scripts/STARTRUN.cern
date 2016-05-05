@@ -38,11 +38,16 @@ ls
 echo '    Starting Subprocesses'
 
 echo '        RunControl'
-~/eudaq-drs4/bin/euRun.exe -x 5 -y -28 -w 916 -g 460 -a tcp://$RCPORT  &
+~/eudaq-drs4/bin/euRun.exe -x 5 -y -28 -w 500 -g 600 -a tcp://$RCPORT  &
 sleep 2
 
 echo '        LogCollector'
-~/eudaq-drs4/bin/euLog.exe -l DEBUG -x 500 -y -28 -w 1000 -g 784 -r  tcp://$HOSTNAME:$RCPORT &
+~/eudaq-drs4/bin/euLog.exe -l DEBUG -x 700 -y -28 -w 600 -g 784 -r  tcp://$HOSTNAME:$RCPORT &
+echo '\033[1;36;48m PLEASE WAIT...\033[0m'
+sleep 2
+
+echo '        DataCollector'
+~/eudaq-drs4/bin/TestDataCollector.exe -r tcp://$HOSTNAME:$RCPORT &
 echo '\033[1;36;48m PLEASE WAIT...\033[0m'
 sleep 2
 

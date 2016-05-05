@@ -32,8 +32,8 @@ ssh -tY pim1 'screen -X -S  "DRS4Screen" kill'
 echo -e "${RED}Killing       CMSPixel @ PiM1 ${RESTORE}"
 ssh -tY pim1 'screen -X -S  "CMSPixelScreen" kill'
 
-echo -e "${RED}Killing       DataCollector @ rapidshare ${RESTORE}"
-ssh -tY rapidshare 'screen -X -S  "DataCollectorScreen" kill'
+#echo -e "${RED}Killing       DataCollector @ rapidshare ${RESTORE}"
+#ssh -tY rapidshare 'screen -X -S  "DataCollectorScreen" kill'
 
 ssh -tY pim1 "killall screen"
 killall xterm
