@@ -25,9 +25,6 @@ namespace eudaq{
                 if(valid){
                     unsigned int id = 0;
                     RawDataEvent::data_t data = in_raw.GetBlock(id);
-                     
-                    uint64_t time_stamp_old = *((uint64_t*)&data[0]);
-                    id++;
 
                     uint64_t time_stamp = *((uint64_t*)&data[0]);
                     id++;
