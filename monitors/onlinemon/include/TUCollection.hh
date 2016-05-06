@@ -39,7 +39,7 @@ class TUCollection:public BaseCollection{
     TUHistos* getTUHistos();
 
   private:
-    TUHistos * mymonhistos;
+    TUHistos * tuevhistos;
 };
 
 #ifdef __CINT__

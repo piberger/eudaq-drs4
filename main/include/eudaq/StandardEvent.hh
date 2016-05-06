@@ -249,10 +249,10 @@ public:
 	unsigned int GetBeamCurrent() const {return cal_beam_current;}
 
 	void SetScalerValue(int idx, unsigned long val){scaler_values[idx] = val;}
-	unsigned long GetScalerValue(int idx){return scaler_values[idx];}
+	unsigned long GetScalerValue(int idx) const {return scaler_values[idx];}
 
 	void SetValid(bool in){m_valid=in;}
-	bool GetValid(){return m_valid;}
+	bool GetValid() const {return m_valid;}
 
 	std::string GetType() const {
 		return m_type;}

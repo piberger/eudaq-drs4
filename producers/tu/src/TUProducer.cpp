@@ -8,30 +8,23 @@
 ** Author: Christian Dorfer (dorfer@phys.ethz.ch)
 ** ---------------------------------------------------------------------------------*/
 
-
-//system includes
-#include <iostream>
-#include <ostream>
-#include <cctype>
-#include <memory>
-#include <string>
-#include <array>
-#include <deque>
+//TU includes
+#include "TUProducer.hh"
+#include "trigger_controll.h"
 
 //EUDAQ includes
-#include "eudaq/Producer.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Configuration.hh"
 
-//TU includes
-#include "TUProducer.hh"
-#include "trigger_controll.h"
+//System Includes
+#include <iostream>
+#include <string>
+#include <cstdint>
 
 static const std::string EVENT_TYPE = "TU";
-
 
 TUProducer::TUProducer(const std::string &name, const std::string &runcontrol, const std::string &verbosity):eudaq::Producer(name, runcontrol),
 	event_type(EVENT_TYPE),
@@ -110,15 +103,18 @@ void TUProducer::MainLoop(){
 				//check if eventnumber has changed since last readout:
 				if(handshake_count != prev_handshake_count){
 				
-					/*
-					std::cout << "Coincidence count without scintillator: " << coincidence_count_no_sin << std::endl;
-					std::cout << "Coincidence count: " << coincidence_count << std::endl;
-					std::cout << "Beam current: " << cal_beam_current << std::endl;
-					std::cout << "Prescaler count: " << prescaler_count << std::endl;
-					std::cout << "Prescaler XOR Pulser count: " << prescaler_count_xor_pulser_count << std::endl;
-					std::cout << "Handshake count: " << handshake_count << std::endl;
-					std::cout << "Timestamp: " << time_stamps[1] << std::endl << std::endl << std::endl;
-					*/
+                        std::cout << "************************************************************************************" << std::endl;
+                        std::cout << "time stamp: " << time_stamps[1] << std::endl;
+                        std::cout << "coincidence_count: " << coincidence_count << std::endl;
+                        std::cout << "coincidence_count_no_sin: " << coincidence_count_no_sin << std::endl;
+                        std::cout << "prescaler_count: " << prescaler_count << std::endl;
+                        std::cout << "prescaler_count_xor_pulser_count: " << prescaler_count_xor_pulser_count << std::endl;
+                        std::cout << "accepted_prescaled_events: " << accepted_prescaled_events << std::endl;
+                        std::cout << "accepted_pulser_events: " << accepted_pulser_events << std::endl;
+                        std::cout << "handshake_count: " << handshake_count << std::endl;
+                        std::cout << "cal_beam_current: " << cal_beam_current << std::endl;
+                        std::cout << "************************************************************************************" << std::endl;
+					
 					
 					//send fake events for events we are missing out between readout cycles
 					if(handshake_count > m_ev_prev){
@@ -132,7 +128,8 @@ void TUProducer::MainLoop(){
 						}
 					}
 
-					unsigned long ts = time_stamps[1];
+					uint64_t ts_old = time_stamps[0];
+					uint64_t ts = time_stamps[1];
 					m_ev = handshake_count;
 					
 					//real data event
@@ -140,28 +137,30 @@ void TUProducer::MainLoop(){
 					ev.SetTag("valid", std::to_string(1));
 
         			unsigned int block_no = 0;
-        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&ts), sizeof(ts)); //timestamp
+        			ev.AddBlock(block_no, static_cast<const uint64_t*>(&ts), sizeof(uint64_t)); //timestamp
         			block_no++;
-        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&coincidence_count), sizeof(coincidence_count));
+        			ev.AddBlock(block_no, static_cast<const uint64_t*>(&ts_old), sizeof(uint64_t)); //timestamp
         			block_no++;
-        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&coincidence_count_no_sin), sizeof(coincidence_count_no_sin));
+        			ev.AddBlock(block_no, static_cast<const uint32_t*>(&coincidence_count), sizeof(uint32_t));
         			block_no++;
-        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&prescaler_count), sizeof(prescaler_count));
+        			ev.AddBlock(block_no, static_cast<const uint32_t*>(&coincidence_count_no_sin), sizeof(uint32_t));
         			block_no++;
-        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&prescaler_count_xor_pulser_count), sizeof(prescaler_count_xor_pulser_count));
+        			ev.AddBlock(block_no, static_cast<const uint32_t*>(&prescaler_count), sizeof(uint32_t));
         			block_no++;
-        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&accepted_prescaled_events), sizeof(accepted_prescaled_events));
+        			ev.AddBlock(block_no, static_cast<const uint32_t*>(&prescaler_count_xor_pulser_count), sizeof(uint32_t));
         			block_no++;
-        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&accepted_pulser_events), sizeof(accepted_pulser_events));
+        			ev.AddBlock(block_no, static_cast<const uint32_t*>(&accepted_prescaled_events), sizeof(uint32_t));
         			block_no++;
-        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&handshake_count), sizeof(handshake_count));
+        			ev.AddBlock(block_no, static_cast<const uint32_t*>(&accepted_pulser_events), sizeof(uint32_t));
         			block_no++;
-        			ev.AddBlock(block_no, reinterpret_cast<const char*>(&cal_beam_current), sizeof(cal_beam_current));
+        			ev.AddBlock(block_no, static_cast<const uint32_t*>(&handshake_count), sizeof(uint32_t));
+        			block_no++;
+        			ev.AddBlock(block_no, static_cast<const float*>(&cal_beam_current), sizeof(float));
         			block_no++;
 
         			//also send individual event scalers
         			unsigned long *cnts = trigger_counts;
-        			ev.AddBlock(block_no, reinterpret_cast<const char*>(cnts), 10*sizeof(unsigned long));
+        			ev.AddBlock(block_no, reinterpret_cast<const char*>(cnts), 10*sizeof(uint64_t));
 
         			SendEvent(ev);
 
@@ -320,24 +319,13 @@ void TUProducer::OnStatus(){
 
 
 void TUProducer::OnConfigure(const eudaq::Configuration& conf) {
-		//std::cout << conf << std::endl;
-
-		m_config = conf;
-
-		std::cout << std::endl << std::endl << std::endl;
-		std::cout << "Config name inside TU producer: " << m_config.Name() << std::endl;
 
 	try {
-
-		std::cout << "Debug: Plane 1 delay: " << m_config.Get("plane_1", -1) << std::endl;
-		std::cout << m_config << std::endl;
-		std::cout << std::endl << std::endl << std::endl;
-
 
 		SetStatus(eudaq::Status::LVL_OK, "Wait");
 
 		//open stream to TU
-		std::string ip_adr = m_config.Get("ip_adr", "192.168.1.120");
+		std::string ip_adr = conf.Get("ip_adr", "192.168.1.120");
 		const char *ip = ip_adr.c_str();
 
 		stream->set_ip_adr(ip);
@@ -345,81 +333,81 @@ void TUProducer::OnConfigure(const eudaq::Configuration& conf) {
    		stream->open();
 
 
-   		std::cout << "Configuring (" << m_config.Name() << ").." << std::endl;			
+   		std::cout << "Configuring (" << conf.Name() << ").." << std::endl;			
   		//enabling/disabling and getting&setting delays for scintillator and planes 1-8 (same order in array)
   		std::cout << "--> Setting delays for scintillator, planes 1-8 and pad." << std::endl;
-		tc->set_scintillator_delay(m_config.Get("scintillator_delay", 100));
-  		tc->set_plane_1_delay(m_config.Get("plane1del", 100));
-  		std::cout << "Debug: Plane 1 delay: " << m_config.Get("plane_1", 100) << std::endl;
-  		tc->set_plane_2_delay(m_config.Get("plane2del", 100));
-  		tc->set_plane_3_delay(m_config.Get("plane3del", 100));
-  		tc->set_plane_4_delay(m_config.Get("plane4del", 100));
-  		tc->set_plane_5_delay(m_config.Get("plane5del", 100));
-  		tc->set_plane_6_delay(m_config.Get("plane6del", 100));
-  		tc->set_plane_7_delay(m_config.Get("plane7del", 100));
-  		tc->set_plane_8_delay(m_config.Get("plane8del", 100));
-  		tc->set_pad_delay(m_config.Get("pad_delay", 100));
+		tc->set_scintillator_delay(conf.Get("scintillator_delay", 100));
+  		tc->set_plane_1_delay(conf.Get("plane1del", 100));
+  		std::cout << "Debug: Plane 1 delay: " << conf.Get("plane_1", 100) << std::endl;
+  		tc->set_plane_2_delay(conf.Get("plane2del", 100));
+  		tc->set_plane_3_delay(conf.Get("plane3del", 100));
+  		tc->set_plane_4_delay(conf.Get("plane4del", 100));
+  		tc->set_plane_5_delay(conf.Get("plane5del", 100));
+  		tc->set_plane_6_delay(conf.Get("plane6del", 100));
+  		tc->set_plane_7_delay(conf.Get("plane7del", 100));
+  		tc->set_plane_8_delay(conf.Get("plane8del", 100));
+  		tc->set_pad_delay(conf.Get("pad_delay", 100));
   		tc->set_delays();
 
   		//generate and set a trigger mask
-  		trg_mask = m_config.Get("pad", 0);
+  		trg_mask = conf.Get("pad", 0);
   		for (unsigned int idx=8; idx>0; idx--){
   			std::string sname = "plane" + std::to_string(idx);
-  			int tmp = m_config.Get(sname, 0);
+  			int tmp = conf.Get(sname, 0);
   			trg_mask = (trg_mask<<1)+tmp;
   		}
 
-  		trg_mask = (trg_mask<<1)+m_config.Get("scintillator", 0);
+  		trg_mask = (trg_mask<<1)+conf.Get("scintillator", 0);
   		std::cout << "Debug: Trigger mask: " << trg_mask << std::endl;
   		tc->set_coincidence_enable(trg_mask);
 
 
   		std::cout << "--> Setting prescaler and delay." << std::endl;
-		int scal = m_config.Get("prescaler", 1);
-		int predel = m_config.Get("prescaler_delay", 5); //must be >4
+		int scal = conf.Get("prescaler", 1);
+		int predel = conf.Get("prescaler_delay", 5); //must be >4
 		tc->set_prescaler(scal);
 		tc->set_prescaler_delay(predel);
 
 
 		std::cout << "--> Setting pulser frequency, width and delay." << std::endl;
-		double freq = m_config.Get("pulser_freq", 0);
-		int width = m_config.Get("pulser_width", 0);
-		int puldel = m_config.Get("pulser_delay", 5); //must be > 4
+		double freq = conf.Get("pulser_freq", 0);
+		int width = conf.Get("pulser_width", 0);
+		int puldel = conf.Get("pulser_delay", 5); //must be > 4
 
 		tc->set_Pulser_width(freq, width);
 		tc->set_pulser_delay(puldel);
 
 
 		std::cout << "--> Setting coincidence pulse and edge width." << std::endl;
-		int copwidth = m_config.Get("coincidence_pulse_width", 10);
-		int coewidth = m_config.Get("coincidence_edge_width", 10);
+		int copwidth = conf.Get("coincidence_pulse_width", 10);
+		int coewidth = conf.Get("coincidence_edge_width", 10);
 		tc->set_coincidence_pulse_width(copwidth);
 		tc->set_coincidence_edge_width(coewidth);
 		tc->send_coincidence_edge_width();
 		tc->send_coincidence_pulse_width();
 
-		int hs_del = m_config.Get("handshake_delay", 0);
+		int hs_del = conf.Get("handshake_delay", 0);
 		tc->set_handshake_delay(hs_del);
 		tc->send_handshake_delay();
 
-		int hs_mask = m_config.Get("handshake_mask", 0);
+		int hs_mask = conf.Get("handshake_mask", 0);
 		tc->set_handshake_mask(hs_mask);
 		tc->send_handshake_mask();
 
-		int trigdel1 = m_config.Get("trig_1_delay", 100);
-		int trigdel2 = m_config.Get("trig_2_delay", 100);
+		int trigdel1 = conf.Get("trig_1_delay", 100);
+		int trigdel2 = conf.Get("trig_2_delay", 100);
 		int trigdel12 = (trigdel1<<12) | trigdel2;
 		tc->set_trigger_12_delay(trigdel12);
 				
 
-		int trigdel3 = m_config.Get("trig_3_delay", 100);
+		int trigdel3 = conf.Get("trig_3_delay", 100);
 		tc->set_trigger_3_delay(trigdel3);
 		tc->set_delays();
 
 		//set current UNIX timestamp
    		tc->set_time();
 		eudaq::mSleep(1000);
-		SetStatus(eudaq::Status::LVL_OK, "Configured (" + m_config.Name() + ")");
+		SetStatus(eudaq::Status::LVL_OK, "Configured (" + conf.Name() + ")");
 		
 		std::cout << "--> Readback of values" << std::endl;
 		std::cout << "############################################################" << std::endl;
@@ -442,7 +430,7 @@ void TUProducer::OnConfigure(const eudaq::Configuration& conf) {
 
 		std::cout << "--> ##### Configuring TU with settings file (" << conf.Name() << ") done. #####" << std::endl;
 
-		SetStatus(eudaq::Status::LVL_OK, "Configured (" + m_config.Name() + ")");
+		SetStatus(eudaq::Status::LVL_OK, "Configured (" + conf.Name() + ")");
 	}catch (...){
 		printf("Configuration Error\n");
 		SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");

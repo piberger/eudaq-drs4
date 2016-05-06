@@ -139,7 +139,7 @@ class RootMonitor : private eudaq::Holder<int>,
 
       void SetSnapShotDir(string s);
       string GetSnapShotDir();
-      OnlineMonConfiguration mon_configdata; //FIXME
+      OnlineMonConfiguration mon_configdata;
 
       unsigned int _fft_resets;
       std::vector<float> _last_fft_min;
@@ -147,7 +147,7 @@ class RootMonitor : private eudaq::Holder<int>,
       std::vector<float> _last_fft_mean;
     private:
       string snapshotdir;
-      EventSanityChecker myevent; //FIXME
+      EventSanityChecker myevent;
       bool useTrackCorrelator;
       TStopwatch my_event_processing_time;
       TStopwatch my_event_inner_operations_time;

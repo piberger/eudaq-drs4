@@ -13,9 +13,10 @@
 #define TUPRODUCER_HH
 
 //Readout_Data struct defined here:
+#include "eudaq/Producer.hh"
 #include "triger_logic_tpc_stream.h"
+#include <deque>
 
-class Producer;
 class Configuration;
 class trigger_controll;
 
@@ -42,7 +43,6 @@ private:
 	int trg_mask;
 	float cal_beam_current;
 	std::deque<float> avg;
-	eudaq::Configuration m_config;
 
 	//data read back from TU
 	unsigned long trigger_counts[10];
