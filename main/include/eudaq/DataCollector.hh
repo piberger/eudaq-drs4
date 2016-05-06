@@ -8,7 +8,7 @@
 
 #include "eudaq/TransportServer.hh"
 #include "eudaq/CommandReceiver.hh"
-#include "eudaq/Event.hh"
+#include "eudaq/TLUEvent.hh"
 #include "eudaq/FileWriter.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Utils.hh"

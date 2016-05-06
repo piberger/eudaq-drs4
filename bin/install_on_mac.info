@@ -1,2 +1,0 @@
-install_name_tool -change libDRS.so /Users/testbeam/sdvlp/DRS4-v5-shared/libDRS.so DRSProducer.exe 
-

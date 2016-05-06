@@ -49,7 +49,7 @@ namespace eudaq {
     Info info;
     info.id = std::shared_ptr<ConnectionInfo>(id.Clone());
     m_buffer.push_back(info);
-    if (id.GetType() == "Producer" && id.GetName() == "TLU") {
+    if (id.GetType() == "Producer" && id.GetName() == "TU") {
       m_itlu = m_buffer.size() - 1;
     }
   }
@@ -135,7 +135,7 @@ namespace eudaq {
   void DataCollector::OnStatus() {
     std::string evt;
     if (m_eventnumber > 0)
-      evt = to_string(m_eventnumber );
+      evt = to_string(m_eventnumber);
     m_status.SetTag("EVENT", evt);
     m_status.SetTag("RUN", to_string(m_runnumber));
     if (m_writer.get())
@@ -153,17 +153,17 @@ namespace eudaq {
       unsigned n_run = m_runnumber, n_ev = m_eventnumber;
       uint64_t n_ts = (uint64_t) -1;
       if (m_itlu != (size_t) -1) {
-        TLUEvent * ev = static_cast<TLUEvent *>(m_buffer[m_itlu].events.front().get());
+        TLUEvent * ev = static_cast<TLUEvent*>(m_buffer[m_itlu].events.front().get());
         n_run = ev->GetRunNumber();
         n_ev = ev->GetEventNumber();
         n_ts = ev->GetTimestamp();
       }
       DetectorEvent ev(n_run, n_ev, n_ts);
-      unsigned tluev = 0;
       for (size_t i = 0; i < m_buffer.size(); ++i) {
         if (m_buffer[i].events.front()->GetRunNumber() != m_runnumber) {
           EUDAQ_ERROR("Run number mismatch in event " + to_string(ev.GetEventNumber()));
         }
+        std::cout << "buffere event nr: " << m_buffer[i].events.front()->GetEventNumber() << " m_ev nr: " << m_eventnumber << std::endl;
         if ((m_buffer[i].events.front()->GetEventNumber() != m_eventnumber) && (m_buffer[i].events.front()->GetEventNumber() != m_eventnumber - 1)) {
           if (ev.GetEventNumber() % 1000 == 0) {
             // dhaas: added if-statement to filter out TLU event number 0, in case of bad clocking out

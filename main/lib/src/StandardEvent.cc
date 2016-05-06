@@ -5,7 +5,9 @@ namespace eudaq {
 
 EUDAQ_DEFINE_EVENT(StandardEvent, str2id("_STD"));
 
-
+/************************************************************************************************/
+/************************************* Standard Waveform ****************************************/
+/************************************************************************************************/
 
 eudaq::StandardWaveform::StandardWaveform(unsigned id, const std::string& type,
 		const std::string& sensor):m_channelnumber(-1){
@@ -429,19 +431,53 @@ template std::vector<short> StandardPlane::GetPixels<>() const;
 template std::vector<int> StandardPlane::GetPixels<>() const;
 template std::vector<double> StandardPlane::GetPixels<>() const;
 
-StandardEvent::StandardEvent(unsigned run, unsigned evnum, uint64_t timestamp)
-: Event(run, evnum, timestamp)
-{
+
+/************************************************************************************************/
+/************************************** Standard TUEvent ****************************************/
+/************************************************************************************************/
+
+
+StandardTUEvent::StandardTUEvent(const std::string & type){
+	m_type = type;
 }
 
-StandardEvent::StandardEvent(const Event & e)
-: Event(e)
-{
+
+StandardTUEvent::StandardTUEvent():m_type(0){}
+
+
+
+StandardTUEvent::StandardTUEvent(Deserializer & ds){
+	ds.read(m_type);
 }
 
-StandardEvent::StandardEvent(Deserializer & ds)
-: Event(ds)
-{
+
+void eudaq::StandardTUEvent::Serialize(Serializer& ser) const {
+	ser.write(m_type);
+}
+
+
+void StandardTUEvent::Print(std::ostream & os) const {
+	os << m_type << ": ";
+	os << "m_timestamp: " << m_timestamp;
+	os << "coincidence_count: " << coincidence_count;
+	os << "coincidence_count_no_sin: " << coincidence_count_no_sin;
+    os << "prescaler_count: " << prescaler_count;                
+    os << "handshake_count: " << handshake_count;
+	os << "cal_beam_current: " << cal_beam_current;
+}
+
+
+
+/************************************************************************************************/
+/*************************************** Standard Event *****************************************/
+/************************************************************************************************/
+
+StandardEvent::StandardEvent(unsigned run, unsigned evnum, uint64_t timestamp):Event(run, evnum, timestamp){}
+
+StandardEvent::StandardEvent(const Event &e):Event(e){
+}
+
+StandardEvent::StandardEvent(Deserializer & ds):Event(ds){
 	ds.read(m_planes);
 	ds.read(m_waveforms);
 }
@@ -484,11 +520,33 @@ StandardPlane & StandardEvent::AddPlane(const StandardPlane & plane) {
 	return m_planes.back();
 }
 
-size_t StandardEvent::NumWaveforms() const {
+
+//begin added CD
+size_t StandardEvent::NumTUEvents() const{
+	return m_tuevent.size();
+}
+
+StandardTUEvent & StandardEvent::GetTUEvent(size_t i){ 
+	return m_tuevent[i];
+}
+
+const StandardTUEvent& StandardEvent::GetTUEvent(size_t i) const {
+	return m_tuevent[i];
+}
+
+StandardTUEvent & StandardEvent::AddTUEvent(const StandardTUEvent & tuev){
+	m_tuevent.push_back(tuev);
+	return m_tuevent.back();
+}
+//end added CD
+
+
+
+size_t StandardEvent::NumWaveforms() const {//ok
 	return m_waveforms.size();
 }
 
-StandardWaveform & StandardEvent::GetWaveform(size_t i) {
+StandardWaveform & StandardEvent::GetWaveform(size_t i) {//ok
 	return m_waveforms[i];
 }
 
@@ -496,7 +554,7 @@ const StandardWaveform & StandardEvent::GetWaveform(size_t i) const {
 	return m_waveforms[i];
 }
 
-StandardWaveform & StandardEvent::AddWaveform(const StandardWaveform & waveform) {
+StandardWaveform & StandardEvent::AddWaveform(const StandardWaveform & waveform) {//ok
 	m_waveforms.push_back(waveform);
 	return m_waveforms.back();
 }
