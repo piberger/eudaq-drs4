@@ -28,6 +28,7 @@ SET (OnlineMon_SOURCES
   src/WaveformOptions.cc
   src/TUCollection.cc
   src/TUHistos.cc
+  src/SimpleStandardTUEvent.cc
 #  src/TreeHistoRelation.cc
   )
 

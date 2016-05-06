@@ -34,21 +34,14 @@ void TUHistos::Write(){
 
 
 
-void TUHistos::Fill(SimpleStandardEvent ev)
-{
-//  _AnalysisTimeHisto->Fill(ev.getMonitor_eventanalysistime());
-//  _FillTimeHisto->Fill(ev.getMonitor_eventfilltime());
-//  _ClusteringTimeHisto->Fill(ev.getMonitor_clusteringtime());
-//  _CorrelationTimeHisto->Fill(ev.getMonitor_correlationtime());
+void TUHistos::Fill(SimpleStandardEvent ev){
+  //_CoincidenceCount->Fill(ev.)
+  //implement SimpleStandardEvent for TU!
 }
 
 
 
-void TUHistos::Reset()
-{
-//  _AnalysisTimeHisto->Reset();
-//  _FillTimeHisto->Reset();
-//  _ClusteringTimeHisto->Reset();
-//  _CorrelationTimeHisto->Reset();
+void TUHistos::Reset(){
+  _CoincidenceCount->Reset();
 }
 

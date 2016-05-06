@@ -80,6 +80,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
 	_colls.push_back(hmCollection);
 	_colls.push_back(corrCollection);
 	_colls.push_back(wfCollection);
+  _colls.push_back(tuCollection);
 	_colls.push_back(monCollection);
 	_colls.push_back(eudaqCollection);
 	// set the root Monitor
@@ -89,6 +90,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
 		corrCollection->setRootMonitor(this);
 		monCollection->setRootMonitor(this);
 		wfCollection->setRootMonitor(this);
+    tuCollection->setRootMonitor(this);
 		eudaqCollection->setRootMonitor(this);
 		onlinemon->setCollections(_colls);
 	}
@@ -228,11 +230,14 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
   if (reduce){
     unsigned int num = (unsigned int) ev.NumPlanes();
 	  unsigned int nwf = (unsigned int) ev.NumWaveforms();
+    unsigned int ntu = (unsigned int) ev.NumTUEvents();
+    //std::cout << "Number of TU events: " << ntu << std::endl;
 
     // Initialize the geometry with the first event received:
     if(!_planesInitialized){
       myevent.setNPlanes(num);
       myevent.setNWaveforms(nwf);
+
       std::cout << "Initialized geometry. Nplanes: " << num <<", NWaveforms: "<< nwf << std::endl;
     
     }else {
@@ -264,8 +269,6 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
       onlinemon->UpdateStatus("Getting data..");}
 
 
-
-
     SimpleStandardEvent simpEv;      
     // store the processing time of the previous EVENT, as we can't track this during the processing
     simpEv.setMonitor_eventanalysistime(previous_event_analysis_time);
@@ -274,6 +277,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
     simpEv.setMonitor_eventcorrelationtime(previous_event_correlation_time);
     simpEv.setEvent_number(ev.GetEventNumber());
     simpEv.setEvent_timestamp(ev.GetTimestamp());
+
     // Get Information wheater this event is an Pulser event
     // this is a hardcoded fix for setup at psi, think about a different option
     bool isPulserEvent = false;
@@ -296,6 +300,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 	  for (unsigned int i = 0; i < nwf;i++){
 			const eudaq::StandardWaveform & waveform = ev.GetWaveform(i);
 
+
       #ifdef DEBUG
 			 cout << "Waveform ID          " << waveform.ID()<<endl;
 			 cout << "Waveform Size        " << sizeof(waveform) <<endl;
@@ -306,6 +311,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 			 cout << "Waveform Type        " << waveform.GetType() << endl;
 			 cout << "Waveform NSamples    " << waveform.GetNSamples() <<endl; // gives 2560 for V1730
       #endif
+
 
 			std::string sensorname;
 			sensorname = waveform.GetType();
@@ -355,42 +361,43 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 //			cout<<"simpWaveform no"<<i<<" name \""<<simpWaveform.getName()
 //					<<"\" ID: "<<simpWaveform.getID()
 //					<<" ch name \""<<simpWaveform.getChannelName()<<"\""<<endl;//<<"\" mon:"<<_mon<<endl;
-			simpEv.addWaveform(simpWaveform);
+      simpEv.addWaveform(simpWaveform);
+
+
+/************************************** Start TU Event Stuff **************************************/
+//don't blame me..
+
+      unsigned int ntu = (unsigned int) ev.NumTUEvents();
+      if(ntu > 1){std::cout << "There is more than 1 TUEvent in the vector. Not good.." << std::endl;}
+      const eudaq::StandardTUEvent &tuev = ev.GetTUEvent(0);
+      SimpleStandardTUEvent simpleTUEvent(tuev.GetType());
+
+      //just transfer data to SimpleStandardTUEvent for processing:
+      bool valid = tuev.GetValid();
+      if(valid){
+        simpleTUEvent.SetValid(1);
+        simpleTUEvent.SetTimeStamp(tuev.GetTimeStamp());
+        simpleTUEvent.SetCoincCount(tuev.GetCoincCount());
+        simpleTUEvent.SetCoincCountNoSin(tuev.GetCoincCountNoSin());
+        simpleTUEvent.SetPrescalerCount(tuev.GetPrescalerCount());
+        simpleTUEvent.SetPrescalerCountXorPulserCount(tuev.GetPrescalerCountXorPulserCount());
+        simpleTUEvent.SetAcceptedPrescaledEvents(tuev.GetAcceptedPrescaledEvents());
+        simpleTUEvent.SetAcceptedPulserCount(tuev.GetAcceptedPulserCount());
+        simpleTUEvent.SetHandshakeCount(tuev.GetHandshakeCount());
+        simpleTUEvent.SetBeamCurrent(tuev.GetBeamCurrent());
+        for(int idx=0; idx<10; idx++){ //hard coded beause..., that's why
+          simpleTUEvent.SetScalerValue(idx, tuev.GetScalerValue(idx));
+        }
+      }else{
+        simpleTUEvent.SetValid(0);
+      }
+
+      simpEv.addTUEvent(simpleTUEvent);
+
+/************************************** End TU Event Stuff **************************************/
+
+
 		}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    //ADD TU EVENT here!
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -529,6 +536,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
     if (ev.GetRunNumber() != 0)
         this->onlinemon->setRunNumber(ev.GetRunNumber());}
 }//end of the whole bloody method
+
 
 
 void RootMonitor::autoReset(const bool reset){

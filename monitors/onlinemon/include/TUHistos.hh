@@ -13,9 +13,8 @@
 
 class TH1I;
 class SimpleStandardEvent;
-
-using namespace std;
 class RootMonitor;
+
 
 class TUHistos{
 
@@ -29,7 +28,7 @@ class TUHistos{
     void Fill( SimpleStandardEvent ev);
     void Write();
     void Reset();
-    TH1I*  getCoincidenceCountHisto() {return _CoincidenceCount;}
+    TH1I*  getCoincidenceCountHisto(){return _CoincidenceCount;}
 
 
 
