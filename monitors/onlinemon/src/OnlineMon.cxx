@@ -2,8 +2,10 @@
 #include <Windows4Root.h>
 #endif
 
-//whoever wrote this file (especially the OnEvent method) should be beaten up
-//number of wasted hours = 1 (increase counter)
+//whoever wrote this file (especially the corresponding header file) should be beaten up
+//number of wasted hours = 4 (increase counter)
+
+
 
 // ROOT includes
 #include "TROOT.h"
@@ -47,6 +49,9 @@
 #define EUDAQ_SLEEP(x) sleep(x)
 #endif
 
+#include "TUCollection.hh"
+
+
 //ONLINE MONITOR Includes
 #include "OnlineMon.hh"
 
@@ -66,8 +71,10 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
   hmCollection = new HitmapCollection();
   corrCollection = new CorrelationCollection();
   wfCollection = new WaveformCollection();
+  tuCollection = new TUCollection();
   MonitorPerformanceCollection *monCollection = new MonitorPerformanceCollection();
   eudaqCollection = new EUDAQMonitorCollection();
+
 
 	// put collections into the vector
 	_colls.push_back(hmCollection);
@@ -350,6 +357,12 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 //					<<" ch name \""<<simpWaveform.getChannelName()<<"\""<<endl;//<<"\" mon:"<<_mon<<endl;
 			simpEv.addWaveform(simpWaveform);
 		}
+
+
+
+
+
+
 
 
 
@@ -657,7 +670,7 @@ int main(int argc, const char ** argv) {
       cout <<"Offline Mode not supported"<<endl;
       exit(-1);}
 
-    
+
     theApp.Run(); //execute
 
   } catch (...) {

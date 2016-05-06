@@ -62,6 +62,7 @@ using namespace std;
 class OnlineMonWindow;
 class BaseCollection;
 class CheckEOF;
+class TUCollection; //first proper forward declaration in this freaking file
 
 class RootMonitor : private eudaq::Holder<int>,
   //public TApplication,
@@ -93,6 +94,7 @@ class RootMonitor : private eudaq::Holder<int>,
       CorrelationCollection *corrCollection;
       EUDAQMonitorCollection * eudaqCollection;
       WaveformCollection *wfCollection;
+      TUCollection *tuCollection;
 
       TVirtualFFT *fft_own;
       std::vector< float > * fft_vals;
