@@ -441,7 +441,6 @@ void StandardTUEvent::Print(std::ostream & os) const {
 
 
 
-
 /************************************************************************************************/
 /*************************************** Standard Event *****************************************/
 /************************************************************************************************/
@@ -449,7 +448,6 @@ void StandardTUEvent::Print(std::ostream & os) const {
 StandardEvent::StandardEvent(unsigned run, unsigned evnum, uint64_t timestamp):Event(run, evnum, timestamp){}
 
 StandardEvent::StandardEvent(const Event &e):Event(e){
-	std::cout << "Hi there I am StandardEvent(const Event)" << std::endl;
 }
 
 StandardEvent::StandardEvent(Deserializer & ds):Event(ds){

@@ -12,88 +12,84 @@ namespace eudaq{
             virtual unsigned GetTriggerID(const eudaq::Event & ev) const{return ev.GetEventNumber();}
             
             virtual void Initialize(const Event & bore, const Configuration & cnf){
-                std::cout << bore.GetTag("FirmwareID") << std::endl;
+                //std::cout << bore.GetTag("FirmwareID") << std::endl;
 
             }
+
             virtual bool GetStandardSubEvent(eudaq::StandardEvent &sev, const eudaq::Event &ev) const{
                 const RawDataEvent & in_raw = dynamic_cast<const RawDataEvent &>(ev);
-                std::cout << "plugin sucker ." << std::endl;
                 int valid = std::stoi(in_raw.GetTag("valid"));
                 int nblocks = in_raw.NumBlocks();
-                std::cout << "nblocks: " << nblocks << std::endl;
-
 
                 if(valid){
-                    std::cout << "plugin sucker .." << std::endl;
                     unsigned int id = 0;
                     RawDataEvent::data_t data = in_raw.GetBlock(id);
                      
                     unsigned long time_stamp = static_cast<unsigned long>(data[0]);
                     id++;
-                    std::cout << "time stamp: " << time_stamp << std::endl;
                     
                     data = in_raw.GetBlock(id);
                     unsigned int coincidence_count = static_cast<unsigned int>(data[0]);
                     id++;
-                    std::cout << "coincidence_count: " << coincidence_count << std::endl;
 
                     data = in_raw.GetBlock(id);
                     unsigned int coincidence_count_no_sin = static_cast<unsigned int>(data[0]);
                     id++;
-                    std::cout << "coincidence_count_no_sin: " << coincidence_count_no_sin << std::endl;
 
                     data = in_raw.GetBlock(id);
                     unsigned int prescaler_count = static_cast<unsigned int>(data[0]);
                     id++;
-                    std::cout << "prescaler_count: " << prescaler_count << std::endl;
 
                     data = in_raw.GetBlock(id);
                     unsigned int prescaler_count_xor_pulser_count = static_cast<unsigned int>(data[0]);
                     id++;
-                    std::cout << "prescaler_count_xor_pulser_count: " << prescaler_count_xor_pulser_count << std::endl;
 
                     data = in_raw.GetBlock(id);
                     unsigned int accepted_prescaled_events = static_cast<unsigned int>(data[0]);
                     id++;
-                    std::cout << "accepted_prescaled_events: " << accepted_prescaled_events << std::endl;
 
                     data = in_raw.GetBlock(id);
                     unsigned int accepted_pulser_events = static_cast<unsigned int>(data[0]);
                     id++;
-                    std::cout << "accepted_pulser_events: " << accepted_pulser_events << std::endl;
 
                     data = in_raw.GetBlock(id);
                     unsigned int handshake_count = static_cast<unsigned int>(data[0]);
                     id++;
-                    std::cout << "handshake_count: " << handshake_count << std::endl;
+
 
                     data = in_raw.GetBlock(id);
                     unsigned int cal_beam_current = static_cast<unsigned int>(data[0]);
                     id++;
-                    std::cout << "cal_beam_current: " << cal_beam_current << std::endl;
+
+
+                    #ifdef DEBUG
+                        std::cout << "nblocks: " << nblocks << std::endl;
+                        std::cout << "time stamp: " << time_stamp << std::endl;
+                        std::cout << "coincidence_count: " << coincidence_count << std::endl;
+                        std::cout << "coincidence_count_no_sin: " << coincidence_count_no_sin << std::endl;
+                        std::cout << "prescaler_count: " << prescaler_count << std::endl;
+                        std::cout << "prescaler_count_xor_pulser_count: " << prescaler_count_xor_pulser_count << std::endl;
+                        std::cout << "accepted_prescaled_events: " << accepted_prescaled_events << std::endl;
+                        std::cout << "accepted_pulser_events: " << accepted_pulser_events << std::endl;
+                        std::cout << "handshake_count: " << handshake_count << std::endl;
+                        std::cout << "cal_beam_current: " << cal_beam_current << std::endl;
+                    #endif
 
                     //add data to the StandardEvent:
                     sev.SetTimestamp(time_stamp);
                     StandardTUEvent tuev(EVENT_TYPE);
                     tuev.SetValid(1);
 
-                    std::cout << "I get here." << std::endl;
+
                     //get individual scaler values
-                    for(int idx=0; idx<10; idx++){
-                        //data = in_raw.GetBlock(id);
-                        std::cout << "I get here.." << std::endl;
-
-
-                        unsigned long sc_val = 0;
-                        std::cout << "scaler value " << idx << ": " << sc_val << std::endl;
-                        tuev.SetScalerValue(idx, sc_val);
-                        //id++;
+                    data = in_raw.GetBlock(id);
+                    int data_size = data.size(); 
+                    int n_samples = data_size/sizeof(unsigned long);
+                    for(int idx=0; idx<n_samples; idx++){
+                        unsigned long *sc_val = (unsigned long*)(&data[0]);
+                        //std::cout << "some output" << sc_val[idx] << std::endl;
+                        tuev.SetScalerValue(idx, sc_val[idx]);
                      }
-
-
-
-
-
 
                      tuev.SetTimeStamp(time_stamp);
                      tuev.SetCoincCount(coincidence_count);
@@ -103,15 +99,12 @@ namespace eudaq{
                      tuev.SetPrescalerCount(prescaler_count);
                      tuev.SetHandshakeCount(handshake_count);
                      tuev.SetBeamCurrent(cal_beam_current);
-                     std::cout << "plugin sucker .." << std::endl;
                      sev.AddTUEvent(tuev);
                 }else{
                      StandardTUEvent tuev(EVENT_TYPE);
                      tuev.SetValid(0);
-                     std::cout << "plugin sucker .." << std::endl;
                      sev.AddTUEvent(tuev);
                 }
-                std::cout << "plugin sucker ..." << std::endl;
                 return true;
             }
 
