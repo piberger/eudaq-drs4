@@ -1,6 +1,7 @@
 #include "eudaq/DataConverterPlugin.hh"
 #include "eudaq/StandardEvent.hh"
 #include <string>
+#include <cstdint>
 
 namespace eudaq{
 
@@ -25,44 +26,48 @@ namespace eudaq{
                     unsigned int id = 0;
                     RawDataEvent::data_t data = in_raw.GetBlock(id);
                      
-                    unsigned long time_stamp = static_cast<unsigned long>(data[0]);
-                    id++;
-                    
-                    data = in_raw.GetBlock(id);
-                    unsigned int coincidence_count = static_cast<unsigned int>(data[0]);
+                    uint64_t time_stamp_old = *((uint64_t*)&data[0]);
                     id++;
 
-                    data = in_raw.GetBlock(id);
-                    unsigned int coincidence_count_no_sin = static_cast<unsigned int>(data[0]);
+                    uint64_t time_stamp = *((uint64_t*)&data[0]);
                     id++;
-
+                  
                     data = in_raw.GetBlock(id);
-                    unsigned int prescaler_count = static_cast<unsigned int>(data[0]);
+                    uint32_t coincidence_count = *((uint32_t*)&data[0]);
                     id++;
 
                     data = in_raw.GetBlock(id);
-                    unsigned int prescaler_count_xor_pulser_count = static_cast<unsigned int>(data[0]);
+                    uint32_t coincidence_count_no_sin = *((uint32_t*)&data[0]);
                     id++;
 
                     data = in_raw.GetBlock(id);
-                    unsigned int accepted_prescaled_events = static_cast<unsigned int>(data[0]);
+                    uint32_t prescaler_count = *((uint32_t*)&data[0]);
                     id++;
 
                     data = in_raw.GetBlock(id);
-                    unsigned int accepted_pulser_events = static_cast<unsigned int>(data[0]);
+                    uint32_t prescaler_count_xor_pulser_count = *((uint32_t*)&data[0]);
                     id++;
 
                     data = in_raw.GetBlock(id);
-                    unsigned int handshake_count = static_cast<unsigned int>(data[0]);
+                    uint32_t accepted_prescaled_events = *((uint32_t*)&data[0]);
+                    id++;
+
+                    data = in_raw.GetBlock(id);
+                    uint32_t accepted_pulser_events = *((uint32_t*)&data[0]);
+                    id++;
+
+                    data = in_raw.GetBlock(id);
+                    uint32_t handshake_count = *((uint32_t*)&data[0]);
                     id++;
 
 
                     data = in_raw.GetBlock(id);
-                    unsigned int cal_beam_current = static_cast<unsigned int>(data[0]);
+                    uint32_t cal_beam_current = *((float*)&data[0]);
                     id++;
 
 
-                    #ifdef DEBUG
+                    //#ifdef DEBUG
+                        std::cout << "************************************************************************************" << std::endl;
                         std::cout << "nblocks: " << nblocks << std::endl;
                         std::cout << "time stamp: " << time_stamp << std::endl;
                         std::cout << "coincidence_count: " << coincidence_count << std::endl;
@@ -73,7 +78,8 @@ namespace eudaq{
                         std::cout << "accepted_pulser_events: " << accepted_pulser_events << std::endl;
                         std::cout << "handshake_count: " << handshake_count << std::endl;
                         std::cout << "cal_beam_current: " << cal_beam_current << std::endl;
-                    #endif
+                        std::cout << "************************************************************************************" << std::endl;
+                    //#endif
 
                     //add data to the StandardEvent:
                     sev.SetTimestamp(time_stamp);
@@ -84,9 +90,9 @@ namespace eudaq{
                     //get individual scaler values
                     data = in_raw.GetBlock(id);
                     int data_size = data.size(); 
-                    int n_samples = data_size/sizeof(unsigned long);
+                    int n_samples = data_size/sizeof(uint64_t);
                     for(int idx=0; idx<n_samples; idx++){
-                        unsigned long *sc_val = (unsigned long*)(&data[0]);
+                        uint64_t *sc_val = (uint64_t*)(&data[0]);
                         //std::cout << "some output" << sc_val[idx] << std::endl;
                         tuev.SetScalerValue(idx, sc_val[idx]);
                      }

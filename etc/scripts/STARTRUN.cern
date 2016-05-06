@@ -52,7 +52,7 @@ echo '\033[1;36;48m PLEASE WAIT...\033[0m'
 sleep 2
 
 echo '        TUProducer'
-~/eudaq-drs4/bin/TUProducer.exe -r  tcp://$HOSTNAME:$RCPORT &
+xterm -geom $ws'x20+'$((1921+wg*4))'-0' -hold -T 'TU' -e '~/eudaq-drs4/bin/TUProducer.exe -r tcp://$HOSTNAME:$RCPORT'  &
 echo '\033[1;36;48m PLEASE WAIT...\033[0m'
 sleep 2
 
