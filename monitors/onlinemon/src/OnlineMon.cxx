@@ -186,6 +186,11 @@ void RootMonitor::setReduce(const unsigned int red) {
   }
 }
 
+void RootMonitor::addTUEvent(SimpleStandardTUEvent & tuev){
+  if(this->getNTUEvent() > 0){prev_tuev.clear();}
+    prev_tuev.push_back(tuev);
+}
+
 
 void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
   #ifdef DEBUG
@@ -365,35 +370,46 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 
 
 /************************************** Start TU Event Stuff **************************************/
-//don't blame me..
+//don't blame me for this code ..
 
       unsigned int ntu = (unsigned int) ev.NumTUEvents();
-      if(ntu > 1){std::cout << "There is more than 1 TUEvent in the vector. Not good.." << std::endl;}
-      const eudaq::StandardTUEvent &tuev = ev.GetTUEvent(0);
-      SimpleStandardTUEvent simpleTUEvent(tuev.GetType());
 
-      //just transfer data to SimpleStandardTUEvent for processing:
-      bool valid = tuev.GetValid();
-      if(valid){
-        simpleTUEvent.SetValid(1);
-        simpleTUEvent.SetTimeStamp(tuev.GetTimeStamp());
-        simpleTUEvent.SetCoincCount(tuev.GetCoincCount());
-        simpleTUEvent.SetCoincCountNoSin(tuev.GetCoincCountNoSin());
-        simpleTUEvent.SetPrescalerCount(tuev.GetPrescalerCount());
-        simpleTUEvent.SetPrescalerCountXorPulserCount(tuev.GetPrescalerCountXorPulserCount());
-        simpleTUEvent.SetAcceptedPrescaledEvents(tuev.GetAcceptedPrescaledEvents());
-        simpleTUEvent.SetAcceptedPulserCount(tuev.GetAcceptedPulserCount());
-        simpleTUEvent.SetHandshakeCount(tuev.GetHandshakeCount());
-        simpleTUEvent.SetBeamCurrent(tuev.GetBeamCurrent());
-        for(int idx=0; idx<10; idx++){ //hard coded beause..., that's why
-          simpleTUEvent.SetScalerValue(idx, tuev.GetScalerValue(idx));
+      if(ntu > 0){
+
+        if(ntu > 1){std::cout << "There is more than 1 TUEvent in the vector. Not good.." << std::endl;}
+        const eudaq::StandardTUEvent &tuev = ev.GetTUEvent(0);
+        SimpleStandardTUEvent simpleTUEvent(tuev.GetType());
+ 
+        //just transfer data to SimpleStandardTUEvent for processing:
+        bool valid = tuev.GetValid();
+        if(valid){
+          simpleTUEvent.SetValid(1);
+          simpleTUEvent.SetTimeStamp(tuev.GetTimeStamp());
+          simpleTUEvent.SetCoincCount(tuev.GetCoincCount());
+          simpleTUEvent.SetCoincCountNoSin(tuev.GetCoincCountNoSin());
+          simpleTUEvent.SetPrescalerCount(tuev.GetPrescalerCount());
+          simpleTUEvent.SetPrescalerCountXorPulserCount(tuev.GetPrescalerCountXorPulserCount());
+          simpleTUEvent.SetAcceptedPrescaledEvents(tuev.GetAcceptedPrescaledEvents());
+          simpleTUEvent.SetAcceptedPulserCount(tuev.GetAcceptedPulserCount());
+          simpleTUEvent.SetHandshakeCount(tuev.GetHandshakeCount());
+          simpleTUEvent.SetBeamCurrent(tuev.GetBeamCurrent());
+          for(int idx=0; idx<10; idx++){ //hard coded beause..., that's why
+            simpleTUEvent.SetScalerValue(idx, tuev.GetScalerValue(idx));
+          }
+        }else{
+          simpleTUEvent.SetValid(0);
         }
-      }else{
-        simpleTUEvent.SetValid(0);
-      }
+        simpEv.addTUEvent(simpleTUEvent);
+      
 
-      simpEv.addTUEvent(simpleTUEvent);
+      //set it here and send it as first event (prev event)
+      this->addTUEvent(simpleTUEvent);
+      }//if ntu > 0
 
+
+
+      //am ende setzen, als erstes schicken
+//        prev_tuevent = SimpleStandardTUEvent(tuev.GetType());
 /************************************** End TU Event Stuff **************************************/
 
 

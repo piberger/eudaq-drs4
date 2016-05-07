@@ -4,7 +4,7 @@ GREEN='\033[00;32m'
 RESTORE='\033[0m'
 
 # cleanup of DAQ computer
-PROCESSES="OnlineMonitor.exe  euLog.exe euRun.exe"
+PROCESSES="OnlineMonitor.exe  euLog.exe euRun.exe TUProducer.exe"
 for thisprocess in $PROCESSES
 do
     echo "Checking if $thisprocess is running... "
