@@ -15,6 +15,7 @@
 
 SimpleStandardTUEvent::SimpleStandardTUEvent(const std::string & name, OnlineMonConfiguration* mymon){}
 SimpleStandardTUEvent::SimpleStandardTUEvent(const std::string & name){}
+SimpleStandardTUEvent::SimpleStandardTUEvent(){}
 
 
 

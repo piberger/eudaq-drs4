@@ -23,6 +23,7 @@ protected:
 public:
 	SimpleStandardTUEvent(const std::string &name, OnlineMonConfiguration* mymon);
 	SimpleStandardTUEvent(const std::string &name);
+	SimpleStandardTUEvent();
 	virtual ~SimpleStandardTUEvent() {};
 
 
@@ -74,8 +75,6 @@ private:
     unsigned int handshake_count;
 	unsigned int cal_beam_current;
 	unsigned long scaler_values[10];
-
-
 
 
 
