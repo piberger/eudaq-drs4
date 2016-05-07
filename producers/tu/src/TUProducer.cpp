@@ -128,7 +128,6 @@ void TUProducer::MainLoop(){
 						}
 					}
 
-					uint64_t ts_old = time_stamps[0];
 					uint64_t ts = time_stamps[1];
 					m_ev = handshake_count;
 					
@@ -138,8 +137,6 @@ void TUProducer::MainLoop(){
 
         			unsigned int block_no = 0;
         			ev.AddBlock(block_no, static_cast<const uint64_t*>(&ts), sizeof(uint64_t)); //timestamp
-        			block_no++;
-        			ev.AddBlock(block_no, static_cast<const uint64_t*>(&ts_old), sizeof(uint64_t)); //timestamp
         			block_no++;
         			ev.AddBlock(block_no, static_cast<const uint32_t*>(&coincidence_count), sizeof(uint32_t));
         			block_no++;
