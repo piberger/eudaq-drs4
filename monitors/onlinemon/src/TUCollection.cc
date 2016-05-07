@@ -68,7 +68,8 @@ void TUCollection::Fill(const SimpleStandardEvent &simpev){
     histos_init=true;
   }
 
-  if(simpev.getNTUEvent() > 0)
+//tuevhistos->Fill(simpev.getTUEvent(0), simpev.getTUEvent(1), simpev.getEvent_number());
+  if(simpev.getNTUEvent() > 1)
     tuevhistos->Fill(simpev.getTUEvent(0), simpev.getEvent_number());
 }
 

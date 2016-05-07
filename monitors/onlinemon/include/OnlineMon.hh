@@ -153,7 +153,6 @@ class RootMonitor : private eudaq::Holder<int>,
 
 
       void addTUEvent(SimpleStandardTUEvent &tuev);
-      SimpleStandardTUEvent getTUEvent(const int i) const {return prev_tuev.at(i);}
       int getNTUEvent() const {return prev_tuev.size();}
 
 

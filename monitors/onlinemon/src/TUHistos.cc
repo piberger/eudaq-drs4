@@ -71,6 +71,9 @@ void TUHistos::Write(){
 
 void TUHistos::Fill(SimpleStandardTUEvent ev, unsigned int event_nr){
 	bool valid = ev.GetValid();
+
+
+  
 	if(valid){
 	  _CoincidenceCount->Fill(event_nr, ev.GetPrescalerCount());
       _CoincidenceCountNoScint->Fill(event_nr, ev.GetCoincCountNoSin());

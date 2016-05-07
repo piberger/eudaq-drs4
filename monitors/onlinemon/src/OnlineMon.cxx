@@ -399,22 +399,21 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
         }else{
           simpleTUEvent.SetValid(0);
         }
-        simpEv.addTUEvent(simpleTUEvent);
-      
 
-      //set it here and send it as first event (prev event)
-      this->addTUEvent(simpleTUEvent);
+        if(this->getNTUEvent() > 0){ //send previous 
+          simpEv.addTUEvent(prev_tuev.at(0));
+        }
+
+        simpEv.addTUEvent(simpleTUEvent);//send new
+        this->addTUEvent(simpleTUEvent); //save current to be next previous
+
+
       }//if ntu > 0
 
-
-
-      //am ende setzen, als erstes schicken
-//        prev_tuevent = SimpleStandardTUEvent(tuev.GetType());
 /************************************** End TU Event Stuff **************************************/
 
 
 		}
-
 
 
     if (skip_dodgy_event){
