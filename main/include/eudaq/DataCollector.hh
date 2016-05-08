@@ -14,6 +14,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Platform.hh"
 #include <memory>
+
 namespace eudaq {
 
   /** Implements the functionality of the File Writer application.

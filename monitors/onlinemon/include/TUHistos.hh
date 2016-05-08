@@ -16,6 +16,7 @@ class SimpleStandardEvent;
 class RootMonitor;
 class SimpleStandardTUEvent;
 
+#include <cstdint>
 
 class TUHistos{
 
@@ -30,6 +31,20 @@ class TUHistos{
 	TH1I* _AvgBeamCurrent;
 	TH1I* _Scaler1;
 	TH1I* _Scaler2;
+	uint64_t start_time;
+	bool called;
+
+    uint64_t old_timestamp;
+    uint32_t old_coincidence_count;
+    uint32_t old_coincidence_count_no_sin;
+    uint32_t old_prescaler_count;
+    uint32_t old_prescaler_count_xor_pulser_count;
+    uint32_t old_accepted_prescaled_events;
+    uint32_t old_accepted_pulser_events;
+    uint32_t old_handshake_count;
+    uint64_t old_scaler1;
+    uint64_t old_scaler2;
+
 
   public:
     TUHistos();

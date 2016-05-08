@@ -186,11 +186,6 @@ void RootMonitor::setReduce(const unsigned int red) {
   }
 }
 
-void RootMonitor::addTUEvent(SimpleStandardTUEvent & tuev){
-  if(this->getNTUEvent() > 0){prev_tuev.clear();}
-    prev_tuev.push_back(tuev);
-}
-
 
 void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
   #ifdef DEBUG
@@ -400,13 +395,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
           simpleTUEvent.SetValid(0);
         }
 
-        if(this->getNTUEvent() > 0){ //send previous 
-          simpEv.addTUEvent(prev_tuev.at(0));
-        }
-
         simpEv.addTUEvent(simpleTUEvent);//send new
-        this->addTUEvent(simpleTUEvent); //save current to be next previous
-
 
       }//if ntu > 0
 
