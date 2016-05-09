@@ -46,7 +46,6 @@
 #include "OnlineMonConfiguration.hh"
 #include "CheckEOF.hh"
 
-#include "include/SimpleStandardTUEvent.hh" //for vector definition
 
 //STL includes
 #include <string>
@@ -83,8 +82,6 @@ class RootMonitor : private eudaq::Holder<int>,
       bool _writeRoot;
       int _offline;
       CheckEOF _checkEOF;
-      //TU information to calculate rates etc:
-      std::vector<SimpleStandardTUEvent> prev_tuev;
 
       bool _planesInitialized;
       //bool _autoReset;
@@ -152,9 +149,6 @@ class RootMonitor : private eudaq::Holder<int>,
       std::vector<float> _last_fft_mean;
 
 
-      void addTUEvent(SimpleStandardTUEvent &tuev);
-      SimpleStandardTUEvent getTUEvent(const int i) const {return prev_tuev.at(i);}
-      int getNTUEvent() const {return prev_tuev.size();}
 
 
     private:

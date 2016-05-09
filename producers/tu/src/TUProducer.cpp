@@ -163,6 +163,7 @@ void TUProducer::MainLoop(){
 
         			m_ev_prev = m_ev+1;
 					prev_handshake_count = handshake_count;
+					std::cout << "Event number TUProducer: " << handshake_count << std::endl;
 				
 				}//end if (prev event count)
 

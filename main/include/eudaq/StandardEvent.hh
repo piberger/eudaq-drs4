@@ -224,32 +224,32 @@ public:
 	void SetTimeStamp(uint64_t timestamp){ m_timestamp=timestamp; }
 	uint64_t GetTimeStamp() const { return m_timestamp;}
 
-	void SetCoincCount(unsigned int cc){coincidence_count=cc;}
-	unsigned int GetCoincCount() const {return coincidence_count;}
+	void SetCoincCount(uint32_t cc){coincidence_count=cc;}
+	uint32_t GetCoincCount() const {return coincidence_count;}
 
-    void SetCoincCountNoSin(unsigned int cc){coincidence_count_no_sin=cc;}
-	unsigned int GetCoincCountNoSin() const {return coincidence_count_no_sin;}
+    void SetCoincCountNoSin(uint32_t cc){coincidence_count_no_sin=cc;}
+	uint32_t GetCoincCountNoSin() const {return coincidence_count_no_sin;}
 
-    void SetPrescalerCount(unsigned int cc){prescaler_count=cc;}
-	unsigned int GetPrescalerCount() const {return prescaler_count;}
+    void SetPrescalerCount(uint32_t cc){prescaler_count=cc;}
+	uint32_t GetPrescalerCount() const {return prescaler_count;}
 
-	void SetPrescalerCountXorPulserCount(unsigned int cc){prescaler_count_xor_pulser_count=cc;}
-	unsigned int GetPrescalerCountXorPulserCount() const {return prescaler_count_xor_pulser_count;}
+	void SetPrescalerCountXorPulserCount(uint32_t cc){prescaler_count_xor_pulser_count=cc;}
+	uint32_t GetPrescalerCountXorPulserCount() const {return prescaler_count_xor_pulser_count;}
 
-	void SetAcceptedPrescaledEvents(unsigned int cc){accepted_prescaled_events=cc;}
-	unsigned int GetAcceptedPrescaledEvents() const {return accepted_prescaled_events;}
+	void SetAcceptedPrescaledEvents(uint32_t cc){accepted_prescaled_events=cc;}
+	uint32_t GetAcceptedPrescaledEvents() const {return accepted_prescaled_events;}
 
-	void SetAcceptedPulserCount(unsigned int cc){accepted_pulser_events=cc;}
-	unsigned int GetAcceptedPulserCount() const {return accepted_pulser_events;}
+	void SetAcceptedPulserCount(uint32_t cc){accepted_pulser_events=cc;}
+	uint32_t GetAcceptedPulserCount() const {return accepted_pulser_events;}
 
-	void SetHandshakeCount(unsigned int cc){handshake_count=cc;}
-	unsigned int GetHandshakeCount() const {return handshake_count;}
+	void SetHandshakeCount(uint32_t cc){handshake_count=cc;}
+	uint32_t GetHandshakeCount() const {return handshake_count;}
 
-	void SetBeamCurrent(unsigned int cc){cal_beam_current=cc;}
-	unsigned int GetBeamCurrent() const {return cal_beam_current;}
+	void SetBeamCurrent(uint32_t cc){cal_beam_current=cc;}
+	uint32_t GetBeamCurrent() const {return cal_beam_current;}
 
-	void SetScalerValue(int idx, unsigned long val){scaler_values[idx] = val;}
-	unsigned long GetScalerValue(int idx) const {return scaler_values[idx];}
+	void SetScalerValue(int idx, uint64_t val){scaler_values[idx] = val;}
+	uint64_t GetScalerValue(int idx) const {return scaler_values[idx];}
 
 	void SetValid(bool in){m_valid=in;}
 	bool GetValid() const {return m_valid;}
@@ -262,16 +262,16 @@ public:
 private:
 	bool m_valid;
 	std::string m_type;
-	unsigned long m_timestamp;
-	unsigned int coincidence_count;
-	unsigned int coincidence_count_no_sin;
-    unsigned int prescaler_count; 
-    unsigned int prescaler_count_xor_pulser_count;
-    unsigned int accepted_prescaled_events;
-    unsigned int accepted_pulser_events;
-    unsigned int handshake_count;
-	unsigned int cal_beam_current;
-	unsigned long scaler_values[10];
+	uint64_t m_timestamp;
+	uint32_t coincidence_count;
+	uint32_t coincidence_count_no_sin;
+    uint32_t prescaler_count; 
+    uint32_t prescaler_count_xor_pulser_count;
+    uint32_t accepted_prescaled_events;
+    uint32_t accepted_pulser_events;
+    uint32_t handshake_count;
+	uint32_t cal_beam_current;
+	uint64_t scaler_values[10];
 };
 
 

@@ -15,20 +15,21 @@
 #include <iostream>
 #include <TH1I.h>
 #include <TFile.h>
+#include <cstdint>
 
 
 TUHistos::TUHistos(){
 
-    _CoincidenceCount = new TH1I("Concidence Count", "Coincidence Count; Number of Events; Entries",1000, 0, 20000);
-    _CoincidenceCountNoScint = new TH1I("Coincidence Count No Scintillator", "Coincidence Count No Scintillator; Number of Events; Entries",1000, 0, 20000);
-    _PrescalerCount = new TH1I("Prescaler Count", "Prescaler Count; Number of Events; Entries",1000, 0, 20000);
-    _PrescalerXPulser = new TH1I("Prescaler Xor Pulser Count", "Prescaler Xor Pulser Count; Number of Events; Entries",1000, 0, 20000);
-    _AcceptedPrescaledEvents = new TH1I("Accepted Prescaled Events", "Accepted Prescaled Events; Number of Events; Entries",1000, 0, 20000);
-    _AcceptedPulserEvents = new TH1I("Accepted Pulser Events", "Accepted Pulser Events; Number of Events; Entries",1000, 0, 20000);
-    _EventCount = new TH1I("Event Count", "Event Count; Number of Events; Entries",1000, 0, 20000);
-    _AvgBeamCurrent = new TH1I("Average Beam Current", "Average Beam Current; Number of Events; Beam Current [mA]",1000, 0, 20000);
-    _Scaler1 = new TH1I("Plane Scaler 1", "Plane Scaler 1; Number of Events; Entries",1000, 0, 20000);
-    _Scaler2 = new TH1I("Plane Scaler 2", "Plane Scaler 2; Number of Events; Entries",1000, 0, 20000);
+  _CoincidenceCount = new TH1I("Concidence Rate", "Coincidence Rate [Hz]; Run Time [s]",500, 0, 500);
+  _CoincidenceCountNoScint = new TH1I("Coincidence Rate No Scintillator", "Coincidence Rate No Scintillator [Hz]; Run Time [s]",500, 0, 500);
+  _PrescalerCount = new TH1I("Prescaler Rate", "Prescaler Rate [Hz]; Run Time [s]",500, 0, 500);
+  _PrescalerXPulser = new TH1I("Prescaler Xor Pulser Rate", "Prescaler Xor Pulser Rate [Hz]; Run Time [s]",500, 0, 500);
+  _AcceptedPrescaledEvents = new TH1I("Accepted Prescaled Event Rate", "Accepted Prescaled Rate [Hz]; Run Time [s]",500, 0, 500);
+  _AcceptedPulserEvents = new TH1I("Accepted Pulser Event Rate", "Accepted Pulser Event Rate [Hz]; Run Time [s]",500, 0, 500);
+  _EventCount = new TH1I("Event Rate", "Event Rate [Hz]; Run Time [s]",500, 0, 500);
+  _AvgBeamCurrent = new TH1I("Average Beam Current", "Average Beam Current [mA]; Run Time [s]",500, 0, 500);
+  _Scaler1 = new TH1I("Rate Plane Scaler 1", "Rate Plane Scaler 1 [Hz]; Run Time [s]",500, 0, 500);
+  _Scaler2 = new TH1I("Rate Plane Scaler 2", "Rate Plane Scaler 2 [Hz]; Run Time [s]",500, 0, 500);
 
 
  	_CoincidenceCount->SetBit(TH1::kCanRebin);
@@ -42,11 +43,24 @@ TUHistos::TUHistos(){
 	_Scaler1->SetBit(TH1::kCanRebin);
 	_Scaler2->SetBit(TH1::kCanRebin);
 
+  called = false;
+  old_timestamp = 0;
+  old_coincidence_count = 0;
+  old_coincidence_count_no_sin = 0;
+  old_prescaler_count = 0;
+  old_prescaler_count_xor_pulser_count = 0;
+  old_accepted_prescaled_events = 0;
+  old_accepted_pulser_events = 0;
+  old_handshake_count = 0;
+  old_scaler1 = 0;
+  old_scaler2 = 0;
 
-    if((_CoincidenceCount==NULL)){
-      std::cout<< "TUHistos:: Error allocating Histograms" <<std::endl;
-      exit(-1);
-    }
+
+  if((_CoincidenceCount==NULL)){
+    std::cout<< "TUHistos:: Error allocating Histograms" <<std::endl;
+    exit(-1);
+  }
+
 }
 
 TUHistos::~TUHistos(){}
@@ -70,19 +84,66 @@ void TUHistos::Write(){
 
 
 void TUHistos::Fill(SimpleStandardTUEvent ev, unsigned int event_nr){
-	bool valid = ev.GetValid();
-	if(valid){
-	  _CoincidenceCount->Fill(event_nr, ev.GetPrescalerCount());
-      _CoincidenceCountNoScint->Fill(event_nr, ev.GetCoincCountNoSin());
-      _PrescalerCount->Fill(event_nr, ev.GetPrescalerCount());
-      _PrescalerXPulser->Fill(event_nr, ev.GetPrescalerCountXorPulserCount());
-      _AcceptedPrescaledEvents->Fill(event_nr, ev.GetAcceptedPrescaledEvents());
-      _AcceptedPulserEvents->Fill(event_nr, ev.GetAcceptedPulserCount());
-      _EventCount->Fill(event_nr, ev.GetHandshakeCount());
-      _AvgBeamCurrent->Fill(event_nr, ev.GetBeamCurrent());
-      _Scaler1->Fill(event_nr, ev.GetScalerValue(0));
-      _Scaler2->Fill(event_nr, ev.GetScalerValue(1));
-	}
+  bool valid = ev.GetValid();
+
+  //set time stamp of beginning event or some of the first events (not 100% precise!)
+  if(!called && valid){
+    start_time = ev.GetTimeStamp();
+    called = true;
+  }
+
+	
+
+  if(valid){
+
+
+    if(old_timestamp > 0){ //it was already set
+      uint64_t new_timestamp = ev.GetTimeStamp();
+      uint32_t coincidence_count = ev.GetCoincCount();
+      uint32_t coincidence_count_no_sin = ev.GetCoincCountNoSin();
+      uint32_t prescaler_count = ev.GetPrescalerCount();
+      uint32_t prescaler_count_xor_pulser_count = ev.GetPrescalerCountXorPulserCount();
+      uint32_t accepted_prescaled_events = ev.GetAcceptedPrescaledEvents();
+      uint32_t accepted_pulser_events = ev.GetAcceptedPulserCount();
+      uint32_t handshake_count = ev.GetHandshakeCount();
+      uint32_t cal_beam_current = ev.GetBeamCurrent();
+      uint64_t scaler1 = ev.GetScalerValue(0);
+      uint64_t scaler2 = ev.GetScalerValue(1);
+
+      uint32_t x_axis = (uint32_t) (new_timestamp - start_time)/500;
+      uint32_t t_diff = (uint32_t) (new_timestamp - old_timestamp);
+
+      //std::cout << "Prescaler difference: " << (coincidence_count - old_coincidence_count) << std::endl;
+      //std::cout << "Old timestamp: " << old_timestamp << ", new timestamp: " << new_timestamp << std::endl;
+      //std::cout << "X-Achse: " << x_axis << ", zeit differenz: " << t_diff << std::endl;
+
+
+      _CoincidenceCount->Fill(x_axis, (coincidence_count - old_coincidence_count));
+      _CoincidenceCountNoScint->Fill(x_axis, (coincidence_count_no_sin - old_coincidence_count_no_sin));
+      _PrescalerCount->Fill(x_axis, (prescaler_count - old_prescaler_count));
+      _PrescalerXPulser->Fill(x_axis, (prescaler_count_xor_pulser_count - old_prescaler_count_xor_pulser_count));
+      _AcceptedPrescaledEvents->Fill(x_axis, (accepted_prescaled_events - old_accepted_prescaled_events));
+      _AcceptedPulserEvents->Fill(x_axis, (accepted_pulser_events - old_accepted_pulser_events));
+      _EventCount->Fill(x_axis, (handshake_count - old_handshake_count));
+      _AvgBeamCurrent->Fill(x_axis, cal_beam_current);
+      _Scaler1->Fill(x_axis, (scaler1 - old_scaler1));
+      _Scaler2->Fill(x_axis, (scaler2 - old_scaler2));
+
+    }
+
+      old_timestamp = ev.GetTimeStamp();
+      old_coincidence_count = ev.GetCoincCount();
+      old_coincidence_count_no_sin = ev.GetCoincCountNoSin();
+      old_prescaler_count = ev.GetPrescalerCount();
+      old_prescaler_count_xor_pulser_count = ev.GetPrescalerCountXorPulserCount();
+      old_accepted_prescaled_events = ev.GetAcceptedPrescaledEvents();
+      old_accepted_pulser_events = ev.GetAcceptedPulserCount();
+      old_handshake_count = ev.GetHandshakeCount();
+      old_scaler1 = ev.GetScalerValue(0);
+      old_scaler2 = ev.GetScalerValue(1);
+
+  }
+
 }
 
 

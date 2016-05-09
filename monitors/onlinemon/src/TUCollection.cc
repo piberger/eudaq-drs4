@@ -68,9 +68,9 @@ void TUCollection::Fill(const SimpleStandardEvent &simpev){
     histos_init=true;
   }
 
-  if(simpev.getNTUEvent() > 0)
+  if(simpev.getNTUEvent() > 1)
     tuevhistos->Fill(simpev.getTUEvent(0), simpev.getEvent_number());
-}
+  }
 
 
 void TUCollection::bookHistograms(const SimpleStandardEvent & /*simpev*/){
