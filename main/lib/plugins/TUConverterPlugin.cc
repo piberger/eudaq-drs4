@@ -22,6 +22,9 @@ namespace eudaq{
                 int valid = std::stoi(in_raw.GetTag("valid"));
                 int nblocks = in_raw.NumBlocks();
 
+                StandardTUEvent tuev(EVENT_TYPE);
+                tuev.SetValid(bool(valid));
+
                 if(valid){
                     unsigned int id = 0;
                     RawDataEvent::data_t data = in_raw.GetBlock(id);
@@ -80,8 +83,6 @@ namespace eudaq{
 
                     //add data to the StandardEvent:
                     sev.SetTimestamp(time_stamp);
-                    StandardTUEvent tuev(EVENT_TYPE);
-                    tuev.SetValid(1);
 
 
                     //get individual scaler values
@@ -102,12 +103,8 @@ namespace eudaq{
                      tuev.SetPrescalerCount(prescaler_count);
                      tuev.SetHandshakeCount(handshake_count);
                      tuev.SetBeamCurrent(cal_beam_current);
-                     sev.AddTUEvent(tuev);
-                }else{
-                     StandardTUEvent tuev(EVENT_TYPE);
-                     tuev.SetValid(0);
-                     sev.AddTUEvent(tuev);
                 }
+                sev.AddTUEvent(tuev);
                 return true;
             }
 
