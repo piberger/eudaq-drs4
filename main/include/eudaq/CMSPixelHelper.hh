@@ -1,5 +1,7 @@
 #include "dictionaries.h"
 #include "constants.h"
+#include "../api/datatypes.h"
+#include "../decoder/datapipe.h"
 #include "datasource_evt.h"
 #include "Utils.hh"
 #include <exception>

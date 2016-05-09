@@ -27,7 +27,7 @@ printf '\033[1;32;48mKILLING EUDAQ ON THIS MACHINE COMPLETE, MOVING ON TO PIM1.\
 #continue here for rapidshare, pim1, etc -Christian
 
 echo -e "${RED}Killing       CMSPixel @ PiM1 ${RESTORE}"
-ssh -tY pim1 'screen -X -S  "CMSPixelScreen" kill'
+#ssh -tY pim1 'screen -X -S  "CMSPixelScreen" kill'
 
-ssh -tY pim1 "killall screen"
+#ssh -tY pim1 "killall screen"
 killall xterm
