@@ -247,7 +247,7 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
 
     // Set Branch Addresses
     m_ttree->Branch("event_number", &f_event_number, "event_number/I");
-    m_ttree->Branch("time",& f_time, "time/F");
+    m_ttree->Branch("time",& f_time, "time/D");
     m_ttree->Branch("pulser",& f_pulser, "pulser/I");
     m_ttree->Branch("nwfs", &f_nwfs, "n_waveforms/I");
     m_ttree->Branch("forc_pos", &v_forc_pos);
@@ -342,7 +342,9 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
     StandardEvent sev = eudaq::PluginManager::ConvertToStandard(ev);
 
     f_event_number = sev.GetEventNumber();
-    f_time = sev.GetTimestamp() / float(384066.);
+    if (sev.GetTUEvent(0).GetValid())
+        f_time = sev.GetTimestamp();
+//        f_time = sev.GetTimestamp() / float(384066.);
     // --------------------------------------------------------------------
     // ---------- get the number of waveforms -----------------------------
     // --------------------------------------------------------------------
