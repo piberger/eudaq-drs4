@@ -58,6 +58,8 @@ FileWriterTreeDRS4::FileWriterTreeDRS4(const std::string & /*param*/)
 
     // waveforms
     for (uint8_t i = 0; i < 4; i++) f_wf[i] = new vector<float>;
+    f_isDa = new vector<bool>;
+    wf_thr = {125, 10, 40, 300};
 
     // spectrum vectors
     peaks_x.resize(4, new std::vector<uint16_t>);
@@ -258,6 +260,7 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
     for (uint8_t i_wf = 0; i_wf < 4; i_wf++)
         if ((save_waveforms & 1 << i_wf) == 1 << i_wf)
             m_ttree->Branch(TString::Format("wf%i", i_wf), &f_wf.at(i_wf));
+    m_ttree->Branch("wf_isDA", &f_isDa);
 
     // integrals
     m_ttree->Branch("IntegralNames",&IntegralNames);
@@ -420,6 +423,8 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
         if (verbose > 3) cout << "fill wf " << iwf << endl;
         UpdateWaveforms(iwf);
 
+        f_isDa->at(iwf) = *max_element(&data->at(20), &data->at(1023)) > wf_thr.at(iwf);
+
         data->clear();
     } // end iwf waveform loop
 
@@ -537,6 +542,7 @@ inline void FileWriterTreeDRS4::ClearVectors(){
     v_forc_time->clear();
 
     for (auto v_wf:f_wf) v_wf.second->clear();
+    f_isDa->clear();
 
     f_plane->clear();
     f_col->clear();
@@ -557,6 +563,8 @@ inline void FileWriterTreeDRS4::ResizeVectors(size_t n_channels) {
     v_average->resize(n_channels);
     for (auto v_t:v_peak_positions) v_t->clear();
     for (auto v_t:v_peak_timings) v_t->clear();
+
+    f_isDa->resize(n_channels);
 
     fft_mean->resize(n_channels, 0);
     fft_min->resize(n_channels, 0);

@@ -100,7 +100,7 @@ namespace eudaq {
         int f_event_number;
         int f_pulser_events;
         int f_signal_events;
-        float f_time;
+        double f_time;
 
         //drs4
         uint16_t f_trigger_cell;
@@ -182,6 +182,9 @@ namespace eudaq {
         std::vector<float> *fft_min_freq;
         std::vector<std::vector<float> *> fft_modes;
         TCanvas *c1;
+        // wf check
+        std::vector<bool> * f_isDa;
+        std::vector<uint16_t> wf_thr;
 
     };
 }
