@@ -221,8 +221,8 @@ public:
 	StandardTUEvent();
 	void Serialize(Serializer &) const;
 
-	void SetTimeStamp(unsigned long timestamp){m_timestamp=timestamp;}
-	unsigned long GetTimeStamp() const {return m_timestamp;}
+	void SetTimeStamp(uint64_t timestamp){ m_timestamp=timestamp; }
+	uint64_t GetTimeStamp() const { return m_timestamp;}
 
 	void SetCoincCount(unsigned int cc){coincidence_count=cc;}
 	unsigned int GetCoincCount() const {return coincidence_count;}
