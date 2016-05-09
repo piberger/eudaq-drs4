@@ -34,7 +34,7 @@ public:
 
 }
 
-  virtual bool GetStandardSubEvent(StandardEvent & sev, const Event & ev) const {
+  virtual bool GetStandardSubEvent(StandardEvent & sev, const Event & ev) const{
 	const RawDataEvent &in_raw = dynamic_cast<const RawDataEvent &>(ev);
 	int nblocks = in_raw.NumBlocks();
 
@@ -42,6 +42,7 @@ public:
 	uint32_t id = 0;
 	RawDataEvent::data_t data = in_raw.GetBlock(id++);
 	uint32_t event_size = *((uint32_t*) &data[0]);
+	//uint32_t event_size = static_cast<uint32_t>(*((uint32_t*) &data[0]));
 
 	data = in_raw.GetBlock(id++);
 	uint32_t n_groups = *((uint32_t*) &data[0]);
@@ -56,6 +57,7 @@ public:
 	//loop over all groups
     for(uint32_t grp = 0; grp < 4; grp++){
     	if(group_mask & (1<<grp)){ 
+    	  std::cout << "Reading data from group: " << grp << std::endl;
 
           data = in_raw.GetBlock(id++);
        	  uint32_t samples_per_channel = *((uint32_t*) &data[0]);

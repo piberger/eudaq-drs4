@@ -159,7 +159,7 @@ void VX1742Producer::ReadoutLoop() {
   while(m_running){
     try{
       //std::cout << "Events stored: " << caen->getEventsStored() << ", size of next event: " << caen->getNextEventSize() << std::endl;
-      usleep(500000);
+      usleep(500);
       if(caen->eventReady()){
         VX1742Event vxEvent;
         caen->BlockTransferEventD64(&vxEvent);
@@ -179,13 +179,13 @@ void VX1742Producer::ReadoutLoop() {
           uint32_t block_no = 0;
           eudaq::RawDataEvent ev(m_event_type, m_run, event_counter);          
 
-          ev.AddBlock(block_no, reinterpret_cast<const char*>(&event_size), sizeof(event_size));
+          ev.AddBlock(block_no, static_cast<const uint32_t*>(&event_size), sizeof(event_size));
           block_no++;
-          ev.AddBlock(block_no, reinterpret_cast<const char*>(&n_groups), sizeof(n_groups));
+          ev.AddBlock(block_no, static_cast<const uint32_t*>(&n_groups), sizeof(n_groups));
           block_no++;
-          ev.AddBlock(block_no, reinterpret_cast<const char*>(&group_mask), sizeof(group_mask));
+          ev.AddBlock(block_no, static_cast<const uint32_t*>(&group_mask), sizeof(group_mask));
           block_no++;
-          ev.AddBlock(block_no, reinterpret_cast<const char*>(&trigger_time_tag), sizeof(trigger_time_tag));
+          ev.AddBlock(block_no, static_cast<const uint32_t*>(&trigger_time_tag), sizeof(trigger_time_tag));
           block_no++;
 
 
@@ -218,11 +218,11 @@ void VX1742Producer::ReadoutLoop() {
               std::cout << "***********************************************************************" << std::endl << std::endl; 
               
 
-              ev.AddBlock(block_no, reinterpret_cast<const char*>(&samples_per_channel), sizeof(uint32_t));
+              ev.AddBlock(block_no, static_cast<const uint32_t*>(&samples_per_channel), sizeof(samples_per_channel));
               block_no++;
-              ev.AddBlock(block_no, reinterpret_cast<const char*>(&start_index_cell), sizeof(uint32_t));
+              ev.AddBlock(block_no, static_cast<const uint32_t*>(&start_index_cell), sizeof(start_index_cell));
               block_no++;
-              ev.AddBlock(block_no, reinterpret_cast<const char*>(&event_timestamp), sizeof(uint32_t));
+              ev.AddBlock(block_no, static_cast<const uint32_t*>(&event_timestamp), sizeof(event_timestamp));
               block_no++;
 
               for(u_int ch = 0; ch < 8; ch++){
@@ -320,49 +320,3 @@ uint32_t VX1742Producer::SamplesInCustomSize(){
   uint32_t csizes[4] = {1024, 520, 256, 136};
   return csizes[custom_size];
 }
-
-
-
-/*//put in software trigger
-        std::cout << "Event number: " << vxEvent.EventCounter() << std::endl;
-        std::cout << "Event valid: " << vxEvent.isValid() << std::endl;
-        std::cout << "Event size: " << vxEvent.EventSize() << std::endl;
-        std::cout << "Active number of channels: " << vxEvent.Channels() << std::endl;
-        std::cout << "Samples per channel: " << vxEvent.SamplesPerChannel() << std::endl;
-        std::cout << "Group mask: " << vxEvent.GroupMask() << std::endl;
-        std::cout << "Trigger time tag: " << vxEvent.TriggerTimeTag() << std::endl;
-        std::cout << "***********************************************************************" << std::endl << std::endl;  
-
-
-std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-          std::cout << "Number of groups: " << vxEvent.Groups() << std::endl;
-          std::cout << "Number of active channels in group 0: " << vxEvent.Channels(0) << std::endl;
-          std::cout << "Buffer size: " << vxEvent.rawdata_size() << std::endl;
-          std::cout << "Group size in buffer: " << vxEvent.getGroupSizeInBuffer() << std::endl;
-          std::cout << "Group 0 position: " << vxEvent.getGroupIndexInBuffer(0) << std::endl;
-          std::cout << "Group 1 position: " << vxEvent.getGroupIndexInBuffer(1) << std::endl;
-          std::cout << "Group 2 position: " << vxEvent.getGroupIndexInBuffer(2) << std::endl;
-          std::cout << "Group 3 position: " << vxEvent.getGroupIndexInBuffer(3) << std::endl;
-          std::cout << "Samples per channel in group 1: " << vxEvent.SamplesPerChannel(0) << std::endl;
-          std::cout << "Samples per channel in group 2: " << vxEvent.SamplesPerChannel(1) << std::endl;
-          std::cout << "Samples per channel in group 3: " << vxEvent.SamplesPerChannel(2) << std::endl;
-          std::cout << "Samples per channel in group 4: " << vxEvent.SamplesPerChannel(3) << std::endl;
-          std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-
-
-          std::cout << "***********************************************************************" << std::endl << std::endl;
-          std::cout << "Event number: " << event_counter << std::endl;
-          std::cout << "Event valid: " << vxEvent.isValid() << std::endl;
-          std::cout << "Event size: " << vxEvent.EventSize() << std::endl;
-          std::cout << "Number of groups: " << n_groups << std::endl;
-          std::cout << "Active number of channels in group 0: " << vxEvent.Channels(0) << std::endl;
-          std::cout << "Samples per channel: " << vxEvent.SamplesPerChannel(0) << std::endl;
-          std::cout << "Group mask: " << vxEvent.GroupMask() << std::endl;
-          std::cout << "Trigger time tag: " << vxEvent.TriggerTimeTag() << std::endl;
-          std::cout << "***********************************************************************" << std::endl << std::endl; 
-
-
-
-
-        */
-
