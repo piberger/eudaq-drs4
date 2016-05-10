@@ -15,6 +15,7 @@
 class VX1742Interface;
 
 #include "eudaq/Producer.hh"
+#include "eudaq/Configuration.hh"
 
 class VX1742Producer: public eudaq::Producer{
 public:
@@ -44,6 +45,7 @@ private:
   unsigned int m_run;
   bool m_running, m_terminated;
   uint32_t m_group_mask;
+  eudaq::Configuration m_config;
 
 };
 

@@ -167,6 +167,7 @@ void VX1742Interface::setSamplingFrequency(uint32_t param){
 	vx1742->sampling_frequency = param;
 }
 
+//0=5GS/s, 1=2.5GS/s, 2=1GS/s
 uint32_t VX1742Interface::getSamplingFrequency(){
 	return vx1742->sampling_frequency;
 
@@ -209,6 +210,11 @@ void VX1742Interface::toggleGroups(uint32_t param[]){
 	param[2]==1 ? vx1742->group_en_mask.group2=1 : vx1742->group_en_mask.group2=0;
 	param[3]==1 ? vx1742->group_en_mask.group3=1 : vx1742->group_en_mask.group3=0;
 }
+
+uint32_t VX1742Interface::getActiveChannels(){
+	return ((vx1742->group_en_mask.group0 + vx1742->group_en_mask.group1 + vx1742->group_en_mask.group2 + vx1742->group_en_mask.group3)*8);
+}
+
 
 
 void VX1742Interface::sendBusyToTRGout(){

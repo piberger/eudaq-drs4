@@ -61,6 +61,8 @@ class VX1742Interface{
 	std::string getTriggerSource();
 
 	void toggleGroups(uint32_t param[]);
+	uint32_t getActiveChannels();
+	//uint32_t getGroupMask(); fixme: implement and use it to send bore event
 
 	void sendBusyToTRGout();
 

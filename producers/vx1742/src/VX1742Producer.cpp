@@ -57,6 +57,8 @@ VX1742Producer::VX1742Producer(const std::string & name, const std::string & run
 
 void VX1742Producer::OnConfigure(const eudaq::Configuration& conf) {
   std::cout << "###Configure VX1742 board with: " << conf.Name() << "..";
+
+  m_config = conf;
   
   try{
     sampling_frequency = conf.Get("sampling_frequency", 0);
@@ -114,28 +116,40 @@ void VX1742Producer::OnStartRun(unsigned runnumber){
     //create BORE
     std::cout<<"VX1742: Create " << m_event_type << "BORE EVENT for run " << m_run <<  " @time: " << m_timestamp << "." << std::endl;
     eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
-    bore.SetTag("timestamp", m_timestamp);
+    bore.SetTag("timestamp", std::to_string(m_timestamp));
     bore.SetTag("serial_number", caen->getSerialNumber());
     bore.SetTag("firmware_version", caen->getFirmwareVersion());
-    
-    
-    /*
-        std::string key = "VX1742_CHANNEL_DAC_"+std::to_string(ch);
-	      bore.SetTag(key, m_channel_dac.at(ch));
-	
-        key = "VX1742_CHANNEL_RANGE_"+std::to_string(ch);
-	      bore.SetTag(key, m_dynamic_range.at(ch));
+    uint32_t n_channels = caen->getActiveChannels();
+    bore.SetTag("active_channels", std::to_string(n_channels));
+    bore.SetTag("device_name", "VX1742");
 
-        key = "VX1742_CHANNEL_GAIN_"+std::to_string(ch);
-	      bore.SetTag(key, m_channel_gain.at(ch));
+    uint32_t s_freq = caen->getSamplingFrequency();
+    if(s_freq==0) bore.SetTag("sampling_speed", std::to_string(5));
+    if(s_freq==1) bore.SetTag("sampling_speed", std::to_string(2.5));
+    if(s_freq==2) bore.SetTag("sampling_speed", std::to_string(1));
+    if(s_freq==3) bore.SetTag("sampling_speed", std::to_string(0));
+
+    uint32_t samples_c = caen->getCustomSize();
+    if(samples_c==0) bore.SetTag("samples_per_channel", std::to_string(1024));
+    if(samples_c==1) bore.SetTag("samples_per_channel", std::to_string(520));
+    if(samples_c==2) bore.SetTag("samples_per_channel", std::to_string(256));
+    if(samples_c==3) bore.SetTag("samples_per_channel", std::to_string(136));
+
+    //fixme - offset for groups other than 0
+    for(int ch=0; ch < n_channels; ch++){
+      std::string conf_ch = "CH_"+std::to_string(ch);
+      std::string ch_name = m_config.Get(conf_ch, conf_ch);
+      bore.SetTag(conf_ch, ch_name);
     }
-    //set number of channels to be implemented
-    //set tags for the channel numbers
-    */
+
+    bore.SetTag("voltage_range", std::to_string(1));
+
+
+    //time_calibration
+    
 
     caen->clearBuffers();
     caen->startAcquisition();
-
     //caen->printAcquisitionStatus();
     //caen->printAcquisitionControl();
 
