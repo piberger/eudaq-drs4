@@ -229,11 +229,11 @@ namespace eudaq {
             int calCol = in_raw.GetBlock(1)[0];
             int calRow = in_raw.GetBlock(2)[0];
 
-            std::cout << "cal is at: " << calCol << "," << calRow << std::endl;
-            std::cout << "pixels:" << evt->pixels.size();
+            //std::cout << "cal is at: " << calCol << "," << calRow << std::endl;
+            //std::cout << "pixels:" << evt->pixels.size();
 
             for (size_t i = 0;i< evt->pixels.size();i++) {
-              std::cout << "hit " << (int)evt->pixels[i].column() << "," << (int)evt->pixels[i].row() << std::endl;
+              //std::cout << "hit " << (int)evt->pixels[i].column() << "," << (int)evt->pixels[i].row() << std::endl;
               if (evt->pixels[i].column() != calCol || evt->pixels[i].row() != calRow) {
                 int val = evt->pixels[i].value();
                 if (val < 0) {
@@ -245,7 +245,7 @@ namespace eudaq {
             }
           }
           catch (...){
-            std::cout << "no 7/8" << std::endl;
+            //std::cout << "no 7/8" << std::endl;
           }
           
 

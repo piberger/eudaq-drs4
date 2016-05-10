@@ -517,7 +517,7 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     // If we run on Pattern Generator, activate the PG loop:
   if(m_trigger_is_pg) {
       if(m_xpixelalive) {
-        m_api -> daqTrigger(10, m_pattern_delay);
+        m_api -> daqTrigger(m_ntrig, m_pattern_delay);
       } else {
         m_api->daqTriggerLoop(m_pattern_delay);
       }
@@ -646,7 +646,7 @@ void CMSPixelProducer::GoToNextPixel(){
       std::cout << "test pixel " << (int)m_calCol << "," << (int)m_calRow << std::endl;
       m_api->_dut->testPixel((int)m_calCol, (int)m_calRow, true);
       m_api->SetCalibrateBits(true);
-      m_api->daqTrigger(10, m_pattern_delay);
+      m_api->daqTrigger(m_ntrig, m_pattern_delay);
     }
 }
 
@@ -690,7 +690,7 @@ void CMSPixelProducer::ReadoutLoop() {
 
   // go to next pixel in xpixelalive test
   if(m_xpixelalive) {
-    if (m_ev % 10 == 0) {
+    if (m_ev % m_ntrig == 0) {
       GoToNextPixel();
     }
   }

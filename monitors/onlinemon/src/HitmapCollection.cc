@@ -168,6 +168,14 @@ void HitmapCollection::registerPlane(const SimpleStandardPlane &p) {
     _mon->getOnlineMon()->registerTreeItem(tree);
     _mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getBgMapHisto(), "COLZ",0);
 
+    sprintf(tree,"%s/Sensor %i/CalEff",p.getName().c_str(),p.getID());
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getCalEff());
+
+    sprintf(tree,"%s/Sensor %i/BG rate",p.getName().c_str(),p.getID());
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getBgRate());
+
 		sprintf(tree,"%s/Sensor %i/PixelChargeProfile",p.getName().c_str(),p.getID());
 		_mon->getOnlineMon()->registerTreeItem(tree);
 		_mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getPixelChargeProfile());

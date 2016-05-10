@@ -14,7 +14,7 @@
 
 HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.getName()), _id(p.getID()), _maxX(p.getMaxX()), _maxY(p.getMaxY()), _wait(false),
 								     _hitmap(NULL),_chargemap(NULL),_hitXmap(NULL),_hitYmap(NULL),_clusterMap(NULL),_calMap(NULL), _bgMap(NULL) ,_lvl1Distr(NULL), _lvl1Width(NULL),_lvl1Cluster(NULL),_totSingle(NULL),_totCluster(NULL),
-  _hitOcc(NULL), _nClusters(NULL), _nHits(NULL), _clusterXWidth(NULL), _clusterYWidth(NULL),_nbadHits(NULL),_nHotPixels(NULL),_hitmapSections(NULL),_efficencyPerEvent(NULL),
+  _hitOcc(NULL), _nClusters(NULL), _nHits(NULL), _clusterXWidth(NULL), _clusterYWidth(NULL),_nbadHits(NULL),_nHotPixels(NULL),_hitmapSections(NULL),_efficencyPerEvent(NULL),_hBgRate(NULL),_hCalEff(NULL),
   _clusterChargeProfile(NULL),_pixelChargeProfile(NULL),_start_time(0),
   is_MIMOSA26(false), is_APIX(false), is_USBPIX(false),is_USBPIXI4(false),is_CMSPIXEL(false)
 {
@@ -199,6 +199,16 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
     _histoMap["clusterChargeTimeProfile"]->GetXaxis()->SetTimeFormat("%H:%M:%S");
     */
 
+    sprintf(out,"%s %i bg rate",_sensor.c_str(), _id);
+    sprintf(out2,"h_bgrate_%s_%i",_sensor.c_str(), _id);
+    _hBgRate = new TH1F(out2, out,1001,0,1000);
+    SetHistoAxisLabelx(_hBgRate,"rate_{bg}");
+
+    sprintf(out,"%s %i cal eff",_sensor.c_str(), _id);
+    sprintf(out2,"h_caleff_%s_%i",_sensor.c_str(), _id);
+    _hCalEff = new TH1F(out2, out,101,0,100);
+    SetHistoAxisLabelx(_hCalEff,"eff_{cal}");
+
     sprintf(out,"%s %i Number of Hot Pixels",_sensor.c_str(), _id);
     sprintf(out2,"h_nhotpixels_%s_%i",_sensor.c_str(), _id);
     _nHotPixels = new TH1I(out2, out,50,0,50);
@@ -342,9 +352,32 @@ void HitmapHistos::Fill(const SimpleStandardHit & hit)
   } 
   if (_calMap != NULL && !pixelIsHot && hit.getTOT() > 0) {
     _calMap->Fill(pixel_x,pixel_y);
-  } 
-  
+  }
 
+  if (_eventNumber % 100 == 0) {
+
+    _hCalEff->Scale(0);
+    
+    for (size_t col=0;col<52;col++) {
+      for (size_t row=0;row<80;row++) {
+        int nCals=_calMap->GetBinContent(1+col,1+row);
+        if (nCals>0) {
+          _hCalEff->SetBinContent(1+nCals, _hCalEff->GetBinContent(1+nCals)+1);
+        }
+      }
+    }
+
+    _hBgRate->Scale(0);
+
+    for (size_t col=0;col<52;col++) {
+      for (size_t row=0;row<80;row++) {
+        int nBgHits=_bgMap->GetBinContent(1+col,1+row);
+        float rate=(float)nBgHits/(25e-9 * 150 * 100 * 1e-2 * _eventNumber);
+        _hBgRate->Fill(rate);
+      }
+    }
+  }
+  
   if (_hitmap != NULL && !pixelIsHot) _hitmap->Fill(pixel_x,pixel_y);
   if (_chargemap != NULL && _hitmap != NULL && !pixelIsHot) {
       prev_avg = _chargemap->GetBinContent(_chargemap->FindBin(pixel_x,pixel_y));
@@ -497,6 +530,8 @@ void HitmapHistos::Reset() {
   _chargemap->Reset();
   _calMap->Reset();
   _bgMap->Reset();
+  _hCalEff->Reset();
+  _hBgRate->Reset();
   _hitXmap->Reset();
   _hitYmap->Reset();
   _totSingle->Reset();
@@ -599,6 +634,8 @@ void HitmapHistos::Write()
   _chargemap->Write();
   _calMap->Write();
   _bgMap->Write();
+  _hCalEff->Write();
+  _hBgRate->Write();
   _hitXmap->Write();
   _hitYmap->Write();
   _totSingle->Write();
