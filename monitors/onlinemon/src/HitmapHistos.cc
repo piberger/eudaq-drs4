@@ -186,6 +186,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
     _clusterChargeProfile->SetStats(false);
     _clusterChargeProfile->SetMinimum(0);
 
+    /*
     sprintf(out,"%s %i Cluster Charge Time Profile",_sensor.c_str(), _id);
     sprintf(out2,"h_ClusterChargeTimeProfile_%s_%i",_sensor.c_str(), _id);
     _histoMap["clusterChargeTimeProfile"] = new TProfile(out2, out,100,0,20000);
@@ -196,6 +197,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
     _histoMap["clusterChargeTimeProfile"]->SetMinimum(0);
     _histoMap["clusterChargeTimeProfile"]->GetXaxis()->SetTimeDisplay(1);
     _histoMap["clusterChargeTimeProfile"]->GetXaxis()->SetTimeFormat("%H:%M:%S");
+    */
 
     sprintf(out,"%s %i Number of Hot Pixels",_sensor.c_str(), _id);
     sprintf(out2,"h_nhotpixels_%s_%i",_sensor.c_str(), _id);

@@ -67,8 +67,10 @@ private:
   eudaq::Timer *m_reset_timer;
 
   // calibrates
-  char m_calRow = 0;
-  char m_calCol = 0;
+  char m_calRow;
+  char m_calCol;
+  int m_ntrig;
+  bool m_xpixelalive;
 };
 
 class masking {
