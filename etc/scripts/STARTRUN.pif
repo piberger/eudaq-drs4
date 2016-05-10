@@ -50,7 +50,8 @@ sleep 2
 echo "CMS: ->$CMS<- "
 if [ "$CMS" = true ]; then
     echo '        CMSPixel @ PiM1'
-    xterm -geom '78x19+2401-0' -hold -e 'ssh -tY pim1 scripts/StartCMSPixel.sh' &
+    #xterm -geom '78x19+2401-0' -hold -e 'ssh -tY pim1 scripts/StartCMSPixel.sh' &
+    /Users/p/eudaq-drs4/bin/CMSPixelProducer.exe -r tcp://127.0.0.1:44000
     #echo '\033[1;36;48m PLEASE WAIT...\033[0m'
 fi
 

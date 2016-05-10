@@ -1,8 +1,8 @@
 #include "dictionaries.h"
 #include "constants.h"
 #include "../api/api.h"
-#include "../api/datatypes.h"
-#include "../decoder/datapipe.h"
+//#include "../api/datatypes.h"
+//#include "../decoder/datapipe.h"
 #include "datasource_evt.h"
 #include "Utils.hh"
 #include <exception>
@@ -191,8 +191,8 @@ namespace eudaq {
 
       const RawDataEvent & in_raw = dynamic_cast<const RawDataEvent &>(in);
       // Check of we have more than one data block:
-      if(in_raw.NumBlocks() > 1) {
-	EUDAQ_ERROR("Only one data block is expected!");
+      if(in_raw.NumBlocks() > 3) {
+	EUDAQ_ERROR("Only up to 3 data blocks are expected!");
 	return false;
       }
 
@@ -222,11 +222,38 @@ namespace eudaq {
           src.AddData(TransformRawData(in_raw.GetBlock(0)));
           // ...and pull it out at the other end:
           evt = Eventpump.Get();
+
+          // xpixelalive
+
+          try{
+            int calCol = in_raw.GetBlock(1)[0];
+            int calRow = in_raw.GetBlock(2)[0];
+
+            std::cout << "cal is at: " << calCol << "," << calRow << std::endl;
+            std::cout << "pixels:" << evt->pixels.size();
+
+            for (size_t i = 0;i< evt->pixels.size();i++) {
+              std::cout << "hit " << (int)evt->pixels[i].column() << "," << (int)evt->pixels[i].row() << std::endl;
+              if (evt->pixels[i].column() != calCol || evt->pixels[i].row() != calRow) {
+                int val = evt->pixels[i].value();
+                if (val < 0) {
+                  std::cout << "negative PH found in raw event " << (int)evt->pixels[i].column() << "," << (int)evt->pixels[i].row() << ":" << val << " --> corrected";
+                  val = -val;
+                }
+                evt->pixels[i].setValue(-val);
+              }
+            }
+          }
+          catch (...){
+            std::cout << "no 7/8" << std::endl;
+          }
+          
+
           decoding_stats += decoder.getStatistics();
       }
       catch (std::exception& e){
           EUDAQ_WARN("Decoding crashed");
-//cout << e.what() << '\n';
+          //cout << e.what() << '\n';
           return false;
       }
 

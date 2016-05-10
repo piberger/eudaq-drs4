@@ -163,7 +163,7 @@ namespace eudaq {
         if (m_buffer[i].events.front()->GetRunNumber() != m_runnumber) {
           EUDAQ_ERROR("Run number mismatch in event " + to_string(ev.GetEventNumber()));
         }
-        std::cout << "buffere event nr: " << m_buffer[i].events.front()->GetEventNumber() << " m_ev nr: " << m_eventnumber << std::endl;
+        //std::cout << "buffere event nr: " << m_buffer[i].events.front()->GetEventNumber() << " m_ev nr: " << m_eventnumber << std::endl;
         if ((m_buffer[i].events.front()->GetEventNumber() != m_eventnumber) && (m_buffer[i].events.front()->GetEventNumber() != m_eventnumber - 1)) {
           if (ev.GetEventNumber() % 1000 == 0) {
             // dhaas: added if-statement to filter out TLU event number 0, in case of bad clocking out

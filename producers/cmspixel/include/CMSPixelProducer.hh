@@ -26,6 +26,7 @@ public:
   virtual void OnStopRun();
   virtual void OnTerminate();
   void ReadoutLoop();
+  void GoToNextPixel();
 
 private:
   void ReadInSingleEventWriteBinary();
@@ -64,6 +65,10 @@ private:
   int m_pattern_delay;
   std::ofstream m_fout;
   eudaq::Timer *m_reset_timer;
+
+  // calibrates
+  char m_calRow = 0;
+  char m_calCol = 0;
 };
 
 class masking {

@@ -32,6 +32,8 @@ class HitmapHistos {
     TH1I * _hitXmap;
     TH1I * _hitYmap;
     TH2I * _clusterMap;
+    TH2I * _calMap;
+    TH2I * _bgMap;
     TH2D * _HotPixelMap;
     TH1I * _lvl1Distr;
     TH1I * _lvl1Width;
@@ -76,6 +78,8 @@ class HitmapHistos {
     void Write();
     TH1  * getHisto(std::string name);
     TH2I * getHitmapHisto() { return _hitmap; }
+    TH2I * getCalMapHisto() { return _calMap; }
+    TH2I * getBgMapHisto() { return _bgMap; }
     TH2F * getChargemapHisto() { return _chargemap; }
     TH1I * getHitXmapHisto() { return _hitXmap; }
     TH1I * getHitYmapHisto() { return _hitYmap; }

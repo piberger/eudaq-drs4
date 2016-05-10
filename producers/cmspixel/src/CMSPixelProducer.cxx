@@ -36,6 +36,8 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
   : eudaq::Producer(name, runcontrol),
     m_run(0),
     m_ev(0),
+    m_calCol(0),
+    m_calRow(0),
     m_ev_filled(0),
     m_ev_runningavg_filled(0),
     m_tlu_waiting_time(4000),
@@ -145,9 +147,7 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
 
   // Pattern Generator:
   bool testpulses = config.Get("testpulses", false);
-  cout << "WTF IS HAPPENING!" << endl;
-  for (auto i:rocDACs.at(0))
-    cout <<  i.first << " " << i.second << endl;
+
   if(testpulses) {
 
     uint16_t pgcal = config.Get("wbc", uint16_t(100));
@@ -166,6 +166,8 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     pg_setup.push_back(std::make_pair("token",0));
     m_pattern_delay = config.Get("patternDelay", 100);
   }
+
+  cout << "pattern generator has been set";
 
   try {
     // Check for multiple ROCs using the I2C parameter:
@@ -300,10 +302,11 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     // test pixels
     if(testpulses) {
       std::cout << "Setting up pixels for calibrate pulses..." << std::endl << "col \t row" << std::endl;
-      for(int i = 40; i < 45; i++){
-	m_api->_dut->testPixel(25,i,true);
-      }
-
+      //for(int i = 40; i < 45; i++){
+	    //m_api->_dut->testPixel(25,i,true);
+      //}
+      m_api->_dut->testAllPixels(false);
+      m_api->_dut->testPixel(m_calCol, m_calRow, true);
     }
 
     /**MASKING*/
@@ -479,6 +482,8 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     // Store eudaq library version:
     bore.SetTag("EUDAQ", PACKAGE_VERSION);
 
+    bore.AddBlock(1, reinterpret_cast<const char*>(&m_calCol), sizeof(m_calCol));
+    bore.AddBlock(2, reinterpret_cast<const char*>(&m_calRow), sizeof(m_calRow));
     // Send the event out:
     SendEvent(bore);
 
@@ -501,8 +506,18 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
 
 
     // If we run on Pattern Generator, activate the PG loop:
-    if(m_trigger_is_pg) {
-      m_api -> daqTriggerLoop(m_pattern_delay);
+
+    bool xpixelalive = false; //m_config.Get("xpixelalive", false);
+
+    if (xpixelalive) {
+      m_api->_dut->testAllPixels(true);
+      m_api->_dut->maskAllPixels(false);
+      int FLAGS = FLAG_CHECK_ORDER | FLAG_FORCE_UNMASKED;
+      m_api->getEfficiencyMap(FLAGS, 50);
+      triggering = true;
+    }
+    else if(m_trigger_is_pg) {
+      m_api -> daqTrigger(10, m_pattern_delay);
       triggering = true;
     }
 
@@ -530,9 +545,14 @@ void CMSPixelProducer::OnStopRun() {
     // Acquire lock for pxarCore instance:
     std::lock_guard<std::mutex> lck(m_mutex);
 
+    bool xpixelalive = false; //m_config.Get("xpixelalive", false);
+
+    if (xpixelalive) {
+      triggering = false;
+    }
     // If running with PG, halt the loop:
-    if(m_trigger_is_pg) {
-      m_api->daqTriggerLoopHalt();
+    else if(m_trigger_is_pg) {
+      //m_api->daqTriggerLoopHalt();
       triggering = false;
     }
 
@@ -553,6 +573,9 @@ void CMSPixelProducer::OnStopRun() {
       for(size_t i = 0; i < daqEvents.size(); i++) {
 	eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
 	ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvents.at(i).data[0]), sizeof(daqEvents.at(i).data[0])*daqEvents.at(i).data.size());
+
+  ev.AddBlock(1, reinterpret_cast<const char*>(&m_calCol), sizeof(m_calCol));
+  ev.AddBlock(2, reinterpret_cast<const char*>(&m_calRow), sizeof(m_calRow));
 	SendEvent(ev);
 	if(daqEvents.at(i).data.size() > 1) { m_ev_filled++; }
 	m_ev++;
@@ -602,6 +625,27 @@ void CMSPixelProducer::OnTerminate() {
   std::cout << "CMSPixelProducer " << m_producerName << " terminated." << std::endl;
 }
 
+void CMSPixelProducer::GoToNextPixel(){
+// go to next pixel
+    m_api->_dut->testPixel((int)m_calCol, (int)m_calRow, false);
+    m_api->SetCalibrateBits(false);
+    m_calRow++;
+    if (m_calRow>79) {
+      m_calRow = 0;
+      m_calCol++;
+    }
+    if (m_calCol>51) {
+      std::cout << "Loop through all pixels finished at event " << m_ev << std::endl;
+      //stop run!!!
+      OnStopRun();
+    } else {
+      std::cout << "test pixel " << (int)m_calCol << "," << (int)m_calRow << std::endl;
+    }
+    m_api->_dut->testPixel((int)m_calCol, (int)m_calRow, true);
+    m_api->SetCalibrateBits(true);
+    m_api->daqTrigger(10, m_pattern_delay);
+}
+
 void CMSPixelProducer::ReadoutLoop() {
   // Loop until Run Control tells us to terminate
   while (!m_terminated) {
@@ -627,11 +671,26 @@ void CMSPixelProducer::ReadoutLoop() {
 	pxar::rawEvent daqEvent = m_api->daqGetRawEvent();
 
 	eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
+
 	ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvent.data[0]), sizeof(daqEvent.data[0])*daqEvent.data.size());
+
+  ev.AddBlock(1, reinterpret_cast<const char*>(&m_calCol), sizeof(m_calCol));
+  ev.AddBlock(2, reinterpret_cast<const char*>(&m_calRow), sizeof(m_calRow));
+
+  // add address of pixel which received calibrate
+  /*
+  ev.AddBlock(1337, &m_calCol, sizeof(m_calCol));
+  ev.AddBlock(1338, &m_calRow, sizeof(m_calRow));
+  */
 
 	SendEvent(ev);
   std::cout << "Event count CMSPixel producer: " << m_ev << std::endl;
 	m_ev++;
+
+  if (m_ev % 10 == 0) {
+    GoToNextPixel();
+  }
+
 	// Events with pixel data have more than 4 words for TBM header/trailer and 1 for each ROC header:
 	if(daqEvent.data.size() > (4 + m_nplanes)) { m_ev_filled++; m_ev_runningavg_filled++; }
 

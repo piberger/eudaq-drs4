@@ -13,7 +13,7 @@
 #include <TROOT.h>
 
 HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.getName()), _id(p.getID()), _maxX(p.getMaxX()), _maxY(p.getMaxY()), _wait(false),
-								     _hitmap(NULL),_chargemap(NULL),_hitXmap(NULL),_hitYmap(NULL),_clusterMap(NULL),_lvl1Distr(NULL), _lvl1Width(NULL),_lvl1Cluster(NULL),_totSingle(NULL),_totCluster(NULL),
+								     _hitmap(NULL),_chargemap(NULL),_hitXmap(NULL),_hitYmap(NULL),_clusterMap(NULL),_calMap(NULL), _bgMap(NULL) ,_lvl1Distr(NULL), _lvl1Width(NULL),_lvl1Cluster(NULL),_totSingle(NULL),_totCluster(NULL),
   _hitOcc(NULL), _nClusters(NULL), _nHits(NULL), _clusterXWidth(NULL), _clusterYWidth(NULL),_nbadHits(NULL),_nHotPixels(NULL),_hitmapSections(NULL),_efficencyPerEvent(NULL),
   _clusterChargeProfile(NULL),_pixelChargeProfile(NULL),_start_time(0),
   is_MIMOSA26(false), is_APIX(false), is_USBPIX(false),is_USBPIXI4(false),is_CMSPIXEL(false)
@@ -78,6 +78,16 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
     sprintf(out2,"h_clustermap_%s_%i",_sensor.c_str(), _id);
     _clusterMap = new TH2I(out2, out, _maxX+1,0,_maxX, _maxY+1,0,_maxY);
     SetHistoAxisLabels(_clusterMap,"X","Y");
+
+    sprintf(out,"%s %i Calibrate Hitmap",_sensor.c_str(),_id);
+    sprintf(out2,"h_calmap_%s_%i",_sensor.c_str(), _id);
+    _calMap = new TH2I(out2, out, _maxX+1,0,_maxX, _maxY+1,0,_maxY);
+    SetHistoAxisLabels(_calMap,"X","Y");
+
+    sprintf(out,"%s %i Background Hitmap",_sensor.c_str(),_id);
+    sprintf(out2,"h_bgmap_%s_%i",_sensor.c_str(), _id);
+    _bgMap = new TH2I(out2, out, _maxX+1,0,_maxX, _maxY+1,0,_maxY);
+    SetHistoAxisLabels(_bgMap,"X","Y");
     //std::cout << "Created Histogram " << out2 << std::endl;
 
     sprintf(out,"%s %i hot Pixel Map",_sensor.c_str(),_id);
@@ -325,6 +335,14 @@ void HitmapHistos::Fill(const SimpleStandardHit & hit)
   bool pixelIsHot = false;
   if (_HotPixelMap->GetBinContent(pixel_x+1,pixel_y+1)>_mon->mon_configdata.getHotpixelcut()) pixelIsHot=true;
 
+  if (_bgMap != NULL && !pixelIsHot && hit.getTOT() <= 0) {
+    _bgMap->Fill(pixel_x,pixel_y);
+  } 
+  if (_calMap != NULL && !pixelIsHot && hit.getTOT() > 0) {
+    _calMap->Fill(pixel_x,pixel_y);
+  } 
+  
+
   if (_hitmap != NULL && !pixelIsHot) _hitmap->Fill(pixel_x,pixel_y);
   if (_chargemap != NULL && _hitmap != NULL && !pixelIsHot) {
       prev_avg = _chargemap->GetBinContent(_chargemap->FindBin(pixel_x,pixel_y));
@@ -475,6 +493,8 @@ void HitmapHistos::Fill(const SimpleStandardCluster & cluster)
 void HitmapHistos::Reset() {
   _hitmap->Reset();
   _chargemap->Reset();
+  _calMap->Reset();
+  _bgMap->Reset();
   _hitXmap->Reset();
   _hitYmap->Reset();
   _totSingle->Reset();
@@ -575,6 +595,8 @@ void HitmapHistos::Write()
 {
   _hitmap->Write();
   _chargemap->Write();
+  _calMap->Write();
+  _bgMap->Write();
   _hitXmap->Write();
   _hitYmap->Write();
   _totSingle->Write();
