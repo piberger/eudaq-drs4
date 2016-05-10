@@ -46,6 +46,7 @@ class VX1742Interface{
 	void clearBuffers();
 	void printAcquisitionStatus();
 	void printAcquisitionControl();
+	void disableIndividualTriggers();
 
 	void setSamplingFrequency(uint32_t param);
 	uint32_t getSamplingFrequency();

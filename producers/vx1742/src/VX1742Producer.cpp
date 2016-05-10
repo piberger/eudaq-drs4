@@ -83,6 +83,7 @@ void VX1742Producer::OnConfigure(const eudaq::Configuration& conf) {
     caen->setCustomSize(custom_size);
     caen->sendBusyToTRGout();
     caen->setTriggerCount(); //count all, not just accepted triggers
+    caen->disableIndividualTriggers(); //count one event only once, not per group
 
 
     //individual group configuration here
@@ -94,7 +95,7 @@ void VX1742Producer::OnConfigure(const eudaq::Configuration& conf) {
   std::cout << " [OK]" << std::endl;
 
   
-  SetStatus(eudaq::Status::LVL_OK, "Configured VX1742 (" + conf.Name() +")");
+  SetStatus(eudaq::Status::LVL_OK, "Configured (" + conf.Name() +")");
 
   }catch ( ... ){
   EUDAQ_ERROR(std::string("Error in the VX1742 configuration procedure."));
@@ -159,7 +160,7 @@ void VX1742Producer::ReadoutLoop() {
   while(m_running){
     try{
       //std::cout << "Events stored: " << caen->getEventsStored() << ", size of next event: " << caen->getNextEventSize() << std::endl;
-      usleep(500);
+      //usleep(500);
       if(caen->eventReady()){
         VX1742Event vxEvent;
         caen->BlockTransferEventD64(&vxEvent);
@@ -205,18 +206,18 @@ void VX1742Producer::ReadoutLoop() {
                 event_timestamp = 0;
               }
 
-              
-              std::cout << "***********************************************************************" << std::endl << std::endl;
-              std::cout << "Event number: " << event_counter << std::endl;
-              std::cout << "Event size: " << event_size << std::endl;
-              std::cout << "Groups enabled: " << n_groups << std::endl;
-              std::cout << "Group mask: " << group_mask << std::endl;
-              std::cout << "Trigger time tag: " << trigger_time_tag << std::endl;
-              std::cout << "Samples per channel: " << samples_per_channel << std::endl;
-              std::cout << "Start index cell : " << start_index_cell << std::endl;
-              std::cout << "Event trigger time tag: " << event_timestamp << std::endl;
-              std::cout << "***********************************************************************" << std::endl << std::endl; 
-              
+              #ifdef DEBUG
+                std::cout << "***********************************************************************" << std::endl << std::endl;
+                std::cout << "Event number: " << event_counter << std::endl;
+                std::cout << "Event size: " << event_size << std::endl;
+                std::cout << "Groups enabled: " << n_groups << std::endl;
+                std::cout << "Group mask: " << group_mask << std::endl;
+                std::cout << "Trigger time tag: " << trigger_time_tag << std::endl;
+                std::cout << "Samples per channel: " << samples_per_channel << std::endl;
+                std::cout << "Start index cell : " << start_index_cell << std::endl;
+                std::cout << "Event trigger time tag: " << event_timestamp << std::endl;
+                std::cout << "***********************************************************************" << std::endl << std::endl; 
+              #endif            
 
               ev.AddBlock(block_no, static_cast<const uint32_t*>(&samples_per_channel), sizeof(samples_per_channel));
               block_no++;

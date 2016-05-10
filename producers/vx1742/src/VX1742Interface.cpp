@@ -249,6 +249,10 @@ uint32_t VX1742Interface::getNextEventSize(){
 	return vx1742->event_size;
 }
 
+void VX1742Interface::disableIndividualTriggers(){
+	vx1742->group_conf.individual_trg = 1;
+}
+
 
 
 //nEvents needs to be smaller than 255
