@@ -206,7 +206,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
 
     sprintf(out,"%s %i cal eff",_sensor.c_str(), _id);
     sprintf(out2,"h_caleff_%s_%i",_sensor.c_str(), _id);
-    _hCalEff = new TH1F(out2, out,101,0,100);
+    _hCalEff = new TH1F(out2, out,101,-0.5,100.5);
     SetHistoAxisLabelx(_hCalEff,"eff_{cal}");
 
     sprintf(out,"%s %i Number of Hot Pixels",_sensor.c_str(), _id);
@@ -360,7 +360,7 @@ void HitmapHistos::Fill(const SimpleStandardHit & hit)
     
     for (size_t col=0;col<52;col++) {
       for (size_t row=0;row<80;row++) {
-        int nCals=_calMap->GetBinContent(1+col,1+row);
+        int nCals=10 * _calMap->GetBinContent(1+col,1+row);
         if (nCals>0) {
           _hCalEff->SetBinContent(1+nCals, _hCalEff->GetBinContent(1+nCals)+1);
         }
