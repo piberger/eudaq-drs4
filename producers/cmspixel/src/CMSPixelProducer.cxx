@@ -677,11 +677,17 @@ void CMSPixelProducer::ReadoutLoop() {
 	eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
 
 	ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvent.data[0]), sizeof(daqEvent.data[0])*daqEvent.data.size());
-  
+
+  // add analogue and digital current
+  float ia = m_api->getTBia();
+  float id = m_api->getTBid();
+  ev.AddBlock(1, reinterpret_cast<const char*>(&ia), sizeof(ia));
+  ev.AddBlock(2, reinterpret_cast<const char*>(&id), sizeof(id));
+
   // add address of pixel which received calibrate
   if(m_xpixelalive) {
-    ev.AddBlock(1, reinterpret_cast<const char*>(&m_calCol), sizeof(m_calCol));
-    ev.AddBlock(2, reinterpret_cast<const char*>(&m_calRow), sizeof(m_calRow));
+    ev.AddBlock(3, reinterpret_cast<const char*>(&m_calCol), sizeof(m_calCol));
+    ev.AddBlock(4, reinterpret_cast<const char*>(&m_calRow), sizeof(m_calRow));
   }
 
 	SendEvent(ev);
