@@ -430,12 +430,6 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
     for (uint8_t iplane = 0; iplane < sev.NumPlanes(); ++iplane) {
         const eudaq::StandardPlane & plane = sev.GetPlane(iplane);
         std::vector<double> cds = plane.GetPixels<double>();
-        if (f_event_number < 10000 && f_event_number > 9990) {
-            cout << "Plane " << int(iplane) << ": ";
-            for (uint16_t ipix = 0; ipix < cds.size(); ++ipix)
-                cout << ipix << " " << plane.GetX(ipix) << " " << plane.GetY(ipix) << " ";
-            cout << endl;
-        }
 
         for (uint16_t ipix = 0; ipix < cds.size(); ++ipix) {
             f_plane->push_back(iplane);
@@ -445,8 +439,7 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
             f_charge->push_back(42);						// todo: do charge conversion here!
         }
     }
-    if (f_event_number < 10000 && f_event_number > 9990)
-        cout << endl;
+
     m_ttree->Fill();
     if (f_event_number + 1 % 1000 == 0) cout << "of run " << runnumber << flush;
 //        <<" "<<std::setw(7)<<f_event_number<<"\tSpectrum: "<<w_spectrum.RealTime()/w_spectrum.Counter()<<"\t" <<"LinearFitting: "
