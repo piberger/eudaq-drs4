@@ -281,7 +281,6 @@ void FileWriterTreeDRS4::StartRun(unsigned runnumber) {
 
     // fft stuff and spectrum
     if (fft_waveforms) {
-        print_banner("This is not executed!");
         m_ttree->Branch("fft_mean", &fft_mean);
         m_ttree->Branch("fft_mean_freq", &fft_mean_freq);
         m_ttree->Branch("fft_max", &fft_max);
@@ -428,8 +427,6 @@ void FileWriterTreeDRS4::WriteEvent(const DetectorEvent & ev) {
     // --------------------------------------------------------------------
     // ---------- save all info for the telescope -------------------------
     // --------------------------------------------------------------------
-    if (f_event_number < 10000 && f_event_number > 9990)
-        cout << "PIXEL INFO for " << f_event_number << ": " << endl;
     for (uint8_t iplane = 0; iplane < sev.NumPlanes(); ++iplane) {
         const eudaq::StandardPlane & plane = sev.GetPlane(iplane);
         std::vector<double> cds = plane.GetPixels<double>();
