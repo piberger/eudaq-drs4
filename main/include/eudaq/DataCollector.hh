@@ -8,12 +8,13 @@
 
 #include "eudaq/TransportServer.hh"
 #include "eudaq/CommandReceiver.hh"
-#include "eudaq/Event.hh"
+#include "eudaq/TLUEvent.hh"
 #include "eudaq/FileWriter.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Platform.hh"
 #include <memory>
+
 namespace eudaq {
 
   /** Implements the functionality of the File Writer application.

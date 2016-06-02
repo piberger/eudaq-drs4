@@ -44,8 +44,8 @@
 #include "SimpleStandardEvent.hh"
 #include "EventSanityChecker.hh"
 #include "OnlineMonConfiguration.hh"
-
 #include "CheckEOF.hh"
+
 
 //STL includes
 #include <string>
@@ -57,20 +57,23 @@
 #define EUDAQ_SLEEP(x) sleep(x)
 #endif
 
-using namespace std;
+//using namespace std;
 
 class OnlineMonWindow;
 class BaseCollection;
 class CheckEOF;
+class TUCollection; //first proper forward declaration in this freaking file
+
+
 
 class RootMonitor : private eudaq::Holder<int>,
   //public TApplication,
   //public TGMainFrame,
+
   public eudaq::Monitor {
     RQ_OBJECT("RootMonitor")
     protected:
       bool histos_booked;
-
       std::vector <BaseCollection*> _colls;
       OnlineMonWindow *onlinemon;
       std::string rootfilename;
@@ -93,6 +96,7 @@ class RootMonitor : private eudaq::Holder<int>,
       CorrelationCollection *corrCollection;
       EUDAQMonitorCollection * eudaqCollection;
       WaveformCollection *wfCollection;
+      TUCollection *tuCollection;
 
       TVirtualFFT *fft_own;
       std::vector< float > * fft_vals;
@@ -137,15 +141,20 @@ class RootMonitor : private eudaq::Holder<int>,
 
       void SetSnapShotDir(string s);
       string GetSnapShotDir();
-      OnlineMonConfiguration mon_configdata; //FIXME
+      OnlineMonConfiguration mon_configdata;
 
       unsigned int _fft_resets;
       std::vector<float> _last_fft_min;
       std::vector<float> _last_fft_max;
       std::vector<float> _last_fft_mean;
+
+
+
+
     private:
       string snapshotdir;
-      EventSanityChecker myevent; //FIXME
+      eudaq::StandardEvent prev_event;
+      EventSanityChecker myevent;
       bool useTrackCorrelator;
       TStopwatch my_event_processing_time;
       TStopwatch my_event_inner_operations_time;
@@ -154,6 +163,9 @@ class RootMonitor : private eudaq::Holder<int>,
       double previous_event_clustering_time;
       double previous_event_correlation_time;
       unsigned int tracksPerEvent;
+
+
+
   };
 
 

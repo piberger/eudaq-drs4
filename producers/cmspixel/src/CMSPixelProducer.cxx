@@ -145,7 +145,15 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
 
   // Pattern Generator:
   bool testpulses = config.Get("testpulses", false);
+  cout << "WTF IS HAPPENING!" << endl;
+  for (auto i:rocDACs.at(0))
+    cout <<  i.first << " " << i.second << endl;
   if(testpulses) {
+
+    uint16_t pgcal = config.Get("wbc", uint16_t(100));
+    cout << pgcal << endl;
+    pgcal += m_roctype.find("dig") ? 6 : 5;
+    cout << pgcal << endl;
     pg_setup.push_back(std::make_pair("resetroc",config.Get("resetroc",25)) );
     pg_setup.push_back(std::make_pair("calibrate",config.Get("calibrate",106)) );
     pg_setup.push_back(std::make_pair("trigger",config.Get("trigger", 16)) );
@@ -622,6 +630,7 @@ void CMSPixelProducer::ReadoutLoop() {
 	ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvent.data[0]), sizeof(daqEvent.data[0])*daqEvent.data.size());
 
 	SendEvent(ev);
+  std::cout << "Event count CMSPixel producer: " << m_ev << std::endl;
 	m_ev++;
 	// Events with pixel data have more than 4 words for TBM header/trailer and 1 for each ROC header:
 	if(daqEvent.data.size() > (4 + m_nplanes)) { m_ev_filled++; m_ev_runningavg_filled++; }
