@@ -63,7 +63,8 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_event_type(""),
     m_alldacs(""),
     m_last_mask_filename(""),
-    m_resetaftereachcolumn(false)
+    m_resetaftereachcolumn(false),
+    m_logcurrents(false)
 {
   if(m_producerName.find("REF") != std::string::npos) {
     m_detector = "REF";
@@ -153,6 +154,13 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   power_settings.push_back( std::make_pair("ia",config.Get("ia",1.10)) );
   power_settings.push_back( std::make_pair("id",config.Get("id",1.10)) );
 
+  // current logging
+  m_logcurrents = config.Get("logcurrents", false);
+  if (m_logcurrents) {
+    EUDAQ_INFO(string("Current logging enabled (analog/digital currents)."));
+  } else {
+    EUDAQ_INFO(string("Current logging disabled."));
+  }
   // Periodic ROC resets:
   m_roc_resetperiod = config.Get("rocresetperiod", 0);
   if(m_roc_resetperiod > 0) { EUDAQ_USER("Sending periodic ROC resets every " + eudaq::to_string(m_roc_resetperiod) + "ms\n"); }
@@ -850,11 +858,13 @@ void CMSPixelProducer::ReadoutLoop() {
 
 	ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvent.data[0]), sizeof(daqEvent.data[0])*daqEvent.data.size());
 
-  // add analogue and digital current
-  float ia = m_api->getTBia();
-  float id = m_api->getTBid();
-  ev.AddBlock(1, reinterpret_cast<const char*>(&ia), sizeof(ia));
-  ev.AddBlock(2, reinterpret_cast<const char*>(&id), sizeof(id));
+    if (m_logcurrents) {
+      // add analogue and digital current
+      float ia = m_api->getTBia();
+      float id = m_api->getTBid();
+      ev.AddBlock(1, reinterpret_cast<const char *>(&ia), sizeof(ia));
+      ev.AddBlock(2, reinterpret_cast<const char *>(&id), sizeof(id));
+    }
 
   // add address of pixel which received calibrate
   if(m_xpixelalive) {

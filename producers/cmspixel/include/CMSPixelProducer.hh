@@ -58,6 +58,7 @@ private:
   bool m_trimmingFromConf, m_trigger_is_pg;
   bool m_maskingFromConf;
     bool m_resetaftereachcolumn;
+    bool m_logcurrents;
   std::string m_last_mask_filename;
   eudaq::Configuration m_config;
 
