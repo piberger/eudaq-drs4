@@ -27,6 +27,8 @@ public:
   virtual void OnTerminate();
   void ReadoutLoop();
   void GoToNextPixel();
+    void CalDelScan();
+    double EstimateEfficiency();
 
 private:
   void ReadInSingleEventWriteBinary();

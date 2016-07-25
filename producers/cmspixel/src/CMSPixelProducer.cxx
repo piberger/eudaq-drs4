@@ -478,6 +478,143 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
 
 /**STARTRUN*/
 
+double CMSPixelProducer::EstimateEfficiency() {
+
+  std::vector< std::pair<int,int> > pixels;
+  for (int c=1;c<51;c+=6) {
+    for (int r=1;r<79;r+=8) {
+      pixels.push_back(std::make_pair(c,r));
+    }
+  }
+
+  int ntrig=10;
+  int good_hits = 0;
+  m_api->daqStart();
+
+  for (int k=0;k<pixels.size();k++) {
+
+    m_api->_dut->testAllPixels(false);
+    m_api->SetCalibrateBits(false);
+    m_api->_dut->testPixel(pixels[k].first, pixels[k].second, true);
+    m_api->SetCalibrateBits(true);
+
+    m_api->daqSingleSignal("resetroc");
+    m_api->daqTrigger(ntrig, m_pattern_delay);
+
+    m_api->_dut->testPixel(pixels[k].first, pixels[k].second, false);
+
+  }
+
+  // Stop the Data Acquisition:
+  m_api->daqStop();
+
+  std::vector <pxar::Event> caldelEvents = m_api->daqGetEventBuffer();
+  for (int i = 0; i < caldelEvents.size(); i++) {
+    int k = i / ntrig;
+    if (caldelEvents[i].pixels.size() > 0) {
+      for (int j = 0; j < caldelEvents[i].pixels.size(); j++) {
+        if (caldelEvents[i].pixels[j].column() == pixels[k].first &&
+            caldelEvents[i].pixels[j].row() == pixels[k].second) {
+          good_hits++;
+        }
+      }
+    }
+  }
+  return (double)good_hits/(ntrig*pixels.size());
+}
+
+void CMSPixelProducer::CalDelScan() {
+
+  std::cout << "optimize caldel" << std::endl;
+
+  std::vector< std::pair<int, double> > efficiencies;
+  double maxEfficiency = 0;
+
+  for (int calDel=0;calDel<255;calDel += 10) {
+    m_api->setDAC("caldel", calDel);
+
+    std::stringstream ss("");
+    double efficiency = EstimateEfficiency();
+    efficiencies.push_back(std::make_pair(calDel, efficiency));
+
+    if (maxEfficiency < efficiency) {
+      maxEfficiency = efficiency;
+    }
+
+    ss << calDel << ":" << (int)(efficiency*100);
+    EUDAQ_INFO(ss.str());
+  }
+
+  int firstPos=0,lastPos=0;
+
+  for (int i=0;i<efficiencies.size();i++) {
+    if (efficiencies[i].second > maxEfficiency * 0.995) {
+      firstPos = efficiencies[i].first;
+      break;
+    }
+  }
+
+  for (int i=efficiencies.size()-1;i>=0;i--) {
+    if (efficiencies[i].second > maxEfficiency * 0.995) {
+      lastPos = efficiencies[i].first;
+      break;
+    }
+  }
+
+  firstPos -=10;
+  if (firstPos < 0) firstPos = 0;
+  lastPos += 10;
+  if (lastPos > 255) lastPos = 255;
+
+  if (lastPos < firstPos) lastPos = firstPos;
+
+  maxEfficiency = 0;
+  int bestCaldel = 0;
+  efficiencies.clear();
+
+  for (int calDel=firstPos;calDel<=lastPos;calDel += 1) {
+    m_api->setDAC("caldel", calDel);
+
+    std::stringstream ss("");
+    double efficiency = EstimateEfficiency();
+    efficiencies.push_back(std::make_pair(calDel, efficiency));
+
+    if (maxEfficiency < efficiency) {
+      maxEfficiency = efficiency;
+      bestCaldel = calDel;
+    }
+
+    ss << calDel << ":" << (int)(efficiency*100);
+    EUDAQ_INFO(ss.str());
+  }
+
+  firstPos=0,lastPos=0;
+
+  for (int i=0;i<efficiencies.size();i++) {
+    if (efficiencies[i].second > maxEfficiency * 0.9995) {
+      firstPos = efficiencies[i].first;
+      break;
+    }
+  }
+
+  for (int i=efficiencies.size()-1;i>=0;i--) {
+    if (efficiencies[i].second > maxEfficiency * 0.9995) {
+      lastPos = efficiencies[i].first;
+      break;
+    }
+  }
+
+  bestCaldel = (int)((firstPos+lastPos)/2);
+
+  std::stringstream ss("");
+  ss <<  "optimal CalDel: " << bestCaldel;
+  EUDAQ_INFO(ss.str());
+  m_api->setDAC("caldel", bestCaldel);
+
+
+}
+
+
 void CMSPixelProducer::OnStartRun(unsigned runnumber) {
   m_run = runnumber;
   m_ev = 0;
@@ -489,6 +626,10 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     EUDAQ_INFO(m_last_mask_filename);
     m_api->HVon();
 
+    if (true) {
+      CalDelScan();
+
+    }
     std::cout << "Start Run: " << m_run << std::endl;
 
     eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
@@ -522,6 +663,7 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     SendEvent(bore);
 
     std::cout << "BORE with detector " << m_detector << " (event type " << m_event_type << ") and ROC type " << m_roctype << std::endl;
+
 
     // Start the Data Acquisition:
     m_api -> daqStart();
