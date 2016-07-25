@@ -55,6 +55,7 @@ private:
   bool m_terminated, m_running, triggering;
   bool m_trimmingFromConf, m_trigger_is_pg;
   bool m_maskingFromConf;
+    bool m_resetaftereachcolumn;
   std::string m_last_mask_filename;
   eudaq::Configuration m_config;
 
@@ -70,6 +71,7 @@ private:
   char m_calRow;
   char m_calCol;
   int m_ntrig;
+    int m_nHits;
   bool m_xpixelalive;
 };
 

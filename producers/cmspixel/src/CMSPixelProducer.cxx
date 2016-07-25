@@ -62,7 +62,8 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_detector(""),
     m_event_type(""),
     m_alldacs(""),
-    m_last_mask_filename("")
+    m_last_mask_filename(""),
+    m_resetaftereachcolumn(false)
 {
   if(m_producerName.find("REF") != std::string::npos) {
     m_detector = "REF";
@@ -137,6 +138,15 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   sig_delays.push_back(std::make_pair("tindelay",config.Get("tindelay",13)));
   sig_delays.push_back(std::make_pair("toutdelay",config.Get("toutdelay",10)));
   sig_delays.push_back(std::make_pair("triggertimeout",config.Get("triggertimeout",65000)));
+  if (config.Get("trimdelay",0) > 0) {
+    sig_delays.push_back(std::make_pair("trimdelay",config.Get("trimdelay",0)));
+    EUDAQ_INFO(string("trimdelay: " + std::to_string(config.Get("trimdelay",0))));
+  }
+  if (config.Get("triggerdelay",0) > 0) {
+    sig_delays.push_back(std::make_pair("triggerdelay",config.Get("triggerdelay",0)));
+    EUDAQ_INFO(string("triggerdelay: " + std::to_string(config.Get("triggerdelay",0))));
+  }
+
   //Power settings:
   power_settings.push_back( std::make_pair("va",config.Get("va",1.8)) );
   power_settings.push_back( std::make_pair("vd",config.Get("vd",2.5)) );
@@ -156,7 +166,12 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     cout << pgcal << endl;
     pgcal += m_roctype.find("dig") ? 6 : 5;
     cout << pgcal << endl;
-    pg_setup.push_back(std::make_pair("resetroc",config.Get("resetroc",25)) );
+    if (config.Get("resetroc",25) > 0) {
+      pg_setup.push_back(std::make_pair("resetroc", config.Get("resetroc", 25)));
+      EUDAQ_INFO(string("PG with calibrates and reset"));
+    } else {
+      EUDAQ_INFO(string("PG with calibrates, without reset"));
+    }
     pg_setup.push_back(std::make_pair("calibrate",config.Get("calibrate",106)) );
     pg_setup.push_back(std::make_pair("trigger",config.Get("trigger", 16)) );
     pg_setup.push_back(std::make_pair("token",config.Get("token", 0)));
@@ -164,11 +179,18 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     EUDAQ_USER("Using testpulses, pattern delay " + eudaq::to_string(m_pattern_delay) + "\n");
   }
   else {
+    EUDAQ_INFO(string("PG without calibrates/reset"));
     pg_setup.push_back(std::make_pair("trigger",46));
     pg_setup.push_back(std::make_pair("token",0));
     m_pattern_delay = config.Get("patternDelay", 100);
   }
 
+  if (config.Get("resetAfterEachColumn",0) == 1) {
+    m_resetaftereachcolumn = true;
+    EUDAQ_INFO(string("send ROC reset after each double column"));
+  } else {
+    m_resetaftereachcolumn = false;
+  }
   m_ntrig = config.Get("ntrig", 10);
   cout << "pattern generator has been set";
 
@@ -239,6 +261,9 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     m_api->initDUT(hubid,m_tbmtype,tbmDACs,m_roctype,rocDACs,rocPixels,rocI2C);
     // Store the number of configured ROCs to be stored in a BORE tag:
     m_nplanes = rocDACs.size();
+
+    // set pattern generator
+    m_api->setPatternGenerator(pg_setup);
 
     // Read current:
     std::cout << "Analog current: " << m_api->getTBia()*1000 << "mA" << std::endl;
@@ -636,11 +661,15 @@ void CMSPixelProducer::GoToNextPixel(){
     if (m_calRow>79) {
       m_calRow = 0;
       m_calCol++;
+      if (m_resetaftereachcolumn) {
+        if (!m_api->daqSingleSignal("resetroc")) { EUDAQ_ERROR(string("Unable to send ROC reset signal!\n")); }
+      }
     }
     if (m_calCol>51) {
       std::cout << "Loop through all pixels finished at event " << m_ev << std::endl;
       m_calRow = 0;
       m_calCol = 0;
+      std::cout << "You can STOP the run now!" << std::endl;
       //stop run!!!
     } else {
       std::cout << "test pixel " << (int)m_calCol << "," << (int)m_calRow << std::endl;
@@ -648,6 +677,7 @@ void CMSPixelProducer::GoToNextPixel(){
       m_api->SetCalibrateBits(true);
       m_api->daqTrigger(m_ntrig, m_pattern_delay);
     }
+  m_nHits = 0;
 }
 
 void CMSPixelProducer::ReadoutLoop() {
@@ -685,7 +715,13 @@ void CMSPixelProducer::ReadoutLoop() {
   }
 
 	SendEvent(ev);
+        int daqEventSize = daqEvent.data.size();
   std::cout << "Event count CMSPixel producer: " << m_ev << std::endl;
+
+   // count hits
+
+std::cout << "last event size: " << daqEvent.data.size() << std::endl;
+
 	m_ev++;
 
   // go to next pixel in xpixelalive test
