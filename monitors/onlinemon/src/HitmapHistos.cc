@@ -347,10 +347,10 @@ void HitmapHistos::Fill(const SimpleStandardHit & hit)
   bool pixelIsHot = false;
   if (_HotPixelMap->GetBinContent(pixel_x+1,pixel_y+1)>_mon->mon_configdata.getHotpixelcut()) pixelIsHot=true;
 
-  if (_bgMap != NULL && !pixelIsHot && hit.getTOT() <= 0) {
+  if (_bgMap != NULL && !pixelIsHot && hit.getTOT() < 0) {
     _bgMap->Fill(pixel_x,pixel_y);
   } 
-  if (_calMap != NULL && !pixelIsHot && hit.getTOT() > 0) {
+  if (_calMap != NULL && !pixelIsHot && hit.getTOT() >= 0) {
     _calMap->Fill(pixel_x,pixel_y);
   }
 
