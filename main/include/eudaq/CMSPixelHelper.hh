@@ -52,7 +52,7 @@ namespace eudaq {
 
   class CMSPixelHelper {
   public:
-    std::map<std::string, float > roc_calibrations = {{"psi46v2", 65}, {"psi46digv21respin", 47}, {"proc600", 47}};
+    std::map<std::string, float > roc_calibrations = {{"psi46v2", 65}, {"psi46digv21respin", 47}, {"proc600", 47}, {"proc600v2", 47}};
     CMSPixelHelper(std::string event_type) : do_conversion(false), m_event_type(event_type), m_conv_cfg(0) {};
     void set_conversion(bool val){do_conversion = val;}
     bool get_conversion(){return do_conversion;}
@@ -103,7 +103,7 @@ namespace eudaq {
         cnf.SetSection(i);
         std::string roctype = cnf.Get("roctype","roctype","");
         if (roctype == "") continue;
-        bool is_digital = (roctype.find("dig") == -1) ? false : true;
+        bool is_digital = ((roctype.find("dig") == -1)||(roctype.find("proc") == -1)) ? false : true;
 
         std::string fname = m_conv_cfg ? m_conv_cfg->Get("phCalibrationFile", "") : "";
         if (fname == "") fname = cnf.Get("phCalibrationFile","");
@@ -191,8 +191,8 @@ namespace eudaq {
 
       const RawDataEvent & in_raw = dynamic_cast<const RawDataEvent &>(in);
       // Check of we have more than one data block:
-      if(in_raw.NumBlocks() > 3) {
-	EUDAQ_ERROR("Only up to 3 data blocks are expected!");
+      if(in_raw.NumBlocks() > 5) {
+	EUDAQ_ERROR("Only up to 5 data blocks are expected!");
 	return false;
       }
 
@@ -226,8 +226,8 @@ namespace eudaq {
           // xpixelalive
 
           try{
-            int calCol = in_raw.GetBlock(1)[0];
-            int calRow = in_raw.GetBlock(2)[0];
+            int calCol = in_raw.GetBlock(3)[0];
+            int calRow = in_raw.GetBlock(4)[0];
 
             //std::cout << "cal is at: " << calCol << "," << calRow << std::endl;
             //std::cout << "pixels:" << evt->pixels.size();
