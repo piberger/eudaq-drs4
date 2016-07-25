@@ -71,7 +71,7 @@ class HitmapHistos {
   public:
     HitmapHistos(SimpleStandardPlane p, RootMonitor * mon);
 
-    void Fill(const SimpleStandardHit & hit);
+    void Fill(const SimpleStandardHit & hit, bool last=false);
     void Fill(const SimpleStandardPlane & plane, unsigned event_no, unsigned time_stamp);
     void Fill(const SimpleStandardCluster & cluster);
     void Reset();

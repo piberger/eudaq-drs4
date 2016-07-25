@@ -337,7 +337,7 @@ int HitmapHistos::zero_plane_array()
   return 0;
 }
 
-void HitmapHistos::Fill(const SimpleStandardHit & hit)
+void HitmapHistos::Fill(const SimpleStandardHit & hit, bool last)
 {
   int pixel_x=hit.getX();
   int pixel_y=hit.getY();
@@ -354,9 +354,9 @@ void HitmapHistos::Fill(const SimpleStandardHit & hit)
     _calMap->Fill(pixel_x,pixel_y);
   }
 
-  if (_eventNumber % 100 == 0) {
+  if (_eventNumber % 100 == 0 || last) {
 
-    _hCalEff->Scale(0);
+    _hCalEff->Reset("MICES");
     
     for (size_t col=0;col<52;col++) {
       for (size_t row=0;row<80;row++) {
@@ -367,7 +367,7 @@ void HitmapHistos::Fill(const SimpleStandardHit & hit)
       }
     }
 
-    _hBgRate->Scale(0);
+    _hBgRate->Reset("MICES");
 
     for (size_t col=0;col<52;col++) {
       for (size_t row=0;row<80;row++) {
@@ -480,10 +480,16 @@ void HitmapHistos::fillMimosaHistos (const SimpleStandardPlane* plane){
 }
 
 void HitmapHistos::loopOverPixelHits(const SimpleStandardPlane* simpPlane) {
-    for (int hitpix = 0; hitpix < simpPlane->getNHits();hitpix++)
+    int nHitsTotal = simpPlane->getNHits();
+
+    for (int hitpix = 0; hitpix < nHitsTotal;hitpix++)
     {
       const SimpleStandardHit& onehit = simpPlane->getHit(hitpix);
-      this->Fill(onehit);
+      if (hitpix < nHitsTotal-1) {
+        this->Fill(onehit);}
+      else {
+        this->Fill(onehit, true);
+      }
     }
 }
 
