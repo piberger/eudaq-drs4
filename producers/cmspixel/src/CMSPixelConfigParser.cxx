@@ -175,10 +175,10 @@ vector<masking> CMSPixelProducer::GetConfMask(){
     string filename = m_config.Get("maskFile", "");
     vector<masking>  mask;
     ifstream file(filename);
-
+    mask.clear();
     if(!file.fail()){
         std::string line;
-        while(std::getline(file, line)){
+        while(std::getline(file, line, '\n')){
             stringstream   linestream(line);
             string         identifier;
             uint16_t       roc, col, row;
@@ -187,6 +187,7 @@ vector<masking> CMSPixelProducer::GetConfMask(){
 
         }
         m_maskingFromConf = true;
+        file.close();
     }
     else {
         cout << "Couldn't read mask parameters from \"" << string(filename) << "\". So I don't know how to mask ;-)\n";
