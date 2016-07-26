@@ -64,7 +64,9 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_alldacs(""),
     m_last_mask_filename(""),
     m_resetaftereachcolumn(false),
-    m_logcurrents(false)
+    m_logcurrents(false),
+    m_caldelscan(false),
+    m_feedbackscan(false)
 {
   if(m_producerName.find("REF") != std::string::npos) {
     m_detector = "REF";
@@ -161,6 +163,23 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   } else {
     EUDAQ_INFO(string("Current logging disabled."));
   }
+
+  // CalDel scan
+  m_caldelscan = config.Get("caldelscan", false);
+  if (m_caldelscan) {
+    EUDAQ_INFO(string("CalDel scan enabled"));
+  } else {
+    EUDAQ_INFO(string("CalDel scan disabled"));
+  }
+
+  // Vwllpr/Vwllsh scan
+  m_feedbackscan = config.Get("feedbackscan", false);
+  if (m_feedbackscan) {
+    EUDAQ_INFO(string("Vwllpr/Vwllsh scan enabled"));
+  } else {
+    EUDAQ_INFO(string("Vwllpr/Vwllsh scan disabled"));
+  }
+
   // Periodic ROC resets:
   m_roc_resetperiod = config.Get("rocresetperiod", 0);
   if(m_roc_resetperiod > 0) { EUDAQ_USER("Sending periodic ROC resets every " + eudaq::to_string(m_roc_resetperiod) + "ms\n"); }
@@ -185,6 +204,9 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     pg_setup.push_back(std::make_pair("token",config.Get("token", 0)));
     m_pattern_delay = config.Get("patternDelay", 100) * 10;
     EUDAQ_USER("Using testpulses, pattern delay " + eudaq::to_string(m_pattern_delay) + "\n");
+    if (m_xpixelalive) {
+      EUDAQ_INFO(string("scanning ROC pixel by pixel with test-pulses (xpixelalive)"));
+    }
   }
   else {
     EUDAQ_INFO(string("PG without calibrates/reset"));
@@ -619,9 +641,56 @@ void CMSPixelProducer::CalDelScan() {
   EUDAQ_INFO(ss.str());
   m_api->setDAC("caldel", bestCaldel);
 
-
 }
 
+// scan feedback DACs to optimize efficiency
+void CMSPixelProducer::FeedbackScan() {
+
+  std::cout << "optimize vwllpr/vwllsh" << std::endl;
+
+  std::vector< std::pair<int, double> > efficiencies;
+  double maxEfficiency = 0;
+
+  for (int feedback=5;feedback<155;feedback += 5) {
+    m_api->setDAC("vwllpr", feedback);
+    m_api->setDAC("vwllsh", feedback);
+
+    std::stringstream ss("");
+    double efficiency = EstimateEfficiency();
+    efficiencies.push_back(std::make_pair(feedback, efficiency));
+
+    if (maxEfficiency < efficiency) {
+      maxEfficiency = efficiency;
+    }
+
+    ss << "Vwllpr/sh = " << feedback << ":" << (int)(efficiency*100);
+    EUDAQ_INFO(ss.str());
+  }
+
+  int firstPos=0,lastPos=0;
+
+  for (int i=0;i<efficiencies.size();i++) {
+    if (efficiencies[i].second > maxEfficiency * 0.998) {
+      firstPos = efficiencies[i].first;
+      break;
+    }
+  }
+
+  for (int i=efficiencies.size()-1;i>=0;i--) {
+    if (efficiencies[i].second > maxEfficiency * 0.998) {
+      lastPos = efficiencies[i].first;
+      break;
+    }
+  }
+
+  int bestFeedback = (firstPos + lastPos)/2;
+  std::stringstream ss("");
+  ss <<  "optimal vwllpr/sh: " << bestFeedback;
+  EUDAQ_INFO(ss.str());
+  m_api->setDAC("vwllpr", bestFeedback);
+  m_api->setDAC("vwllsh", bestFeedback);
+
+}
 
 void CMSPixelProducer::OnStartRun(unsigned runnumber) {
   m_run = runnumber;
@@ -634,10 +703,14 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     EUDAQ_INFO(m_last_mask_filename);
     m_api->HVon();
 
-    if (true) {
+    if (m_caldelscan) {
       CalDelScan();
-
     }
+
+    if (m_feedbackscan) {
+      FeedbackScan();
+    }
+
     std::cout << "Start Run: " << m_run << std::endl;
 
     eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
@@ -677,8 +750,6 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     m_api -> daqStart();
 
 
-
-
     // Send additional ROC Reset signal at run start:
     if(!m_api->daqSingleSignal("resetroc")) {
       throw InvalidConfig("Unable to send ROC reset signal!");
@@ -686,8 +757,6 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     else {
       EUDAQ_INFO(string("ROC Reset signal issued."));
     }
-
-
 
     // If we run on Pattern Generator, activate the PG loop:
   if(m_trigger_is_pg) {
