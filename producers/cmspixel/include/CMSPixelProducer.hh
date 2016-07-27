@@ -62,6 +62,10 @@ private:
   bool m_logcurrents;
   bool m_caldelscan;
   bool m_feedbackscan;
+    int m_feedbackscanmin;
+    int m_feedbackscanmax;
+    int m_feedbackscanstep;
+    int m_caldel;
   std::string m_last_mask_filename;
   eudaq::Configuration m_config;
 
