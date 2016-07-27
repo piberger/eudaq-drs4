@@ -112,14 +112,14 @@ float StandardWaveform::getMedian(uint32_t min, uint32_t max) const
 /*************************************** Standard Plane *****************************************/
 /************************************************************************************************/
 
-StandardPlane::StandardPlane() : m_id(0), m_tluevent(0), m_xsize(0), m_ysize(0), m_flags(0), m_pivotpixel(0), m_result_pix(0), m_result_x(0), m_result_y(0) {}
+StandardPlane::StandardPlane() : m_id(0), m_tluevent(0), m_xsize(0), m_ysize(0), m_flags(0), m_pivotpixel(0), m_result_pix(0), m_result_x(0), m_result_y(0), m_ntrig(10) {}
 
 StandardPlane::StandardPlane(unsigned id, const std::string & type, const std::string & sensor)
 : m_type(type), m_sensor(sensor), m_id(id), m_tluevent(0), m_xsize(0), m_ysize(0),
-  m_flags(0), m_pivotpixel(0), m_result_pix(0), m_result_x(0), m_result_y(0)
+  m_flags(0), m_pivotpixel(0), m_result_pix(0), m_result_x(0), m_result_y(0), m_ntrig(10)
 {}
 
-StandardPlane::StandardPlane(Deserializer & ds) : m_result_pix(0), m_result_x(0), m_result_y(0) {
+StandardPlane::StandardPlane(Deserializer & ds) : m_result_pix(0), m_result_x(0), m_result_y(0), m_ntrig(10) {
 	ds.read(m_type);
 	ds.read(m_sensor);
 	ds.read(m_id);

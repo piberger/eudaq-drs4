@@ -59,7 +59,7 @@ using namespace std;
 
 RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & datafile, int /*x*/, int /*y*/, int /*w*/,
        int /*h*/, int argc, int offline, const unsigned lim, const unsigned skip_, const unsigned int skip_with_counter,
-       const std::string & conffile):eudaq::Holder<int>(argc), eudaq::Monitor("OnlineMon", runcontrol, lim, skip_, skip_with_counter, datafile), _offline(offline), _planesInitialized(false), _fft_resets(0){
+       const std::string & conffile):eudaq::Holder<int>(argc), eudaq::Monitor("OnlineMon", runcontrol, lim, skip_, skip_with_counter, datafile), _offline(offline), _planesInitialized(false), _fft_resets(0) {
 
   if (_offline <= 0){
     onlinemon = new OnlineMonWindow(gClient->GetRoot(),800,600);
@@ -196,7 +196,8 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
   _checkEOF.EventReceived();
 
   if (ev.IsBORE()){
-    std::cout << "This is a BORE" << std::endl;}
+    std::cout << "This is a BORE" << std::endl;
+  }
 
   if (ev.GetEventNumber()<10 && ev.GetRunNumber()!=0)
    this->onlinemon->setRunNumber(ev.GetRunNumber());
@@ -433,6 +434,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 
 
       SimpleStandardPlane simpPlane(sensorname,plane.ID(),plane.XSize(),plane.YSize(), plane.TLUEvent(),plane.PivotPixel(),&mon_configdata);
+      simpPlane.m_ntrig = plane.m_ntrig;
       for (unsigned int lvl1 = 0; lvl1 < plane.NumFrames(); lvl1++){
         // if (lvl1 > 2 && plane.HitPixels(lvl1) > 0) std::cout << "LVLHits: " << lvl1 << ": " << plane.HitPixels(lvl1) << std::endl;
         for (unsigned int index = 0; index < plane.HitPixels(lvl1);index++){
@@ -478,7 +480,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
       #ifdef DEBUG
       cout << "Waiting for booking of Histograms..." << endl;
       #endif
-      EUDAQ_SLEEP(1);
+      EUDAQ_SLEEP(3);
       #ifdef DEBUG
       cout << "...long enough"<< endl;
       #endif
