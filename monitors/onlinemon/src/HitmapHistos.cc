@@ -358,8 +358,8 @@ void HitmapHistos::Fill(const SimpleStandardHit & hit, int ntrig, bool last)
 
     _hCalEff->Reset("MICES");
     
-    for (size_t col=0;col<52;col++) {
-      for (size_t row=0;row<80;row++) {
+    for (size_t col=1;col<51;col++) {
+      for (size_t row=1;row<79;row++) {
         int nCals=100 * _calMap->GetBinContent(1+col,1+row) / ntrig;
         if (nCals>0) {
           _hCalEff->SetBinContent(1+nCals, _hCalEff->GetBinContent(1+nCals)+1);
@@ -369,8 +369,8 @@ void HitmapHistos::Fill(const SimpleStandardHit & hit, int ntrig, bool last)
 
     _hBgRate->Reset("MICES");
 
-    for (size_t col=0;col<52;col++) {
-      for (size_t row=0;row<80;row++) {
+    for (size_t col=1;col<51;col++) {
+      for (size_t row=1;row<79;row++) {
         int nBgHits=_bgMap->GetBinContent(1+col,1+row);
         int nCals=_calMap->GetBinContent(1+col,1+row);
         if (nCals > 0) {
