@@ -54,7 +54,7 @@ namespace eudaq {
         void writeHistogram(TH2D* h1, std::string name);
         void writeHistogram(TH1D* h1, std::string name);
 
-        const char* analysisRevision = "v1.8";
+        const char* analysisRevision = "v1.10";
     private:
 
         uint8_t m_roctype, m_tbmtype;
@@ -75,12 +75,29 @@ namespace eudaq {
         TH2D* pkamHitmap;
         TH1D* calEff;
         TH1D* calEffNoPKAM;
+        TH2D* errorsMap;
+        TH2D* hitsAboveMap;
+        TH2D* hitsAboveBelowMap;
+        TH2D* hitsBelowMap;
+        TH2D* hitsIsolatedMap;
+
+        TH2D* calsAboveMap;
+        TH2D* calsAboveBelowMap;
+        TH2D* calsBelowMap;
+        TH2D* calsIsolatedMap;
+
+        TH1D* effHitsAbove;
+        TH1D* effHitsBelow;
+        TH1D* effHitsAboveBelow;
+        TH1D* effHitsIsolated;
+
         int ntrig;
         bool eventSourceCreated;
         std::string htmlText;
         int m_runnumber;
         int m_npkam;
         int m_npkammax;
+        int m_nreadouterrors;
 
     };
 
@@ -109,10 +126,23 @@ namespace eudaq {
         calMap = new TH2D("calMap", "calMap", 52, 0, 52, 80, 0 ,80);
         bgMap = new TH2D("bgMap", "bgMap", 52, 0, 52, 80, 0 ,80);
         pkamMap = new TH2D("pkamMap", "pkamMap", 52, 0, 52, 80, 0 ,80);
+        errorsMap = new TH2D("errorsMap", "errorsMap", 52, 0, 52, 80, 0 ,80);
         pkamHitmap = new TH2D("pkamhitMap", "pkamHitMap", 52, 0, 52, 80, 0 ,80);
+
+        hitsAboveMap = new TH2D("hitsAboveMap", "hitsAboveMap", 52, 0, 52, 80, 0 ,80);
+        hitsBelowMap = new TH2D("hitsBelowMap", "hitsBelowMap", 52, 0, 52, 80, 0 ,80);
+        hitsAboveBelowMap = new TH2D("hitsAboveBelowMap", "hitsAboveBelowMap", 52, 0, 52, 80, 0 ,80);
+        hitsIsolatedMap = new TH2D("hitsIsolatedMap", "hitsIsolatedMap", 52, 0, 52, 80, 0 ,80);
+
+        calsAboveMap = new TH2D("calsAboveMap", "calsAboveMap", 52, 0, 52, 80, 0 ,80);
+        calsBelowMap = new TH2D("calsBelowMap", "calsBelowMap", 52, 0, 52, 80, 0 ,80);
+        calsAboveBelowMap = new TH2D("calsAboveBelowMap", "calsAboveBelowMap", 52, 0, 52, 80, 0 ,80);
+        calsIsolatedMap = new TH2D("calsIsolatedMap", "calsIsolatedMap", 52, 0, 52, 80, 0 ,80);
+
         ntrig = 10;
         m_npkam = 0;
         m_npkammax = 100;
+        m_nreadouterrors = 0;
 
         std::stringstream ss;
         ss << "<strong>RUN " << runnumber << ":</strong><br><i>analysis rev:" << analysisRevision << "</i><br><br>";
@@ -160,6 +190,13 @@ namespace eudaq {
             evt = Eventpump.Get();
 
             // event has pkam?
+            if (evt->hasAutoReset()) {
+                std::cout << "AUTO RESET!!! #################################################" << std::endl;
+            }
+            if (evt->hasSyncError()) {
+                std::cout << "SYNC ERR!!! #################################################" << std::endl;
+            }
+
             if (evt->hasPkamReset()) {
                 pkamMap->Fill(calCol, calRow);
                 for (int j = 0; j < evt->pixels.size(); j++) {
@@ -184,14 +221,54 @@ namespace eudaq {
                 m_npkam++;
 
 
+            } else if (!evt->hasCalTrigger()) {
+                errorsMap->Fill(calCol, calRow);
+                std::cout << "read-out errors occured! skip event!!!" << std::endl;
+                m_nreadouterrors++;
             } else {
+
+                int hitsBelow = 0;
+                int hitsAbove = 0;
+                bool calFound = false;
 
                 for (int j = 0; j < evt->pixels.size(); j++) {
                     if (evt->pixels[j].column() == calCol && evt->pixels[j].row() == calRow) {
                         calMap->Fill(calCol, calRow);
+                        calFound = true;
                     } else {
                         bgMap->Fill(evt->pixels[j].column(), evt->pixels[j].row());
                     }
+
+                    // check for hits in same double column
+                    if ((evt->pixels[j].column() % 2) == (calCol % 2) && evt->pixels[j].row() > calRow) {
+                        hitsAbove++;
+                    }
+                    if ((evt->pixels[j].column() % 2) == (calCol % 2) && evt->pixels[j].row() < calRow) {
+                        hitsBelow++;
+                    }
+                }
+
+
+                if (calFound) {
+                    if (hitsAbove < 1 && hitsBelow < 1) {
+                        hitsIsolatedMap->Fill(calCol, calRow);
+                    } else if (hitsAbove < 1 && hitsBelow > 0) {
+                        hitsBelowMap->Fill(calCol, calRow);
+                    } else if (hitsAbove > 0 && hitsBelow < 1) {
+                        hitsAboveMap->Fill(calCol, calRow);
+                    } else {
+                        hitsAboveBelowMap->Fill(calCol, calRow);
+                    }
+                }
+
+                if (hitsAbove < 1 && hitsBelow < 1) {
+                    calsIsolatedMap->Fill(calCol, calRow);
+                } else if (hitsAbove < 1 && hitsBelow > 0) {
+                    calsBelowMap->Fill(calCol, calRow);
+                } else if (hitsAbove > 0 && hitsBelow < 1) {
+                    calsAboveMap->Fill(calCol, calRow);
+                } else {
+                    calsAboveBelowMap->Fill(calCol, calRow);
                 }
 
             }
@@ -269,6 +346,12 @@ namespace eudaq {
         calEff = new TH1D("calEffDist", "cal eff distribution", 2020, 0 ,101.0);
         calEffNoPKAM = new TH1D("calEffDistNoPKAM", "cal eff distribution (no PKAM)", 2020, 0 ,101.0);
 
+
+        effHitsAbove = new TH1D("calEffDistAbove", "cal eff distribution (hits above)", 2020, 0 ,101.0);
+        effHitsAboveBelow = new TH1D("calEffDistAboveBelow", "cal eff distribution (hits below and above)", 2020, 0 ,101.0);
+        effHitsBelow = new TH1D("calEffDistBelow", "cal eff distribution (hits below)", 2020, 0 ,101.0);
+        effHitsIsolated = new TH1D("calEffDistIsolated", "cal eff distribution (isolated)", 2020, 0 ,101.0);
+
         int calsTotal = 0;
         int PKAMsTotal = 0;
         int bgHitsTotal=0;
@@ -284,6 +367,7 @@ namespace eudaq {
             for (int r=1;r<79;r++) {
                 int cals = calMap->GetBinContent(1 + c, 1 + r);
                 int pkams = pkamMap->GetBinContent(1 + c, 1 + r);
+                int errors = errorsMap->GetBinContent(1 + c, 1 + r);
                 int bgHits = bgMap->GetBinContent(1 + c, 1 + r);
 
                 if (cals > 0 || bgHits > 0) {
@@ -294,8 +378,8 @@ namespace eudaq {
                 double efficiency = (double)cals  / (double) ntrig * 100.0;
                 if (efficiency > 100.0) efficiency = 100.0;
                 double efficiencyNoPkam = 0;
-                if (ntrig - pkams > 0) {
-                    efficiencyNoPkam = (double)cals / (double) (ntrig - pkams) * 100.0;
+                if (ntrig - pkams - errors > 0) {
+                    efficiencyNoPkam = (double)cals / (double) (ntrig - pkams - errors) * 100.0;
                     if (efficiencyNoPkam > 100.0) efficiencyNoPkam = 100.0;
                     calEffNoPKAM->Fill(efficiencyNoPkam);
                     calEffNoPKAMList.push_back(efficiencyNoPkam);
@@ -309,6 +393,35 @@ namespace eudaq {
                 calsTotal += cals;
                 PKAMsTotal += pkams;
 
+                int calsBelow = calsBelowMap->GetBinContent(1 + c, 1 + r);
+                int calsAbove = calsAboveMap->GetBinContent(1 + c, 1 + r);
+                int calsAboveBelow = calsAboveBelowMap->GetBinContent(1 + c, 1 + r);
+                int calsIsolated = calsIsolatedMap->GetBinContent(1 + c, 1 + r);
+                int hitsBelow = hitsBelowMap->GetBinContent(1 + c, 1 + r);
+                int hitsAbove = hitsAboveMap->GetBinContent(1 + c, 1 + r);
+                int hitsAboveBelow = hitsAboveBelowMap->GetBinContent(1 + c, 1 + r);
+                int hitsIsolated = hitsIsolatedMap->GetBinContent(1 + c, 1 + r);
+
+                if (calsBelow > 0) {
+                    double efficiencyBelow = (double) hitsBelow / (double) calsBelow * 100.0;
+                    if (efficiencyBelow > 100.0) efficiencyBelow = 100.0;
+                    effHitsBelow->Fill(efficiencyBelow);
+                }
+                if (calsAboveBelow > 0) {
+                    double efficiencyAboveBelow = (double) hitsAboveBelow / (double) calsAboveBelow * 100.0;
+                    if (efficiencyAboveBelow > 100.0) efficiencyAboveBelow = 100.0;
+                    effHitsAboveBelow->Fill(efficiencyAboveBelow);
+                }
+                if (calsAbove > 0) {
+                    double efficiencyAbove = (double) hitsAbove / (double) calsAbove * 100.0;
+                    if (efficiencyAbove > 100.0) efficiencyAbove = 100.0;
+                    effHitsAbove->Fill(efficiencyAbove);
+                }
+                if (calsIsolated > 0) {
+                    double efficiencyIsolated = (double) hitsIsolated / (double) calsIsolated * 100.0;
+                    if (efficiencyIsolated > 100.0) efficiencyIsolated = 100.0;
+                    effHitsIsolated->Fill(efficiencyIsolated);
+                }
 
             }
         }
@@ -330,7 +443,7 @@ namespace eudaq {
             efficiencyNoPKAMError = 100.0 * sqrt( meanEfficiencyNoPKAM * 0.01 * (1-meanEfficiencyNoPKAM* 0.01) / (calsTotal-PKAMsTotal));
         }
         std::stringstream ss2;
-        ss2 << "Efficiency (PKAM events removed): " <<meanEfficiencyNoPKAM << " +/- " << efficiencyNoPKAMError << " %<br>";
+        ss2 << "Efficiency (PKAM events & events with R/O errors removed): " <<meanEfficiencyNoPKAM << " +/- " << efficiencyNoPKAMError << " %<br>";
         htmlText += ss2.str();
         ss2.str("");
         ss2.clear();
@@ -387,6 +500,21 @@ namespace eudaq {
         writeHistogram(pkamHitmap, "pkamHitMap");
         writeHistogram(calEff, "calEffDistr");
         writeHistogram(calEffNoPKAM, "calEffDistrNoPkam");
+        writeHistogram(errorsMap, "errorsMap");
+        
+        writeHistogram(hitsAboveBelowMap, "hitsAboveBelowMap");
+        writeHistogram(hitsAboveMap, "hitsAboveMap");
+        writeHistogram(hitsBelowMap, "hitsBelowMap");
+        writeHistogram(hitsIsolatedMap, "hitsIsolatedMap");
+        writeHistogram(calsAboveBelowMap, "calsAboveBelowMap");
+        writeHistogram(calsAboveMap, "calsAboveMap");
+        writeHistogram(calsBelowMap, "calsBelowMap");
+        writeHistogram(calsIsolatedMap, "calsIsolatedMap");
+
+        writeHistogram(effHitsAbove, "effHitsAbove");
+        writeHistogram(effHitsBelow, "effHitsBelow");
+        writeHistogram(effHitsAboveBelow, "effHitsAboveBelow");
+        writeHistogram(effHitsIsolated, "effHitsIsolated");
 
         std::stringstream ss;
         ss << outputFolder << "/run.html";
@@ -394,6 +522,42 @@ namespace eudaq {
         out << htmlText;
         htmlText = "";
         out.close();
+
+
+
+        ss.str("");
+        ss.clear();
+        ss << outputFolder << "/results.csv";
+        std::ofstream out2(ss.str());
+
+        ss2.str("");
+        ss2.clear();
+        ss2 << meanRate << "," << rateError << ", " << meanEfficiencyNoPKAM << ", " << efficiencyNoPKAMError << ", " << " -1";
+
+        out2 << ss2.str();
+        out2.close();
+
+
+        ss.str("");
+        ss.clear();
+        ss << outputFolder << "/results_dc.csv";
+        std::ofstream out3(ss.str());
+
+        ss2.str("");
+        ss2.clear();
+        activePixelsDC = 152;
+        for (int dc=1;dc<25;dc++) {
+            ss2.str("");
+            ss2.clear();
+            double dcEfficiency = 100.0 * calsDC[dc] / (double)triggersDC[dc];
+            double dcEfficiencyError = 100.0 * sqrt( dcEfficiency * 0.01 * (1-dcEfficiency* 0.01) / (double)triggersDC[dc]);
+            double dcRate = (bgHitsDC[dc] / (activePixelsDC *25*1e-9*150.0*100.0 * 1e-2 * (double)(ntrig*4160-PKAMsTotal)))/(dcEfficiency*0.01);
+            double dcrateError = (sqrt(bgHitsDC[dc]) / (activePixelsDC*25*1e-9*150.0*100.0 * 1e-2 * (double)(ntrig*4160-PKAMsTotal)))/(dcEfficiency*0.01);
+            ss2 << dcRate << "," << dcrateError << ", " << dcEfficiency << ", " << dcEfficiencyError << ", " << " -1" << "\n";
+            out3 << ss2.str();
+        }
+        out3.close();
+
 
     }
 
