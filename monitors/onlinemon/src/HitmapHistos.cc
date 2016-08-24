@@ -15,7 +15,7 @@
 HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.getName()), _id(p.getID()), _maxX(p.getMaxX()), _maxY(p.getMaxY()), _wait(false),
 								     _hitmap(NULL),_chargemap(NULL),_hitXmap(NULL),_hitYmap(NULL),_clusterMap(NULL),_calMap(NULL), _bgMap(NULL) ,_lvl1Distr(NULL), _lvl1Width(NULL),_lvl1Cluster(NULL),_totSingle(NULL),_totCluster(NULL),
   _hitOcc(NULL), _nClusters(NULL), _nHits(NULL), _clusterXWidth(NULL), _clusterYWidth(NULL),_nbadHits(NULL),_nHotPixels(NULL),_hitmapSections(NULL),_efficencyPerEvent(NULL),_hBgRate(NULL),_hCalEff(NULL),
-  _clusterChargeProfile(NULL),_pixelChargeProfile(NULL),_start_time(0),
+  _clusterChargeProfile(NULL),_pixelChargeProfile(NULL),_start_time(0), _clusterSizeBg(NULL),
   is_MIMOSA26(false), is_APIX(false), is_USBPIX(false),is_USBPIXI4(false),is_CMSPIXEL(false),ntrig(10)
 {
   char out[1024], out2[1024];
@@ -147,6 +147,11 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
     sprintf(out2,"h_clustersize_%s_%i",_sensor.c_str(), _id);
     _clusterSize= new TH1I(out2, out,10,0,10);
     SetHistoAxisLabelx(_clusterSize,"Cluster Size");
+
+    sprintf(out,"%s %i Clustersize BG",_sensor.c_str(), _id);
+    sprintf(out2,"h_clustersize_bg_%s_%i",_sensor.c_str(), _id);
+    _clusterSizeBg= new TH1I(out2, out,50,0,50);
+    SetHistoAxisLabelx(_clusterSizeBg,"Cluster Size BG");
 
     sprintf(out,"%s %i Number of Hits",_sensor.c_str(), _id);
     sprintf(out2,"h_nHits_%s_%i",_sensor.c_str(), _id);
@@ -454,6 +459,55 @@ void HitmapHistos::Fill(const SimpleStandardPlane & plane, unsigned event_no,uns
   fillMimosaHistos(&plane);
   loopOverPixelHits(&plane);
   loopOverClusterHits(&plane);
+
+  int nHitsTotal = plane.getNHits();
+  std::vector < std::pair<int, int> > pixels;
+  std::vector < std::pair<int, int> > pixelsNew;
+  std::vector < std::pair<int, int> > cluster;
+
+  for (int hitpix = 0; hitpix < nHitsTotal;hitpix++) {
+    const SimpleStandardHit& onehit = plane.getHit(hitpix);
+    if (onehit.getTOT() < 0) {
+      pixels.push_back(make_pair(onehit.getX(), onehit.getY()));
+    }
+  }
+
+  int nClusters = 0;
+
+  while (pixels.size() > 0) {
+    // take last pixel to initialize the clusters
+    if (cluster.size() < 1) {
+      cluster.push_back(pixels[pixels.size()-1]);
+      pixels.pop_back();
+    }
+
+    int newPixelsFound = 0;
+    for (int i=pixels.size()-1;i>=0;i--) {
+      for (int j=0;j<cluster.size();j++) {
+        if (abs(pixels[i].first-cluster[j].first) < 2 && abs(pixels[i].second-cluster[j].second) < 2) {
+          // add to cluster
+          cluster.push_back(pixels[i]);
+          // remove from list
+          pixels.erase(pixels.begin()+i);
+          newPixelsFound++;
+          break;
+        }
+      }
+    }
+
+    if (newPixelsFound < 1) {
+      // cluster found!
+      nClusters++;
+      _clusterSizeBg->Fill(cluster.size());
+      cluster.clear();
+    } else {
+      // remove duplicates from cluster
+      sort(cluster.begin(), cluster.end() );
+      cluster.erase(unique( cluster.begin(), cluster.end() ), cluster.end() );
+    }
+  }
+
+
 }
 
 void HitmapHistos::fillMimosaHistos (const SimpleStandardPlane* plane){
@@ -551,6 +605,7 @@ void HitmapHistos::Reset() {
   _lvl1Width->Reset();
   _hitOcc->Reset();
   _clusterSize->Reset();
+  _clusterSizeBg->Reset();
   _nClusters->Reset();
   _nHits->Reset();
   _nbadHits->Reset();
@@ -655,6 +710,7 @@ void HitmapHistos::Write()
   _lvl1Width->Write();
   _hitOcc->Write();
   _clusterSize->Write();
+  _clusterSizeBg->Write();
   _nClusters->Write();
   _nHits->Write();
   _nbadHits->Write();

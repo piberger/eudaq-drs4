@@ -736,7 +736,7 @@ void CMSPixelProducer::FeedbackScan() {
       maxEfficiency = efficiency;
     }
 
-    ss << "Vwllpr/sh = " << feedback << ":" << (int)(efficiency*100);
+    ss << "Vwllpr/sh = " << feedback << ":" << efficiency;
     EUDAQ_INFO(ss.str());
   }
 

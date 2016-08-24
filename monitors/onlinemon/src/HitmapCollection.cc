@@ -233,6 +233,11 @@ void HitmapCollection::registerPlane(const SimpleStandardPlane &p) {
     _mon->getOnlineMon()->registerTreeItem(tree);
     _mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getClusterSizeHisto());
 
+      sprintf(tree,"%s/Sensor %i/ClustersizeBG",p.getName().c_str(),p.getID());
+      _mon->getOnlineMon()->registerTreeItem(tree);
+      _mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getClusterSizeBgHisto());
+
+
     sprintf(tree,"%s/Sensor %i/NumHits",p.getName().c_str(),p.getID());
     _mon->getOnlineMon()->registerTreeItem(tree);
     _mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getNHitsHisto());

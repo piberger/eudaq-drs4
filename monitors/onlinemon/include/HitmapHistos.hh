@@ -44,6 +44,7 @@ class HitmapHistos {
     TH1I * _totCluster;
     TH1F * _hitOcc;
     TH1I * _clusterSize;
+    TH1I * _clusterSizeBg;
     TH1I * _nClusters;
     TH1I * _nHits;
     TH1I * _clusterXWidth;
@@ -95,6 +96,7 @@ class HitmapHistos {
     TH1I * getTOTClusterHisto() { return _totCluster; }
     TH1F * getHitOccHisto() { if (_wait) return NULL; else return _hitOcc; }
     TH1I * getClusterSizeHisto() { return _clusterSize; }
+    TH1I * getClusterSizeBgHisto() { return _clusterSizeBg; }
     TH1I * getNHitsHisto() { return _nHits; }
     TH1I * getNClustersHisto() { return _nClusters; }
     TH1I * getClusterWidthXHisto() { return _clusterXWidth; }
