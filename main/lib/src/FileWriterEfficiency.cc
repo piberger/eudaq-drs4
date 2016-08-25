@@ -54,7 +54,7 @@ namespace eudaq {
         void writeHistogram(TH2D* h1, std::string name);
         void writeHistogram(TH1D* h1, std::string name);
 
-        const char* analysisRevision = "v1.10";
+        const char* analysisRevision = "v1.11";
     private:
 
         uint8_t m_roctype, m_tbmtype;
@@ -303,7 +303,7 @@ namespace eudaq {
 
         ss.str("");
         ss.clear();
-        ss << "<a href='" << name << ".pdf'><img src='" << name << ".png'></a><br>" ;
+        ss << "<div style='float:left;'><a href='" << name << ".pdf'><img src='" << name << ".png'></a></div><br>" ;
         htmlText += ss.str();
     }
 
@@ -475,13 +475,16 @@ namespace eudaq {
 
         ss2.str("");
         ss2.clear();
-        ss2 << "<br>{" << m_runnumber << ", " << meanRate << "," << rateError << ", " << meanEfficiencyNoPKAM << ", " << efficiencyNoPKAMError << ", " << meanEfficiency << ", " << efficiencyError << ", " << calsTotal << ", " << bgHitsTotal << ", " << bgHitPixels << ", " << PKAMsTotal << "}<br>";
+        ss2 << "<br>{" << m_runnumber << ", " << meanRate << "," << rateError << ", " << meanEfficiencyNoPKAM << ", " << efficiencyNoPKAMError << ", " << meanEfficiency << ", " << efficiencyError << ", " << calsTotal << ", " << bgHitsTotal << ", " << bgHitPixels << ", " << PKAMsTotal << ", " << effHitsAbove->GetMean() << ", " << effHitsBelow->GetMean() << ", " << effHitsAboveBelow->GetMean() << ", " << effHitsIsolated->GetMean() << "}<br>";
         htmlText += ss2.str();
 
         ss2.str("");
         ss2.clear();
-        ss2 << "<br>[" <<  meanRate << "," << rateError << ", " << meanEfficiencyNoPKAM << ", " << efficiencyNoPKAMError << ", " << " -1" << "]<br><br>Per double column:";
+        ss2 << "<br>[" <<  meanRate << "," << rateError << ", " << meanEfficiencyNoPKAM << ", " << efficiencyNoPKAMError << ", " << " -1, " << effHitsAbove->GetMean() << ", " << effHitsBelow->GetMean() << ", " << effHitsAboveBelow->GetMean() << ", " << effHitsIsolated->GetMean() << "]";
+
+
         htmlText += ss2.str();
+        htmlText += "<br><br>Per double column:<br>";
 
         int activePixelsDC = 152;
         for (int dc=1;dc<25;dc++) {
@@ -494,6 +497,7 @@ namespace eudaq {
             ss2 << "<br>[" <<  dcRate << "," << dcrateError << ", " << dcEfficiency << ", " << dcEfficiencyError << ", " << " -1" << "],";
             htmlText += ss2.str();
         }
+        htmlText += "<br><br><strong>Histograms:</strong><br>";
         writeHistogram(calMap, "calibrateMap");
         writeHistogram(bgMap, "bgMap");
         writeHistogram(pkamMap, "pkamMap");
@@ -532,7 +536,13 @@ namespace eudaq {
 
         ss2.str("");
         ss2.clear();
-        ss2 << meanRate << "," << rateError << ", " << meanEfficiencyNoPKAM << ", " << efficiencyNoPKAMError << ", " << " -1";
+
+        double efficiencyErrorAbove = 100.0 * sqrt( effHitsAbove->GetMean() * 0.01 * (1-effHitsAbove->GetMean()* 0.01) / (calsAboveMap->GetEntries()+1e-8));
+        double efficiencyErrorBelow = 100.0 * sqrt( effHitsBelow->GetMean() * 0.01 * (1-effHitsBelow->GetMean()* 0.01) / (calsBelowMap->GetEntries()+1e-8));
+        double efficiencyErrorAboveBelow = 100.0 * sqrt( effHitsAboveBelow->GetMean() * 0.01 * (1-effHitsAboveBelow->GetMean()* 0.01) / (calsAboveBelowMap->GetEntries()+1e-8));
+        double efficiencyErrorIsolated = 100.0 * sqrt( effHitsIsolated->GetMean() * 0.01 * (1-effHitsIsolated->GetMean()* 0.01) / (calsIsolatedMap->GetEntries()+1e-8));
+
+        ss2 << meanRate << "," << rateError << ", " << meanEfficiencyNoPKAM << ", " << efficiencyNoPKAMError << ", " << " -1, " << effHitsAbove->GetMean() << ", " << efficiencyErrorAbove << ", " << effHitsBelow->GetMean() << ", " << efficiencyErrorBelow << ", " << effHitsAboveBelow->GetMean() << ", " << efficiencyErrorAboveBelow << ", " << effHitsIsolated->GetMean() << ", " << efficiencyErrorIsolated;
 
         out2 << ss2.str();
         out2.close();
@@ -553,7 +563,7 @@ namespace eudaq {
             double dcEfficiencyError = 100.0 * sqrt( dcEfficiency * 0.01 * (1-dcEfficiency* 0.01) / (double)triggersDC[dc]);
             double dcRate = (bgHitsDC[dc] / (activePixelsDC *25*1e-9*150.0*100.0 * 1e-2 * (double)(ntrig*4160-PKAMsTotal)))/(dcEfficiency*0.01);
             double dcrateError = (sqrt(bgHitsDC[dc]) / (activePixelsDC*25*1e-9*150.0*100.0 * 1e-2 * (double)(ntrig*4160-PKAMsTotal)))/(dcEfficiency*0.01);
-            ss2 << dcRate << "," << dcrateError << ", " << dcEfficiency << ", " << dcEfficiencyError << ", " << " -1" << "\n";
+            ss2 << dcRate << "," << dcrateError << ", " << dcEfficiency << ", " << dcEfficiencyError << ", " << " -1, " << effHitsAbove->GetMean() << ", " << effHitsBelow->GetMean() << ", " << effHitsAboveBelow->GetMean() << ", " << effHitsIsolated->GetMean() << "\n";
             out3 << ss2.str();
         }
         out3.close();
