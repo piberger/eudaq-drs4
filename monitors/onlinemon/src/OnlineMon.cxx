@@ -67,7 +67,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
       cerr<< "Error Allocationg OnlineMonWindow"<<endl;
       exit(-1);}
   }
-
+/*
   gStyle->SetCanvasBorderMode(0);
   gStyle->SetCanvasColor(kWhite);
   gStyle->SetCanvasDefH(600); //Height of canvas
@@ -195,7 +195,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
   // gStyle->SetHistMinimumZero(kTRUE);
 
   gStyle->cd();
-
+*/
 
   hmCollection = new HitmapCollection();
   corrCollection = new CorrelationCollection();

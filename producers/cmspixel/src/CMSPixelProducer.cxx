@@ -36,8 +36,8 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
   : eudaq::Producer(name, runcontrol),
     m_run(0),
     m_ev(0),
-    m_calCol(0),
-    m_calRow(0),
+    m_calCol(-1),
+    m_calRow(-1),
     m_ntrig(100),
     m_xpixelalive(false),
     m_ev_filled(0),
@@ -215,6 +215,8 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     m_pattern_delay = config.Get("patternDelay", 100) * 10;
     EUDAQ_USER("Using testpulses, pattern delay " + eudaq::to_string(m_pattern_delay) + "\n");
     if (m_xpixelalive) {
+      m_calCol = 0;
+      m_calRow = 0;
       EUDAQ_INFO(string("scanning ROC pixel by pixel with test-pulses (xpixelalive)"));
     }
   }
@@ -827,7 +829,7 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
       bore.AddBlock(1, reinterpret_cast<const char*>(&m_calCol), sizeof(m_calCol));
       bore.AddBlock(2, reinterpret_cast<const char*>(&m_calRow), sizeof(m_calRow));
     } else {
-      int empty = 0;
+      int empty = -1;
       bore.AddBlock(1, reinterpret_cast<const char*>(&empty), sizeof(empty));
       bore.AddBlock(2, reinterpret_cast<const char*>(&empty), sizeof(empty));
     }
@@ -1074,11 +1076,11 @@ void CMSPixelProducer::ReadoutLoop() {
 
 	SendEvent(ev);
         int daqEventSize = daqEvent.data.size();
-  std::cout << "Event count CMSPixel producer: " << m_ev << std::endl;
+  //std::cout << "Event count CMSPixel producer: " << m_ev << std::endl;
 
    // count hits
 
-std::cout << "last event size: " << daqEvent.data.size() << std::endl;
+//std::cout << "last event size: " << daqEvent.data.size() << std::endl;
 
 	m_ev++;
 
