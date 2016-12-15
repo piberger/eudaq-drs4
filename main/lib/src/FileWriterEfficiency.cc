@@ -51,12 +51,12 @@ namespace eudaq {
             }
             return rawData;
         }
-        void writeHistogram(TH1D* h1, std::string name);
+        void writeHistogram(TH1D* h1, std::string name, bool log = false);
         void writeHistogram(TH2D* h2, std::string name);
-        void writeHistogram(TH1D* h1, std::string name, float statsX, float statsY, char* drawOption = "");
+        void writeHistogram(TH1D* h1, std::string name, float statsX, float statsY, char* drawOption = "", bool log = false);
         void writeHistogram(TH2D* h2, std::string name, float statsX, float statsY);
 
-        const char* analysisRevision = "v1.15";
+        const char* analysisRevision = "v1.17";
     private:
 
         uint8_t m_roctype, m_tbmtype;
@@ -405,14 +405,15 @@ namespace eudaq {
 
                 int nClusters = 0;
                 int clusterRadius = 2; //default: 2
-                while (pixels.size() > 0) {
+                int newPixelsFound = 0;
+                while (pixels.size() > 0 || newPixelsFound > 0) {
                     // take last pixel to initialize the clusters
                     if (cluster.size() < 1) {
                         cluster.push_back(pixels[pixels.size()-1]);
                         pixels.pop_back();
                     }
 
-                    int newPixelsFound = 0;
+                    newPixelsFound = 0;
                     for (int i=pixels.size()-1;i>=0;i--) {
                         for (int j=0;j<cluster.size();j++) {
                             if (abs(pixels[i].first-cluster[j].first) < clusterRadius && abs(pixels[i].second-cluster[j].second) < clusterRadius) {
@@ -490,16 +491,21 @@ namespace eudaq {
         htmlText += ss.str();
     }
 
-    void FileWriterEfficiency::writeHistogram(TH1D* h1, std::string name) {
-        writeHistogram(h1, name, -1.0, -1.0);
+    void FileWriterEfficiency::writeHistogram(TH1D* h1, std::string name, bool log) {
+        writeHistogram(h1, name, -1.0, -1.0, (char*)"", log);
     }
 
-    void FileWriterEfficiency::writeHistogram(TH1D* h1, std::string name, float statsPosX, float statsPosY, char* drawOption) {
+    void FileWriterEfficiency::writeHistogram(TH1D* h1, std::string name, float statsPosX, float statsPosY, char* drawOption, bool log) {
         TCanvas* c1 = new TCanvas("c1","c1",500,500);
         h1->SetStats(kTRUE);
-
+        if (log) {
+            gPad->SetLogy(1);
+        }
         h1->Draw(drawOption);
         gPad->Modified(); gPad->Update();
+        if (log) {
+            gPad->SetLogy(1);
+        }
         float statsX = 0.15;
         float statsY = 0.65;
 
@@ -581,19 +587,23 @@ namespace eudaq {
                 double efficiency = (double)cals  / (double) ntrig * 100.0;
                 if (efficiency > 100.0) efficiency = 100.0;
                 double efficiencyNoPkam = 0;
-                if (ntrig - pkams - errors > 0) {
-                    efficiencyNoPkam = (double)cals / (double) (ntrig - pkams - errors) * 100.0;
-                    if (efficiencyNoPkam > 100.0) efficiencyNoPkam = 100.0;
-                    calEffNoPKAM->Fill(efficiencyNoPkam);
-                    calEffNoPKAMList.push_back(efficiencyNoPkam);
 
-                    triggersDC[c/2] += ntrig - pkams;
-                    calsDC[c/2] += cals;
-                    bgHitsDC[c/2] += bgHits;
+                // ignore dead/masked pixels
+                if (cals > 0 || bgHits > 0) {
+                    if (ntrig - pkams - errors > 0) {
+                        efficiencyNoPkam = (double)cals / (double) (ntrig - pkams - errors) * 100.0;
+                        if (efficiencyNoPkam > 100.0) efficiencyNoPkam = 100.0;
+                        calEffNoPKAM->Fill(efficiencyNoPkam);
+                        calEffNoPKAMList.push_back(efficiencyNoPkam);
+
+                        triggersDC[c/2] += ntrig - pkams;
+                        calsDC[c/2] += cals;
+                        bgHitsDC[c/2] += bgHits;
+                    }
+                    calEff->Fill(efficiency);
+
+                    calsTotal += cals;
                 }
-                calEff->Fill(efficiency);
-
-                calsTotal += cals;
                 PKAMsTotal += pkams;
 
                 int calsBelow = calsBelowMap->GetBinContent(1 + c, 1 + r);
@@ -758,8 +768,8 @@ namespace eudaq {
         writeHistogram(bgMap, "bgMap");
         writeHistogram(pkamMap, "pkamMap");
         writeHistogram(pkamHitmap, "pkamHitMap");
-        writeHistogram(calEff, "calEffDistr");
-        writeHistogram(calEffNoPKAM, "calEffDistrNoPkam");
+        writeHistogram(calEff, "calEffDistr", true);
+        writeHistogram(calEffNoPKAM, "calEffDistrNoPkam",true);
         writeHistogram(errorsMap, "errorsMap");
         
         writeHistogram(hitsAboveBelowMap, "hitsAboveBelowMap");
@@ -771,10 +781,10 @@ namespace eudaq {
         writeHistogram(calsBelowMap, "calsBelowMap");
         writeHistogram(calsIsolatedMap, "calsIsolatedMap");
 
-        writeHistogram(effHitsAbove, "effHitsAbove");
-        writeHistogram(effHitsBelow, "effHitsBelow");
-        writeHistogram(effHitsAboveBelow, "effHitsAboveBelow");
-        writeHistogram(effHitsIsolated, "effHitsIsolated");
+        writeHistogram(effHitsAbove, "effHitsAbove", true);
+        writeHistogram(effHitsBelow, "effHitsBelow", true);
+        writeHistogram(effHitsAboveBelow, "effHitsAboveBelow", true);
+        writeHistogram(effHitsIsolated, "effHitsIsolated", true);
 
         writeHistogram(clusterMap, "clusterMap");
         writeHistogram(clusterSizeDistribution, "clusterSizeDistribution", 0.65, 0.65);

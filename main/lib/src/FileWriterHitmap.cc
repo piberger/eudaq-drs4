@@ -56,10 +56,10 @@ namespace eudaq {
         }
         void writeHistogram(TH1D* h1, std::string name);
         void writeHistogram(TH2D* h2, std::string name);
-        void writeHistogram(TH1D* h1, std::string name, float statsX, float statsY, char* drawOption = "");
+        void writeHistogram(TH1D* h1, std::string name, float statsX, float statsY, const std::string drawOption = "");
         void writeHistogram(TH2D* h2, std::string name, float statsX, float statsY);
 
-        const char* analysisRevision = "v1.15 /H";
+        const char* analysisRevision = "v2.0 H";
     private:
 
         uint8_t m_roctype, m_tbmtype;
@@ -87,7 +87,13 @@ namespace eudaq {
         TH1D* adcDistribution;
         TH1D* pixelChargeDistribution;
         TH1D* clusterChargeDistribution;
+        TH1D* cluster1ChargeDistribution;
+        TH1D* cluster2ChargeDistribution;
+        TH1D* cluster3ChargeDistribution;
+        TH1D* cluster4ChargeDistribution;
+        TH1D* cluster5ChargeDistribution;
 
+        TH2D* maskedPixelsMap;
         TH1D* clusterSizeDistribution;
 
         TH1D* hitsPerNEventsVsTime;
@@ -103,6 +109,10 @@ namespace eudaq {
         int m_dumpeventsmax;
         int m_dumpedevents;
         int m_eventcounter;
+        int m_pass;
+        int m_pass_max;
+
+        std::vector< std::pair<int,int> > maskedhotPixels;
 
         std::vector< std::pair < double, double > > phCalibrationTable;
         bool phCalibrationOK;
@@ -126,6 +136,8 @@ namespace eudaq {
         //m_ser = new FileSerializer(FileNamer(m_filepattern).Set('X', ".raw").Set('R', runnumber));
         std::cout << "start run" << runnumber << std::endl;
         m_runnumber = runnumber;
+        m_pass = 1;
+        m_pass_max = 2; //2 passes required now!!
         eventSourceCreated = false;
 
         std::cout << m_filepattern << std::endl;
@@ -134,9 +146,11 @@ namespace eudaq {
         outputFolder = foutput;
         mkdir(outputFolder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
-
+        // ---- PH Calibration ----------------------------------------------------------------------------------------
         phCalibrationOK = false;
-        std::ifstream phCalibrationFile("phCalibration_C0.dat");
+        std::stringstream phFile;
+        phFile << outputFolder << "/phCalibration_C0.dat";
+        std::ifstream phCalibrationFile(phFile.str());
         if (phCalibrationFile) {
             std::cout << "PH calibration found...\n";
             std::string line;
@@ -209,6 +223,29 @@ namespace eudaq {
             std::cout << "NO PH calibration found!!!!! \n";
         }
 
+        // ---- hot pixels -------------------------------------------------------------------------------------------
+        maskedPixelsMap = new TH2D("maskedPixelsMap", "maskedPixelsMap", 52, 0, 52, 80, 0 ,80);
+        std::stringstream ss;
+        std::string hotPixelLine;
+        std::string hotPixelValue;
+        int hotPixelCol,hotPixelRow;
+        ss << outputFolder << "/hotpixels.csv";
+        std::ifstream hotpixelsFile(ss.str());
+        if (hotpixelsFile) {
+            while(std::getline(hotpixelsFile, hotPixelLine)) {
+                std::stringstream hotPixelLineStream(hotPixelLine);
+                std::getline(hotPixelLineStream, hotPixelValue, ',');
+                hotPixelCol = stoi(hotPixelValue);
+                std::getline(hotPixelLineStream, hotPixelValue, ',');
+                hotPixelRow = stoi(hotPixelValue);
+                maskedhotPixels.push_back(std::make_pair(hotPixelCol, hotPixelRow));
+                maskedPixelsMap->SetBinContent(1+hotPixelCol, 1+hotPixelRow, 1);
+            }
+            m_pass++;
+            std::cout << maskedhotPixels.size() << " hot pixels masked for clustering! " << std::endl;
+        }
+
+
         bgMap = new TH2D("bgMap", "bgMap", 52, 0, 52, 80, 0 ,80);
         bgMapNotHot = new TH2D("bgMapNotHot", "bgMapNotHot", 52, 0, 52, 80, 0 ,80);
         pkamMap = new TH2D("pkamMap", "pkamMap", 52, 0, 52, 80, 0 ,80);
@@ -220,14 +257,19 @@ namespace eudaq {
         totalChargeMap = new TH2D("totalChargeMap", "totalChargeMap", 52, 0, 52, 80, 0 ,80);
         meanChargeMap = new TH2D("meanChargeMap", "meanChargeMap", 52, 0, 52, 80, 0 ,80);
 
-        clusterMap = new TH2D("clusterMap", "clusterMap", 104, 0, 52, 160, 0 ,80);
+        clusterMap = new TH2D("clusterMap", "clusterMap", 104, 0, 52, 160, 0, 80);
         clusterSizeDistribution = new TH1D("clusterSizeDistribution", "clusterSizeDistribution", 38, 0, 38);
 
         hitsPerNEventsVsTime = new TH1D("hitsPerNEventsVsTime", "hitsPerNEventsVsTime", 21000, 0, 210000);
         chargePerNEventsVsTime = new TH1D("chargePerNEventsVsTime", "chargePerNEventsVsTime", 21000, 0, 210000);
 
         pixelChargeDistribution = new TH1D("pixelChargeDistribution", "pixelChargeDistribution", 1000, -500, 2500);
-        clusterChargeDistribution = new TH1D("clusterChargeDistribution", "clusterChargeDistribution", 5000, -500, 4500);
+        clusterChargeDistribution = new TH1D("clusterChargeDistribution", "clusterChargeDistribution", 1000, -500, 2500);
+        cluster1ChargeDistribution = new TH1D("cluster1ChargeDistribution", "cluster1ChargeDistribution", 1000, -500, 2500);
+        cluster2ChargeDistribution = new TH1D("cluster2ChargeDistribution", "cluster2ChargeDistribution", 1000, -500, 2500);
+        cluster3ChargeDistribution = new TH1D("cluster3ChargeDistribution", "cluster3ChargeDistribution", 1000, -500, 2500);
+        cluster4ChargeDistribution = new TH1D("cluster4ChargeDistribution", "cluster4ChargeDistribution", 1000, -500, 2500);
+        cluster5ChargeDistribution = new TH1D("cluster5ChargeDistribution", "cluster5ChargeDistribution", 1000, -500, 2500);
         adcDistribution = new TH1D("adcDistribution", "adcDistribution", 256, 0, 256.0);
 
 
@@ -235,11 +277,12 @@ namespace eudaq {
         m_npkam = 0;
         m_npkammax = 10;
         m_nreadouterrors = 0;
-        m_dumpeventsmax = 10;
+        m_dumpeventsmax = 50;
         m_dumpedevents = 0;
         m_eventcounter = 0;
 
-        std::stringstream ss;
+        ss.str("");
+        ss.clear();
         ss << "<strong>RUN " << runnumber << ":</strong><br><i>analysis rev:" << analysisRevision << "</i><br><br>";
         htmlText += ss.str();
     }
@@ -357,6 +400,8 @@ namespace eudaq {
                 //------------------------------------------------------------------------------------------------------------------------------
             } else {
                 int backgroundHits=0;
+                double eventCharge = 0;
+                std::vector < std::pair< std::pair<int, int>, double> > pixels;
                 //------------------------------------------------------------------------------------------------------------------------------
                 // loop over pixels
                 //------------------------------------------------------------------------------------------------------------------------------
@@ -375,7 +420,16 @@ namespace eudaq {
                             chargesList.push_back(
                                     std::make_pair(std::make_pair(evt->pixels[j].column(), evt->pixels[j].row()), charge));
                         }
+                        eventCharge += charge;
                     }
+
+                    //  remove hot pixels from clustering!
+                    if (maskedPixelsMap->GetBinContent(1 + evt->pixels[j].column(), 1 + evt->pixels[j].row()) < 1) {
+                        pixels.push_back(
+                                std::make_pair(std::make_pair(evt->pixels[j].column(), evt->pixels[j].row()),
+                                               evt->pixels[j].value()));
+                    }
+
                     backgroundHits++;
                 }
 
@@ -388,27 +442,23 @@ namespace eudaq {
                 // clustering
                 //------------------------------------------------------------------------------------------------------------------------------
                 int nHitsTotal = evt->pixels.size();
-                std::vector < std::pair<int, int> > pixels;
-                std::vector < std::pair<int, int> > pixelsNew;
-                std::vector < std::pair<int, int> > cluster;
-
-                for (int hitpix = 0; hitpix < nHitsTotal;hitpix++) {
-                    pixels.push_back(std::make_pair(evt->pixels[hitpix].column(), evt->pixels[hitpix].row()));
-                }
+                std::vector < std::pair< std::pair<int, int>, double> > pixelsNew;
+                std::vector < std::pair< std::pair<int, int>, double> > cluster;
 
                 int nClusters = 0;
-                int clusterRadius = 2; //default: 2
-                while (pixels.size() > 0) {
+                int clusterRadius = 3; //default: 2, use 3 to allow holes of 1 pixel
+                int newPixelsFound = 0;
+                while (pixels.size() > 0 || newPixelsFound > 0) {
                     // take last pixel to initialize the clusters
                     if (cluster.size() < 1) {
-                        cluster.push_back(pixels[pixels.size()-1]);
+                        cluster.push_back(pixels.back());
                         pixels.pop_back();
                     }
 
-                    int newPixelsFound = 0;
+                    newPixelsFound = 0;
                     for (int i=pixels.size()-1;i>=0;i--) {
                         for (int j=0;j<cluster.size();j++) {
-                            if (abs(pixels[i].first-cluster[j].first) < clusterRadius && abs(pixels[i].second-cluster[j].second) < clusterRadius) {
+                            if (abs(pixels[i].first.first-cluster[j].first.first) < clusterRadius && abs(pixels[i].first.second-cluster[j].first.second) < clusterRadius) {
                                 // add to cluster
                                 cluster.push_back(pixels[i]);
                                 // remove from list
@@ -422,15 +472,36 @@ namespace eudaq {
                     if (newPixelsFound < 1) {
                         // complete cluster found!
                         nClusters++;
-                        long sumCol=0;
-                        long sumRow=0;
+                        double sumCol=0;
+                        double sumRow=0;
+                        double clusterCharge = 0;
                         for (unsigned int clusterPixelIndex=0;clusterPixelIndex<cluster.size();clusterPixelIndex++) {
-                            sumCol += cluster[clusterPixelIndex].first;
-                            sumRow += cluster[clusterPixelIndex].second;
+                            std::pair< double, double> phCalibration = phCalibrationTable[cluster[clusterPixelIndex].first.first * 80 + cluster[clusterPixelIndex].first.second];
+                            double charge = 0;
+                            if (phCalibration.second > 0) {
+                                charge = (cluster[clusterPixelIndex].second - phCalibration.first) / phCalibration.second;
+                            }
+                            sumCol += cluster[clusterPixelIndex].first.first * charge;
+                            sumRow += cluster[clusterPixelIndex].first.second * charge;
+
+                            clusterCharge += charge;
                         }
-                        if (cluster.size() > 0) {
-                            clusterMap->Fill(sumCol / (double) cluster.size(), sumRow / (double) cluster.size());
-                            clusterSizeDistribution->Fill(cluster.size());
+                        clusterSizeDistribution->Fill(cluster.size());
+                        if (clusterCharge > 0) {
+                            clusterMap->Fill(sumCol / clusterCharge, sumRow / clusterCharge);
+
+                            clusterChargeDistribution->Fill(clusterCharge);
+
+                            if (cluster.size()==1)
+                                cluster1ChargeDistribution->Fill(clusterCharge);
+                            if (cluster.size()==2)
+                                cluster2ChargeDistribution->Fill(clusterCharge);
+                            if (cluster.size()==3)
+                                cluster3ChargeDistribution->Fill(clusterCharge);
+                            if (cluster.size()==4)
+                                cluster4ChargeDistribution->Fill(clusterCharge);
+                            if (cluster.size()==5)
+                                cluster5ChargeDistribution->Fill(clusterCharge);
                         }
                         cluster.clear();
                     } else {
@@ -479,7 +550,7 @@ namespace eudaq {
 
         ss.str("");
         ss.clear();
-        ss << "<div style='float:left;'><a href='" << name << ".pdf'><img src='" << name << ".png'></a></div><br>" ;
+        ss << "<div style='float:left;'><a href='" << name << ".pdf'><img src='" << name << ".png'></a></div>" ;
         htmlText += ss.str();
     }
 
@@ -487,11 +558,11 @@ namespace eudaq {
         writeHistogram(h1, name, -1.0, -1.0);
     }
 
-    void FileWriterHitmap::writeHistogram(TH1D* h1, std::string name, float statsPosX, float statsPosY, char* drawOption) {
+    void FileWriterHitmap::writeHistogram(TH1D* h1, std::string name, float statsPosX, float statsPosY, const std::string drawOption) {
         TCanvas* c1 = new TCanvas("c1","c1",500,500);
         h1->SetStats(kTRUE);
 
-        h1->Draw(drawOption);
+        h1->Draw(drawOption.c_str());
         gPad->Modified(); gPad->Update();
         float statsX = 0.15;
         float statsY = 0.65;
@@ -527,7 +598,7 @@ namespace eudaq {
 
         ss.str("");
         ss.clear();
-        ss << "<a href='" << name << ".pdf'><img src='" << name << ".png'></a><br>" ;
+        ss << "<div style='float:left;'><a href='" << name << ".pdf'><img src='" << name << ".png'></a></div>" ;
         htmlText += ss.str();
     }
 
@@ -543,7 +614,7 @@ namespace eudaq {
 
         std::vector< double > triggersDC(26, 0);
         std::vector< double > calsDC(26, 0);
-        std::vector< double >  bgHitsDC(26, 0);
+        std::vector< double > bgHitsDC(26, 0);
 
         //------------------------------------------------------------------------------------------------------------------------------
         // aggregate data from single pixel values
@@ -573,8 +644,10 @@ namespace eudaq {
         int nPixelsHot=0;
         double hitsTolerance = sqrt(meanHitsPerPixel) * 5 + 1;
 
-
         TH2D* hotPixelMap = new TH2D("hotPixelMap", "hotPixelMap", 52, 0, 52, 80, 0 ,80);
+        std::stringstream ss;
+        ss << outputFolder << "/hotpixels.csv";
+        std::ofstream hotpixelsFile(ss.str());
 
         for (int c=1;c<51;c++) {
             for (int r=1;r<79;r++) {
@@ -583,6 +656,7 @@ namespace eudaq {
                     nPixelsHot++;
                     hotPixelMap->SetBinContent( 1+c, 1+r, 1);
                     totalChargeMap->SetBinContent(1+c, 1+r, 0);
+                    hotpixelsFile << c << "," << r << "\n";
                 } else {
                     nPixelsNotHot++;
                     nHitsNotHot += nHits;
@@ -590,13 +664,21 @@ namespace eudaq {
                 }
             }
         }
+        hotpixelsFile.close();
 
+        std::cout << "clist size:" << chargesList.size() << std::endl;
+
+        int nf=0;
+        pixelChargeDistribution->Clear();
         for (unsigned int i=0;i<chargesList.size();i++) {
-            if (hotPixelMap->GetBinContent( 1+ chargesList[i].first.first, 1+chargesList[i].first.second) < 1) {
+            if (hotPixelMap->GetBinContent( 1+ chargesList[i].first.first, 1+chargesList[i].first.second) < 1 && maskedPixelsMap->GetBinContent( 1+ chargesList[i].first.first, 1+chargesList[i].first.second) < 1) {
                 totalChargeMap->Fill(chargesList[i].first.first, chargesList[i].first.second, chargesList[i].second);
+                nf++;
                 pixelChargeDistribution->Fill(chargesList[i].second);
             }
         }
+        std::cout << "nf:" << nf << std::endl;
+
 
         for (int c=1;c<51;c++) {
             for (int r=1;r<79;r++) {
@@ -620,7 +702,6 @@ namespace eudaq {
             clusterRate += clusterSizeDistribution->GetBinContent(1 + clusterSize) / (bgHitPixels*25*1e-9*150.0*100.0 * 1e-2 * (double)m_eventcounter);
         }
 
-        std::stringstream ss;
         std::stringstream ss3;
         std::stringstream ss2;
         ss3 << "Events: " << m_eventcounter << "<br>";
@@ -646,16 +727,30 @@ namespace eudaq {
         writeHistogram(adcDistribution, "adcDistribution");
         writeHistogram(totalChargeMap, "totalChargeMap");
         writeHistogram(meanChargeMap, "meanChargeMap");
-        pixelChargeDistribution->GetXaxis()->SetRangeUser(0, 300);
+        pixelChargeDistribution->GetXaxis()->SetRangeUser(0, 1000);
         writeHistogram(pixelChargeDistribution, "pixelChargeDistribution", 0.65, 0.65);
         writeHistogram(hotPixelMap, "hotPixelMap");
 
 
         writeHistogram(clusterMap, "clusterMap");
         writeHistogram(clusterSizeDistribution, "clusterSizeDistribution", 0.65, 0.65);
+        clusterChargeDistribution->GetXaxis()->SetRangeUser(0, 2000);
+        writeHistogram(clusterChargeDistribution, "clusterChargeDistribution", 0.65, 0.65);
+        cluster1ChargeDistribution->GetXaxis()->SetRangeUser(0, 2000);
+        writeHistogram(cluster1ChargeDistribution, "cluster1ChargeDistribution", 0.65, 0.65);
+        cluster2ChargeDistribution->GetXaxis()->SetRangeUser(0, 2000);
+        writeHistogram(cluster2ChargeDistribution, "cluster2ChargeDistribution", 0.65, 0.65);
+        cluster3ChargeDistribution->GetXaxis()->SetRangeUser(0, 2000);
+        writeHistogram(cluster3ChargeDistribution, "cluster3ChargeDistribution", 0.65, 0.65);
+        cluster4ChargeDistribution->GetXaxis()->SetRangeUser(0, 2000);
+        writeHistogram(cluster4ChargeDistribution, "cluster4ChargeDistribution", 0.65, 0.65);
+        cluster5ChargeDistribution->GetXaxis()->SetRangeUser(0, 2000);
+        writeHistogram(cluster5ChargeDistribution, "cluster5ChargeDistribution", 0.65, 0.65);
 
         writeHistogram(hitsPerNEventsVsTime, "hitsPerNEventsVsTime", 0.65, 0.15);
 
+        ss.str("");
+        ss.clear();
         ss << outputFolder << "/run.html";
         std::ofstream out(ss.str());
         out << htmlText;
@@ -676,6 +771,12 @@ namespace eudaq {
         ss2 <<  meanRate << ", " << rateError;
         out2 << ss2.str();
         out2.close();
+
+        if (m_pass < m_pass_max) {
+            std::cout << "--------------------------------------------------------------------" << std::endl;
+            std::cout << " pass " << m_pass << " of " << m_pass_max << " finished! run analysis again!" << std::endl;
+            std::cout << "--------------------------------------------------------------------" << std::endl;
+        }
     }
 
     uint64_t FileWriterHitmap::FileBytes() const { return 0; }
