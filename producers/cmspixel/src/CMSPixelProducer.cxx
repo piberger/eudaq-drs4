@@ -203,8 +203,25 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     cout << pgcal << endl;
     pgcal += m_roctype.find("dig") ? 6 : 5;
     cout << pgcal << endl;
+
+    // new: set resetroc to -1 to disable resets, even if testpulses is set to true
     if (config.Get("resetroc",25) > 0) {
-      pg_setup.push_back(std::make_pair("resetroc", config.Get("resetroc", 25)));
+      int resetDelay = config.Get("resetroc", 25);
+      if (resetDelay < 256) {
+        pg_setup.push_back(std::make_pair("resetroc", resetDelay));
+      } else {
+        pg_setup.push_back(std::make_pair("resetroc", 255));
+        resetDelay -= 255;
+
+        while (resetDelay>0) {
+            if (resetDelay > 255) {
+                pg_setup.push_back(std::make_pair("delay", 255));
+            } else {
+                pg_setup.push_back(std::make_pair("delay", resetDelay));
+            }
+            resetDelay -= 255;
+        }
+      }
       EUDAQ_INFO(string("PG with calibrates and reset"));
     } else {
       EUDAQ_INFO(string("PG with calibrates, without reset"));
@@ -227,6 +244,7 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     m_pattern_delay = config.Get("patternDelay", 100);
   }
 
+  // new: add option to send reset after each column
   if (config.Get("resetAfterEachColumn",0) == 1) {
     m_resetaftereachcolumn = true;
     EUDAQ_INFO(string("send ROC reset after each double column"));
@@ -347,6 +365,17 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
       TriggerDictionary* trgDict;
       if(m_tbmtype == "notbm" && trgDict->getInstance()->getEmulationState(triggersrc)) {
 	m_tbmtype = "tbmemulator";
+	EUDAQ_INFO("################################################################################");
+	EUDAQ_INFO("################################################################################");
+	EUDAQ_INFO("################################################################################");
+	EUDAQ_INFO("################################################################################");
+	EUDAQ_INFO("");
+	EUDAQ_INFO("WARNING: using TBM EMULATOR even though it was configured not to use it...");
+	EUDAQ_INFO("");
+	EUDAQ_INFO("################################################################################");
+	EUDAQ_INFO("################################################################################");
+	EUDAQ_INFO("################################################################################");
+	EUDAQ_INFO("################################################################################");
       }
 
       if(triggersrc == "pg" || triggersrc == "pg_dir" || triggersrc == "patterngenerator") {
