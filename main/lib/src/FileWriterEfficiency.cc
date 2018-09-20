@@ -25,6 +25,7 @@
 #include "THStack.h"
 #include "TStyle.h"
 #include "TPad.h"
+#include "TLegend.h"
 
 //#include "eudaq/Logger.hh"
 
@@ -62,7 +63,7 @@ namespace eudaq {
         void writeHistogram(TH2D* h2, std::string name, float statsX, float statsY);
         void writeHistogramTest(TH1D* h2, std::string name, float statsX, float statsY, float meanClusterSizeInColumn);
 
-        const char* analysisRevision = "v1.21 - July 17 2017";
+        const char* analysisRevision = "v1.24 - September 20 2018";
     private:
 
         uint8_t m_roctype, m_tbmtype;
@@ -83,6 +84,7 @@ namespace eudaq {
         TH2D* pkamHitmap;
         TH1D* calEff;
         TH1D* calEffNoPKAM;
+        TH1D* calEffNoDead;
         TH2D* errorsMap;
         TH2D* hitsAboveMap;
         TH2D* hitsAboveBelowMap;
@@ -104,13 +106,17 @@ namespace eudaq {
         TH1D* clusterSizeDistributionCol;
         TH1D* clusterSizeDistributionRow;
 
-        TH1D* calsVsHitsPerEventDistribution;
-        TH1D* calHitsVsHitsPerEventDistribution;
+        TH1D* hitsPerEventDistribution;
+        TH1D* calHitsPerEventDistribution;
         TH1D* efficiencyVsHitsPerEventDistribution;
 
         TH1D* calsVsHitsInOtherDoubleColumnsDistribution;
         TH1D* calHitsVsHitsInOtherDoubleColumnsDistribution;
         TH1D* efficiencyVsHitsInOtherDoubleColumnsDistribution;
+
+        TH1D* calsVsHitsInSameDoubleColumnsDistribution;
+        TH1D* calHitsVsHitsInSameDoubleColumnsDistribution;
+        TH1D* efficiencyVsHitsInSameDoubleColumnsDistribution;
 
         TH1D* hitsPerNEventsVsTime;
         TH2D* hitsPerNEventsVsTimeDC;
@@ -119,6 +125,8 @@ namespace eudaq {
 
         TH1D* calClusterFound;
         TH1D* calClusterNotFound;
+
+        TH1D* nFramesPerDoubleColumn;
 
         std::map < std::vector< std::pair< int,int >  >, int > clusterShapes;
 
@@ -137,6 +145,16 @@ namespace eudaq {
         int m_clusterRadius;
         int m_min_adc;
 
+        int m_eventsmax;
+
+        bool m_includeEdges;
+
+        int m_fiducial_area_col_min;
+        int m_fiducial_area_col_max;
+        int m_fiducial_area_row_min;
+        int m_fiducial_area_row_max;
+
+        mutable pxar::statistics decoding_stats;
     };
 
     namespace {
@@ -154,6 +172,29 @@ namespace eudaq {
         std::cout << "start run" << runnumber << std::endl;
         m_runnumber = runnumber;
         eventSourceCreated = false;
+
+        ntrig = 10;
+        m_npkam = 0;
+        m_npkammax = 100;
+        m_nreadouterrors = 0;
+        m_dumpeventsmax = 100;
+        m_dumpedevents = 0;
+        m_eventcounter = 0;
+        m_brokenclustercandidate = 0;
+        m_eventsmax = 4160 * ntrig;
+        m_includeEdges = false;
+
+        if (m_includeEdges) {
+            m_fiducial_area_col_min = 0;
+            m_fiducial_area_col_max = 51;
+            m_fiducial_area_row_min = 0;
+            m_fiducial_area_row_max = 79;
+        } else {
+            m_fiducial_area_col_min = 1;
+            m_fiducial_area_col_max = 50;
+            m_fiducial_area_row_min = 1;
+            m_fiducial_area_row_max = 78;
+        }
 
         std::cout << m_filepattern << std::endl;
         std::string foutput(FileNamer(m_filepattern).Set('X', "/").Set('R', runnumber));
@@ -184,32 +225,32 @@ namespace eudaq {
         clusterSizeDistributionCol = new TH1D("clusterSizeDistributionCol", "clusterSizeDistributionCol", 38, -0.5, 37.5);
         clusterSizeDistributionRow = new TH1D("clusterSizeDistributionRow", "clusterSizeDistributionRow", 38, -0.5, 37.5);
 
-        calHitsVsHitsPerEventDistribution =  new TH1D("calHitsVsHitsPerEventDistribution", "calHitsVsHitsPerEventDistribution", 50, 0, 50);
-        calsVsHitsPerEventDistribution =  new TH1D("calsVsHitsPerEventDistribution", "calsVsHitsPerEventDistribution", 50, 0, 50);
-        calHitsVsHitsPerEventDistribution->Sumw2();
-        calsVsHitsPerEventDistribution->Sumw2();
+        calHitsPerEventDistribution =  new TH1D("calHitsPerEventDistribution", "calHitsPerEventDistribution", 50, 0, 50);
+        hitsPerEventDistribution =  new TH1D("hitsPerEventDistribution", "hitsPerEventDistribution", 50, 0, 50);
+        calHitsPerEventDistribution->Sumw2();
+        hitsPerEventDistribution->Sumw2();
 
         calHitsVsHitsInOtherDoubleColumnsDistribution =  new TH1D("calHitsVsHitsInOtherDoubleColumnsDistribution", "calHitsVsHitsInOtherDoubleColumnsDistribution", 50, 0, 50);
         calsVsHitsInOtherDoubleColumnsDistribution =  new TH1D("calsVsHitsInOtherDoubleColumnsDistribution", "calsVsHitsInOtherDoubleColumnsDistribution", 50, 0, 50);
         calHitsVsHitsInOtherDoubleColumnsDistribution->Sumw2();
         calsVsHitsInOtherDoubleColumnsDistribution->Sumw2();
 
-        hitsPerNEventsVsTime = new TH1D("hitsPerNEventsVsTime", "hitsPerNEventsVsTime", 21000, 0, 210000);
-        hitsPerNEventsVsTimeDC = new TH2D("hitsPerNEventsVsTimeDC", "hitsPerNEventsVsTimeDC", 15000, 0, 1500000, 26, 0, 26);
+        calHitsVsHitsInSameDoubleColumnsDistribution =  new TH1D("calHitsVsHitsInSameDoubleColumnsDistribution", "calHitsVsHitsInSameDoubleColumnsDistribution", 50, 0, 50);
+        calsVsHitsInSameDoubleColumnsDistribution =  new TH1D("calsVsHitsInSameDoubleColumnsDistribution", "calsVsHitsInSameDoubleColumnsDistribution", 50, 0, 50);
+        calHitsVsHitsInSameDoubleColumnsDistribution->Sumw2();
+        calsVsHitsInSameDoubleColumnsDistribution->Sumw2();
+
+
+        int nBinsTime = floor(m_eventsmax/100)+1;
+        hitsPerNEventsVsTime = new TH1D("hitsPerNEventsVsTime", "hitsPerNEventsVsTime", nBinsTime, 0, nBinsTime*100);
+        hitsPerNEventsVsTimeDC = new TH2D("hitsPerNEventsVsTimeDC", "hitsPerNEventsVsTimeDC", nBinsTime, 0, nBinsTime*100, 26, 0, 26);
 
         adcDistribution = new TH1D("adcDistribution", "adcDistribution", 256, 0, 256.0);
 
-        calClusterFound = new TH1D("calClusterFound", "calClusterFound", 36, 0, 36.0);
+        calClusterFound = new TH1D("calClusterFound", "cluster size near cal inject", 36, 0, 36.0);
         calClusterNotFound = new TH1D("calClusterNotFound", "calClusterNotFound", 36, 0, 36.0);
 
-        ntrig = 10;
-        m_npkam = 0;
-        m_npkammax = 100;
-        m_nreadouterrors = 0;
-        m_dumpeventsmax = 100;
-        m_dumpedevents = 0;
-        m_eventcounter = 0;
-        m_brokenclustercandidate = 0;
+        nFramesPerDoubleColumn = new TH1D("nFramesPerDoubleColumn", "2x2 frames per double column", 40, 0, 40.0);
 
         m_clusterRadius = 4; //default: 2, use 3 or 4 to include broken clusters
 
@@ -220,6 +261,25 @@ namespace eudaq {
         clusterShapes.clear();
 
         std::stringstream ss;
+
+        ss << "<!DOCTYPE html><html><head><style>"
+            "table {\n "
+            "    border-collapse: collapse;\n"
+            "}\n"
+
+            "th, td {\n"
+            "    text-align: left;\n"
+            "    padding: 8px;\n"
+            "}\n"
+
+            "tr:nth-child(even){background-color: #f2f2f2}\n"
+
+            "th {\n"
+            "    background-color: #4CAF50;\n"
+            "    color: white;\n"
+            "}\n"
+            "</style>\n";
+
         ss << "<strong>RUN " << runnumber << ":</strong><br>";
         ss << "<a href='../" << foutputPrev << "run.html'>&lt;previous<a> ";
         ss << "<a href='../" << foutputNext << "run.html'>next&gt;<a> ";
@@ -234,9 +294,8 @@ namespace eudaq {
         if (m_min_adc > -1) {
             ss << "parameters: min ADC = " << m_min_adc << " (exclude pixels with ADC below)<br><br>";
         }
+        ss << "parameters: m_includeEdges = " << m_includeEdges << "<br><br>";
         htmlText += ss.str();
-
-
 
     }
 
@@ -256,6 +315,7 @@ namespace eudaq {
             m_tbmtype = devDict->getInstance()->getDevCode(tbmtype);
 
             if (!eventSourceCreated) {
+                std::cout << "event source:" << (int)m_tbmtype << " / " << (int)m_roctype << std::endl;
                 src = evtSource(0, m_nplanes, 0, m_tbmtype, m_roctype);
                 src >> splitter >> decoder >> Eventpump;
             }
@@ -305,7 +365,7 @@ namespace eudaq {
                     TCanvas *c1 = new TCanvas("c1", "c1", 500, 500);
                     hitmapEvent->SetStats(kFALSE);
                     hitmapEvent->Draw("colz");
-                    ss2 << outputFolder << "/" << ss.str() << ".pdf";
+                    ss2 << outputFolder << "/" << ss.str() << ".png";
                     c1->SaveAs(ss2.str().c_str());
                     std::cout << "dump event " << m_dumpedevents << ": " << ss2.str() << std::endl;
                     m_dumpedevents++;
@@ -327,6 +387,10 @@ namespace eudaq {
                 pkamMap->Fill(calCol, calRow);
                 for (int j = 0; j < evt->pixels.size(); j++) {
                     pkamHitmap->Fill(evt->pixels[j].column(), evt->pixels[j].row());
+                    // fill background hits also for bad events
+                    if (!(evt->pixels[j].column() == calCol && evt->pixels[j].row() == calRow)) {
+                        bgMap->Fill(evt->pixels[j].column(), evt->pixels[j].row());
+                    }
                 }
 
                 //------------------------------------------------------------------------------------------------------------------------------
@@ -343,7 +407,7 @@ namespace eudaq {
                     TCanvas* c1 = new TCanvas("c1","c1",500,500);
                     pkamHitmapEvent->SetStats(kFALSE);
                     pkamHitmapEvent->Draw("colz");
-                    ss2 << outputFolder << "/" << ss.str() << ".pdf";
+                    ss2 << outputFolder << "/" << ss.str() << ".png";
                     c1->SaveAs(ss2.str().c_str());
                     std::cout << "dump pkam event:" << ss2.str() << std::endl;
                 }
@@ -354,7 +418,8 @@ namespace eudaq {
             //------------------------------------------------------------------------------------------------------------------------------
             // READ-OUT ERROR occurred
             //------------------------------------------------------------------------------------------------------------------------------
-            } else if (!evt->hasCalTrigger() && calCol > 0 && calRow > 0 && calCol < 250 && calRow < 250) {
+            //} else if (!evt->hasCalTrigger() && calCol > 0 && calRow > 0 && calCol < 250 && calRow < 250) {
+            } else if (0 && calCol > 0 && calRow > 0 && calCol < 250 && calRow < 250) {
                 errorsMap->Fill(calCol, calRow);
                 std::cout << "read-out errors occured! skip event!!!" << (int)calCol << " " << (int)calRow << std::endl;
                 m_nreadouterrors++;
@@ -362,11 +427,12 @@ namespace eudaq {
             // GOOD EVENT
             //------------------------------------------------------------------------------------------------------------------------------
             } else {
-
+                //std::cout << " good event!! " <<  (int)calCol << " " << (int)calRow << " pixels=" << evt->pixels.size()  << std::endl;
                 int hitsBelow = 0;
                 int hitsAbove = 0;
                 bool calFound = false;
                 int hitsInOtherDoubleColumns = 0;
+                int hitsInSameDoubleColumn = 0;
 
                 //------------------------------------------------------------------------------------------------------------------------------
                 // loop over pixels
@@ -403,6 +469,8 @@ namespace eudaq {
                     }
                     if (((int)(evt->pixels[j].column() / 2) != (int)(calCol / 2))) {
                         hitsInOtherDoubleColumns++;
+                    } else {
+                        hitsInSameDoubleColumn++;
                     }
                 }
 
@@ -410,13 +478,14 @@ namespace eudaq {
                 // for debugging:
                 // efficiency vs. event length
                 //------------------------------------------------------------------------------------------------------------------------------
-                int backgroundHits = evt->pixels.size() + 1;
+                int backgroundHits = evt->pixels.size();
                 if (calRow > 0 && calCol > 0 && calRow < 79 && calCol < 51) {
                     if (calFound) {
-                        backgroundHits--;
-                        calHitsVsHitsPerEventDistribution->Fill(backgroundHits);
+                        calHitsPerEventDistribution->Fill(backgroundHits-1);
+                        hitsPerEventDistribution->Fill(backgroundHits-1);
+                    } else {
+                        hitsPerEventDistribution->Fill(backgroundHits);
                     }
-                    calsVsHitsPerEventDistribution->Fill(backgroundHits);
                 }
 
                 //------------------------------------------------------------------------------------------------------------------------------
@@ -432,8 +501,11 @@ namespace eudaq {
                 if (calRow > 0 && calCol > 0 && calRow < 79 && calCol < 51) {
                     if (calFound) {
                         calHitsVsHitsInOtherDoubleColumnsDistribution->Fill(hitsInOtherDoubleColumns);
+                        calHitsVsHitsInSameDoubleColumnsDistribution->Fill(hitsInSameDoubleColumn);
                     }
                     calsVsHitsInOtherDoubleColumnsDistribution->Fill(hitsInOtherDoubleColumns);
+                    calsVsHitsInSameDoubleColumnsDistribution->Fill(hitsInSameDoubleColumn);
+
                 }
 
                 //------------------------------------------------------------------------------------------------------------------------------
@@ -556,7 +628,7 @@ namespace eudaq {
                 // check if injected pixel is near/in a cluster
                 //------------------------------------------------------------------------------------------------------------------------------
                 bool calibrateIsNearCluster = false;
-                int clusterSizeNearCalibrate = 1;
+                int clusterSizeNearCalibrate = 0;
 
                 for (std::vector < std::vector < std::pair<int, int> > >::iterator clusterIterator = clusters.begin(); clusterIterator != clusters.end(); clusterIterator++) {
                     for (unsigned int clusterPixelIndex=0;clusterPixelIndex<(*clusterIterator).size();clusterPixelIndex++) {
@@ -573,6 +645,10 @@ namespace eudaq {
                     }
                 }
                 if (calFound) {
+                    // no hits from particles nearby, but still the injected calibrate
+                    if (!calibrateIsNearCluster) {
+                        clusterSizeNearCalibrate = 1;
+                    }
                     calClusterFound->Fill(clusterSizeNearCalibrate);
                 } else {
                     calClusterNotFound->Fill(clusterSizeNearCalibrate);
@@ -596,7 +672,9 @@ namespace eudaq {
                     // create relative cluster shape vector
                     std::vector < std::pair<int, int> > relativeClusterShape;
                     for (std::vector < std::pair<int, int> >::iterator clusterPix=(*itCluster).begin(); clusterPix != (*itCluster).end(); clusterPix++) {
-                        relativeClusterShape.push_back(std::make_pair((*clusterPix).first - minCol, (*clusterPix).second - minRow));
+                        if (!((*clusterPix).first == calCol && (*clusterPix).second == calRow)) {
+                            relativeClusterShape.push_back(std::make_pair((*clusterPix).first - minCol, (*clusterPix).second - minRow));
+                        }
                     }
 
                     // count clusters of this shape
@@ -668,6 +746,30 @@ namespace eudaq {
 
             }
 
+
+            //------------------------------------------------------------------------------------------------------------------------------
+            // double column 2x2 frames
+            //------------------------------------------------------------------------------------------------------------------------------
+            std::vector< std::vector< bool > > pixelMap ( 52, std::vector<bool> ( 80, false ) );
+            // use all bg hits of the event
+            for (int hitpix = 0; hitpix < evt->pixels.size();hitpix++) {
+                if ((evt->pixels[hitpix].column() != calCol || evt->pixels[hitpix].row() != calRow) && evt->pixels[hitpix].value() > m_min_adc) {
+                    pixelMap[evt->pixels[hitpix].column()][evt->pixels[hitpix].row()] = true;
+                }
+            }
+            for (int doubleColumn=0;doubleColumn<26;doubleColumn++) {
+                int nFrames = 0;
+                int pos = -99;
+                for (int row=0;row<80;row++) {
+                    bool hit = pixelMap[doubleColumn*2][row] || pixelMap[doubleColumn*2+1][row];
+                    if (hit && row > pos+1) {
+                        nFrames++;
+                        pos = row;
+                    }
+                }
+                nFramesPerDoubleColumn->Fill(nFrames);
+            }
+
             ntrig = raw->GetBlock(5)[0];
             m_eventcounter++;
         }
@@ -705,7 +807,7 @@ namespace eudaq {
 
         ss.str("");
         ss.clear();
-        ss << "<div style='float:left;'><a href='" << name << ".pdf'><img src='" << name << ".png'></a></div>" ;
+        ss << "<div style='float:left;'><a href='" << name << ".pdf'><img src='" << name << ".png' width=350 height=350></a></div>" ;
         htmlText += ss.str();
     }
 
@@ -763,7 +865,7 @@ namespace eudaq {
 
         ss.str("");
         ss.clear();
-        ss << "<div style='float:left;'><a href='" << name << ".pdf'><img src='" << name << ".png'></a></div>" ;
+        ss << "<div style='float:left;'><a href='" << name << ".pdf'><img src='" << name << ".png' width=350 height=350></a></div>" ;
         htmlText += ss.str();
     }
 
@@ -817,8 +919,24 @@ namespace eudaq {
 
         ss.str("");
         ss.clear();
-        ss << "<div style='float:left;'><a href='" << name << ".pdf'><img src='" << name << ".png'></a></div>" ;
+        ss << "<div style='float:left;'><a href='" << name << ".pdf'><img src='" << name << ".png' width=350 height=350></a></div>" ;
         htmlText += ss.str();
+    }
+
+    // https://stackoverflow.com/questions/5056645/sorting-stdmap-using-value
+    template<typename A, typename B>
+    std::pair<B,A> flip_pair(const std::pair<A,B> &p)
+    {
+        return std::pair<B,A>(p.second, p.first);
+    }
+
+    template<typename A, typename B>
+    std::multimap<B,A> flip_map(const std::map<A,B> &src)
+    {
+        std::multimap<B,A> dst;
+        std::transform(src.begin(), src.end(), std::inserter(dst, dst.begin()),
+                       flip_pair<A,B>);
+        return dst;
     }
 
     FileWriterEfficiency::~FileWriterEfficiency() {
@@ -847,15 +965,18 @@ namespace eudaq {
         // (0,0) (0,1) (0,2) : 2.28185 %
         //
         // ...
+
+        std::multimap<int, std::vector< std::pair< int,int > > > clusterShapesSorted = flip_map(clusterShapes);
+
         std::ofstream outputFile;
         std::stringstream ssFileName;
         ssFileName << outputFolder << "/clusters.txt";
         outputFile.open(ssFileName.str());
-        for (std::map < std::vector< std::pair< int,int >  >, int >::iterator clusterShape = clusterShapes.begin(); clusterShape != clusterShapes.end(); clusterShape++ ) {
+        for (std::multimap < int, std::vector< std::pair< int,int >  > >::reverse_iterator clusterShape = clusterShapesSorted.rbegin(); clusterShape != clusterShapesSorted.rend(); clusterShape++ ) {
             std::stringstream ssPixels;
-            float probability = (float)(clusterShape->second)/ nclustersTotal;
-            for (int i=0; i<clusterShape->first.size(); i++) {
-                ssPixels << "(" << (int)(clusterShape->first[i].first) << "," << (int)(clusterShape->first[i].second) << ") ";
+            float probability = (float)(clusterShape->first)/ nclustersTotal;
+            for (int i=0; i<clusterShape->second.size(); i++) {
+                ssPixels << "(" << (int)(clusterShape->second[i].first) << "," << (int)(clusterShape->second[i].second) << ") ";
             }
             outputFile << ssPixels.str() << ": " << 100.0*probability << " % " << std::endl;
         }
@@ -885,6 +1006,7 @@ namespace eudaq {
         //------------------------------------------------------------------------------------------------------------------------------
         calEff = new TH1D("calEffDist", "cal eff distribution", 2020, 0 ,101.0);
         calEffNoPKAM = new TH1D("calEffDistNoPKAM", "cal eff distribution (no PKAM)", 2020, 0 ,101.0);
+        calEffNoDead = new TH1D("calEffDistNoDead", "cal eff distribution (no dead pixels)", 2020, 0 ,101.0);
 
         effHitsAbove = new TH1D("calEffDistAbove", "cal eff distribution (hits above)", 2020, 0 ,101.0);
         effHitsAboveBelow = new TH1D("calEffDistAboveBelow", "cal eff distribution (hits below and above)", 2020, 0 ,101.0);
@@ -892,12 +1014,14 @@ namespace eudaq {
         effHitsIsolated = new TH1D("calEffDistIsolated", "cal eff distribution (isolated)", 2020, 0 ,101.0);
 
         efficiencyVsHitsPerEventDistribution = new TH1D("efficiencyVsHitsPerEventDistribution", "efficiencyVsHitsPerEventDistribution", 50, 0, 50);
-        efficiencyVsHitsInOtherDoubleColumnsDistribution = new TH1D("efficiencyVsHitsInOtherDoubleColumnsDistribution", "efficiencyVsHitsInOtherDoubleColumnsDistribution", 50, 0, 50);
+        efficiencyVsHitsInOtherDoubleColumnsDistribution = new TH1D("efficiencyVsHitsInOtherDoubleColumnsDistribution", "efficiency vs. #hits in other double columns", 50, 0, 50);
+        efficiencyVsHitsInSameDoubleColumnsDistribution = new TH1D("efficiencyVsHitsInSameDoubleColumnsDistribution", "efficiency vs. #hits in same double column", 50, 0, 50);
 
         int calsTotal = 0;
         int PKAMsTotal = 0;
         int bgHitsTotal=0;
         int bgHitPixels = 0;
+        int nDeadPixels = 0;
 
         std::vector<double> calEffNoPKAMList;
 
@@ -908,14 +1032,14 @@ namespace eudaq {
         //------------------------------------------------------------------------------------------------------------------------------
         // aggregate efficiency data from single pixel values (previously filled TH2D's)
         //------------------------------------------------------------------------------------------------------------------------------
-        for (int c=1;c<51;c++) {
-            for (int r=1;r<79;r++) {
+        for (int c=m_fiducial_area_col_min;c<=m_fiducial_area_col_max;c++) {
+            for (int r=m_fiducial_area_row_min;r<=m_fiducial_area_row_max;r++) {
                 int cals = calMap->GetBinContent(1 + c, 1 + r);
                 int pkams = pkamMap->GetBinContent(1 + c, 1 + r);
                 int errors = errorsMap->GetBinContent(1 + c, 1 + r);
                 int bgHits = bgMap->GetBinContent(1 + c, 1 + r);
 
-                if (cals > 0 || bgHits > 0) {
+                if (bgHits > 0) {
                     bgHitPixels++;
                     bgHitsTotal += bgHits;
                 }
@@ -925,11 +1049,11 @@ namespace eudaq {
                 double efficiencyNoPkam = 0;
 
                 //------------------------------------------------------------------------------------------------------------------------------
-                // ignore dead/masked pixels
+                // DISABLED: ignore dead/masked pixels
                 // careful: this only works when it's impossible to have 0 hits from dynamic inefficiency alone
                 // remark: at 600 MHz/cm2, it's safe to do this for ntrig=50
                 //------------------------------------------------------------------------------------------------------------------------------
-                if (cals > 0 || bgHits > 0) {
+                if (true || (cals > 0 || bgHits > 0)) {
                     if (ntrig - pkams - errors > 0) {
                         efficiencyNoPkam = (double)cals / (double) (ntrig - pkams - errors) * 100.0;
                         if (efficiencyNoPkam > 100.0) efficiencyNoPkam = 100.0;
@@ -943,6 +1067,11 @@ namespace eudaq {
                     calEff->Fill(efficiency);
 
                     calsTotal += cals;
+                }
+                if (cals == 0 && bgHits == 0) {
+                    nDeadPixels++;
+                } else {
+                    calEffNoDead->Fill(efficiency);
                 }
                 PKAMsTotal += pkams;
 
@@ -985,6 +1114,7 @@ namespace eudaq {
         double efficiencyNoPKAMError=0;
         double meanEfficiencyNoPKAM = calEffNoPKAM->GetMean();
 
+        // this include all tested pixels, also the ones which are not used for efficiency calculation
         int nPixelsTestedTotal = 4160;
         int nGoodEvents = ntrig*nPixelsTestedTotal-PKAMsTotal;
 
@@ -996,7 +1126,9 @@ namespace eudaq {
         std::stringstream ss2;
         ss2.str("");
         ss2.clear();
-        ss2 << "ntrig " << ntrig << " nEvnets: " << nGoodEvents << " <br>";
+        ss2 << "<table>";
+        ss2 << "<tr><th>property</th><th>value</th></tr>";
+        ss2 << "<tr><td>ntrig per pixel</td><td>" << ntrig << "</td></tr>";
         htmlText += ss2.str();
 
 
@@ -1018,8 +1150,9 @@ namespace eudaq {
         double clusterRate = (double)clusterMap->Integral() / (bgHitPixels*25*1e-9*150.0*100.0 * 1e-2 * (double)nGoodEvents);
 
         std::stringstream ss3;
-        ss3 << "Rate: " << meanRateUncorrected << " +/- " << rateErrorUncorrected << "<br>";
-        ss3 << "Rate (corrected by cal eff.): " <<meanRate << " +/- " << rateError << " MHz/cm2<br>Cluster rate: " << clusterRate << " MHz/cm2<br>";
+        ss3 << "<tr><td>Rate:</td><td>" << meanRateUncorrected << " +/- " << rateErrorUncorrected << " MHz/cm2</td></tr>";
+        ss3 << "<tr><td>Rate (corrected by cal eff.):</td><td>" <<meanRate << " +/- " << rateError << " MHz/cm2</td></tr>";
+        ss3 << "<tr><td>Cluster rate:</td><td>" << clusterRate << " MHz/cm2</td></tr>";
         htmlText += ss3.str();
 
         //------------------------------------------------------------------------------------------------------------------------------
@@ -1030,11 +1163,11 @@ namespace eudaq {
         }
         ss2.str("");
         ss2.clear();
-        ss2 << "Efficiency (PKAM events & events with R/O errors removed): " <<meanEfficiencyNoPKAM << " +/- " << efficiencyNoPKAMError << " %<br>";
+        ss2 << "<tr><td>Efficiency (PKAM events & events with R/O errors removed):</td><td>" <<meanEfficiencyNoPKAM << " +/- " << efficiencyNoPKAMError << " %</td></tr>";
         htmlText += ss2.str();
         ss2.str("");
         ss2.clear();
-        ss2 << "(cross check) efficiency =" << std::accumulate(calEffNoPKAMList.begin(), calEffNoPKAMList.end(), 0.0)/calEffNoPKAMList.size() << "<br>";
+        ss2 << "<tr><td>(cross check) efficiency =</td><td>" << std::accumulate(calEffNoPKAMList.begin(), calEffNoPKAMList.end(), 0.0)/calEffNoPKAMList.size() << " %</td></tr>";
         htmlText += ss2.str();
 
         //------------------------------------------------------------------------------------------------------------------------------
@@ -1044,25 +1177,38 @@ namespace eudaq {
         double efficiencyError = 100.0 * sqrt( meanEfficiency * 0.01 * (1-meanEfficiency* 0.01) / (calsTotal));
         ss2.str("");
         ss2.clear();
-        ss2 << "Efficiency (no bad event correction): " <<meanEfficiency << " +/- " << efficiencyError << " %<br>";
+        ss2 << "<tr><td>Efficiency (no bad event correction):</td><td>" <<meanEfficiency << " +/- " << efficiencyError << " %</td></tr>";
+        htmlText += ss2.str();
+
+        //------------------------------------------------------------------------------------------------------------------------------
+        // efficiency (dead pixels excluded)
+        //------------------------------------------------------------------------------------------------------------------------------
+        double meanEfficiencyNoDead = calEffNoDead->GetMean();
+        double efficiencyErrorNoDead = 100.0 * sqrt( meanEfficiencyNoDead * 0.01 * (1-meanEfficiencyNoDead* 0.01) / (calsTotal));
+        ss2.str("");
+        ss2.clear();
+        ss2 << "<tr><td>Efficiency (dead pixels excluded):</td><td>" <<meanEfficiencyNoDead << " +/- " << efficiencyErrorNoDead << " %</td></tr>";
         htmlText += ss2.str();
 
         ss2.str("");
         ss2.clear();
-        ss2 << "Number of events: " << m_eventcounter << " <br>";
-        ss2 << "PKAMs: " << m_npkam << " <br>";
+        ss2 << "<tr><td>Number of events:</td><td>" << m_eventcounter << " </td></tr>";
+        ss2 << "<tr><td>good XPixelAlive events:</td><td>" << nGoodEvents << "</td></tr>";
+        ss2 << "<tr><td>Dead pixels:</td><td>" << nDeadPixels << " </td></tr>";
+        ss2 << "<tr><td>PKAMs:</td><td>" << m_npkam << " </td></tr>";
         htmlText += ss2.str();
 
 
         //------------------------------------------------------------------------------------------------------------------------------
         // efficiency vs. event length
         //------------------------------------------------------------------------------------------------------------------------------
-        efficiencyVsHitsPerEventDistribution->Divide(calHitsVsHitsPerEventDistribution, calsVsHitsPerEventDistribution, 1, 1, "b");
+        efficiencyVsHitsPerEventDistribution->Divide(calHitsPerEventDistribution, hitsPerEventDistribution, 1, 1, "b");
 
         //------------------------------------------------------------------------------------------------------------------------------
         // efficiency vs. hits in other double column
         //------------------------------------------------------------------------------------------------------------------------------
         efficiencyVsHitsInOtherDoubleColumnsDistribution->Divide(calHitsVsHitsInOtherDoubleColumnsDistribution, calsVsHitsInOtherDoubleColumnsDistribution, 1, 1, "b");
+        efficiencyVsHitsInSameDoubleColumnsDistribution->Divide(calHitsVsHitsInSameDoubleColumnsDistribution, calsVsHitsInSameDoubleColumnsDistribution, 1, 1, "b");
 
 
         //------------------------------------------------------------------------------------------------------------------------------
@@ -1072,9 +1218,8 @@ namespace eudaq {
         double ratePKMError = (sqrt(PKAMsTotal) / (4160*25*1e-9*150.0*100.0 * 1e-2 * (double)ntrig * bgHitPixels))/(meanEfficiencyNoPKAM*0.01);
         ss2.str("");
         ss2.clear();
-        ss2 << "PKAM rate: " <<meanRatePKAM << " +/- " << ratePKMError << " MHz/cm2<br>";
+        ss2 << "<tr><td>PKAM rate: </td><td>" <<meanRatePKAM << " +/- " << ratePKMError << " MHz/cm2</td></tr>";
         htmlText += ss2.str();
-
 
         //------------------------------------------------------------------------------------------------------------------------------
         // PKAM ratio [% of events]
@@ -1082,20 +1227,22 @@ namespace eudaq {
         double PKAMratio = PKAMsTotal/(4160.0*ntrig);
         ss2.str("");
         ss2.clear();
-        ss2 << "PKAM ratio: " << 100.0*PKAMratio << " %<br>";
+        ss2 << "<tr><td>PKAM ratio: </td><td>" << 100.0*PKAMratio << " %</td></tr>";
         htmlText += ss2.str();
 
         ss2.str("");
         ss2.clear();
-        ss2 << "Cluster size: " << clusterSizeDistribution->GetMean() << "<br>";
+        ss2 << "<tr><td>Cluster size: </td><td>" << clusterSizeDistribution->GetMean() << "</td></tr>";
         htmlText += ss2.str();
         ss2.str("");
         ss2.clear();
-        ss2 << "Cluster size (rows): " << clusterSizeDistributionRow->GetMean() << "<br>";
+        ss2 << "<tr><td>Cluster size (rows): </td><td>" << clusterSizeDistributionRow->GetMean() << "</td></tr>";
         htmlText += ss2.str();
         ss2.str("");
         ss2.clear();
-        ss2 << "Cluster size (cols): " << clusterSizeDistributionCol->GetMean() << "<br>";
+        ss2 << "<tr><td>Cluster size (cols): </td><td>" << clusterSizeDistributionCol->GetMean() << "</td></tr>";
+        ss2 << "</table>";
+
         htmlText += ss2.str();
 
 
@@ -1114,22 +1261,42 @@ namespace eudaq {
 
 
         //------------------------------------------------------------------------------------------------------------------------------
-        // write efficiency per double column
+        // decoding statistics
         //------------------------------------------------------------------------------------------------------------------------------
-        htmlText += ss2.str();
-        htmlText += "<br><br>Per double column:<br>";
+        decoding_stats += decoder.getStatistics();
+        std::stringstream ss;
+        ss << "<br><p><h4>Decoding statistics:</h4>";
+        ss << "<table><tr><th>General information:</td><td></th><td></td></tr>";
+        ss << "<tr><td></td><td><16bit words read:        </td><td>" << decoding_stats.info_words_read() << "</td></tr>";
+        ss << "<tr><td></td><td>valid events total:       </td><td>" << decoding_stats.info_events_total() << "</td></tr>";
+        ss << "<tr><td></td><td>empty events:             </td><td>" << decoding_stats.info_events_empty() << "</td></tr>";
+        ss << "<tr><td></td><td>valid events with pixels: </td><td>" << decoding_stats.info_events_valid() << "</td></tr>";
+        ss << "<tr><td></td><td>valid pixel hits:         </td><td>" << decoding_stats.info_pixels_valid() << "</td></tr>";
+        ss << "<tr><th>Event errors: \t           " << decoding_stats.errors_event() << "</th><td></td></tr>";
+        ss << "<tr><td></td><td>start marker:             </td><td>" << decoding_stats.errors_event_start() << "</td></tr>";
+        ss << "<tr><td></td><td>stop marker:              </td><td>" << decoding_stats.errors_event_stop() << "</td></tr>";
+        ss << "<tr><td></td><td>overflow:                 </td><td>" << decoding_stats.errors_event_overflow() << "</td></tr>";
+        ss << "<tr><td></td><td>invalid 5bit words:       </td><td>" << decoding_stats.errors_event_invalid_words() << "</td></tr>";
+        ss << "<tr><td></td><td>invalid XOR eye diagram:  </td><td>" << decoding_stats.errors_event_invalid_xor() << "</td></tr>";
+        ss << "<tr><td></td><td>frame (failed synchr.):   </td><td>" << decoding_stats.errors_event_frame() << "</td></tr>";
+        ss << "<tr><td></td><td>idle data (no TBM trl):   </td><td>" << decoding_stats.errors_event_idledata() << "</td></tr>";
+        ss << "<tr><td></td><td>no data (only TBM hdr):   </td><td>" << decoding_stats.errors_event_nodata() << "</td></tr>";
+        ss << "<tr><th>TBM errors: \t\t           " << decoding_stats.errors_tbm() << "</th><td></td></tr>";
+        ss << "<tr><td></td><td>flawed TBM headers:       </td><td>" << decoding_stats.errors_tbm_header() << "</td></tr>";
+        ss << "<tr><td></td><td>flawed TBM trailers:      </td><td>" << decoding_stats.errors_tbm_trailer() << "</td></tr>";
+        ss << "<tr><td></td><td>event ID mismatches:      </td><td>" << decoding_stats.errors_tbm_eventid_mismatch() << "</td></tr>";
+        ss << "<tr><th>ROC errors: \t\t           " << decoding_stats.errors_roc() << "</th><td></td></tr>";
+        ss << "<tr><td></td><td>missing ROC header(s):    </td><td>" << decoding_stats.errors_roc_missing() << "</td></tr>";
+        ss << "<tr><td></td><td>misplaced readback start: </td><td>" << decoding_stats.errors_roc_readback() << "</td></tr>";
+        ss << "<tr><th>Pixel decoding errors:\t   " << decoding_stats.errors_pixel() << "</th><td></td></tr>";
+        ss << "<tr><td></td><td>pixel data incomplete:    </td><td>" << decoding_stats.errors_pixel_incomplete() << "</td></tr>";
+        ss << "<tr><td></td><td>pixel address:            </td><td>" << decoding_stats.errors_pixel_address() << "</td></tr>";
+        ss << "<tr><td></td><td>pulse height fill bit:    </td><td>" << decoding_stats.errors_pixel_pulseheight() << "</td></tr>";
+        ss << "<tr><td></td><td>buffer corruption:        </td><td>" << decoding_stats.errors_pixel_buffer_corrupt() << "</td></tr>";
+        ss << "</table>";
 
-        int activePixelsDC = 152;
-        for (int dc=1;dc<25;dc++) {
-            ss2.str("");
-            ss2.clear();
-            double dcEfficiency = 100.0 * calsDC[dc] / (double)triggersDC[dc];
-            double dcEfficiencyError = 100.0 * sqrt( dcEfficiency * 0.01 * (1-dcEfficiency* 0.01) / (double)triggersDC[dc]);
-            double dcRate = (bgHitsDC[dc] / (activePixelsDC *25*1e-9*150.0*100.0 * 1e-2 * (double)(ntrig*4160-PKAMsTotal)))/(dcEfficiency*0.01);
-            double dcrateError = (sqrt(bgHitsDC[dc]) / (activePixelsDC*25*1e-9*150.0*100.0 * 1e-2 * (double)(ntrig*4160-PKAMsTotal)))/(dcEfficiency*0.01);
-            ss2 << "<br>[" <<  dcRate << "," << dcrateError << ", " << dcEfficiency << ", " << dcEfficiencyError << ", " << " -1" << "],";
-            htmlText += ss2.str();
-        }
+        htmlText += ss.str();
+
 
 
         //------------------------------------------------------------------------------------------------------------------------------
@@ -1146,6 +1313,48 @@ namespace eudaq {
 
         writeHistogram(adcDistribution, "adcDistribution", 0.65, 0.65);
 
+        writeHistogram(clusterSizeDistribution, "clusterSizeDistribution", 0.65, 0.65);
+        writeHistogram(clusterSizeDistributionCol, "clusterSizeDistributionCol", 0.65, 0.65);
+        writeHistogram(clusterSizeDistributionRow, "clusterSizeDistributionRow", 0.65, 0.65);
+
+        writeHistogram(nFramesPerDoubleColumn, "nFramesPerDoubleColumn", true);
+
+        efficiencyVsHitsPerEventDistribution->SetStats(0);
+        efficiencyVsHitsPerEventDistribution->GetXaxis()->SetTitle("total hits in event");
+        efficiencyVsHitsPerEventDistribution->GetYaxis()->SetTitle("efficiency");
+
+        //double minValue = efficiencyVsHitsPerEventDistribution->GetBinContent(efficiencyVsHitsPerEventDistribution->GetMinimumBin());
+        //double maxValue = efficiencyVsHitsPerEventDistribution->GetBinContent(efficiencyVsHitsPerEventDistribution->GetMaximumBin());
+        //efficiencyVsHitsPerEventDistribution->GetYaxis()->SetRangeUser(minValue * 0.9-0.1, maxValue*1.01 + 0.01);
+
+        writeHistogram(hitsPerEventDistribution, "hitsPerEventDistribution", 0.65, 0.65);
+        writeHistogram(calHitsPerEventDistribution, "calHitsPerEventDistribution", 0.65, 0.65);
+        writeHistogram(efficiencyVsHitsPerEventDistribution, "efficiencyVsHitsPerEventDistribution", -10, -10, (char*)"E");
+
+        //minValue = efficiencyVsHitsInOtherDoubleColumnsDistribution->GetBinContent(efficiencyVsHitsInOtherDoubleColumnsDistribution->GetMinimumBin());
+        //maxValue = efficiencyVsHitsInOtherDoubleColumnsDistribution->GetBinContent(efficiencyVsHitsInOtherDoubleColumnsDistribution->GetMaximumBin());
+        //efficiencyVsHitsInOtherDoubleColumnsDistribution->GetYaxis()->SetRangeUser(minValue * 0.9-0.1, maxValue*1.01 + 0.01);
+
+        efficiencyVsHitsInOtherDoubleColumnsDistribution->SetStats(0);
+        efficiencyVsHitsInOtherDoubleColumnsDistribution->GetXaxis()->SetTitle("hits in other double columns");
+        efficiencyVsHitsInOtherDoubleColumnsDistribution->GetYaxis()->SetTitle("efficiency");
+
+        writeHistogram(calsVsHitsInOtherDoubleColumnsDistribution, "calsVsHitsInOtherDoubleColumns", 0.65, 0.65);
+        writeHistogram(calHitsVsHitsInOtherDoubleColumnsDistribution, "calHitsVsHitsInOtherDoubleColumns", 0.65, 0.65);
+        writeHistogram(efficiencyVsHitsInOtherDoubleColumnsDistribution, "efficiencyVsHitsInOtherDoubleColumns", -10, -10, (char*)"E");
+
+        efficiencyVsHitsInSameDoubleColumnsDistribution->SetStats(0);
+        efficiencyVsHitsInSameDoubleColumnsDistribution->GetXaxis()->SetTitle("hits in other double columns");
+        efficiencyVsHitsInSameDoubleColumnsDistribution->GetYaxis()->SetTitle("efficiency");
+
+        writeHistogram(calsVsHitsInSameDoubleColumnsDistribution, "calsVsHitsInSameDoubleColumns", 0.65, 0.65);
+        writeHistogram(calHitsVsHitsInSameDoubleColumnsDistribution, "calHitsVsHitsInSameDoubleColumns", 0.65, 0.65);
+        writeHistogram(efficiencyVsHitsInSameDoubleColumnsDistribution, "efficiencyVsHitsInSameDoubleColumns", -10, -10, (char*)"E");
+
+
+        writeHistogram(hitsPerNEventsVsTime, "hitsPerNEventsVsTime", 0.65, 0.15);
+        writeHistogram(hitsPerNEventsVsTimeDC, "hitsPerNEventsVsTimeDC");
+
         writeHistogram(hitsAboveBelowMap, "hitsAboveBelowMap");
         writeHistogram(hitsAboveMap, "hitsAboveMap");
         writeHistogram(hitsBelowMap, "hitsBelowMap");
@@ -1161,38 +1370,8 @@ namespace eudaq {
         writeHistogram(effHitsIsolated, "effHitsIsolated", true);
 
         writeHistogram(clusterMap, "clusterMap");
-        writeHistogram(clusterSizeDistribution, "clusterSizeDistribution", 0.65, 0.65);
-        writeHistogram(clusterSizeDistributionCol, "clusterSizeDistributionCol", 0.65, 0.65);
-        writeHistogram(clusterSizeDistributionRow, "clusterSizeDistributionRow", 0.65, 0.65);
 
 
-        efficiencyVsHitsPerEventDistribution->SetStats(0);
-        efficiencyVsHitsPerEventDistribution->GetXaxis()->SetTitle("total hits in event");
-        efficiencyVsHitsPerEventDistribution->GetYaxis()->SetTitle("efficiency");
-
-        //double minValue = efficiencyVsHitsPerEventDistribution->GetBinContent(efficiencyVsHitsPerEventDistribution->GetMinimumBin());
-        //double maxValue = efficiencyVsHitsPerEventDistribution->GetBinContent(efficiencyVsHitsPerEventDistribution->GetMaximumBin());
-        //efficiencyVsHitsPerEventDistribution->GetYaxis()->SetRangeUser(minValue * 0.9-0.1, maxValue*1.01 + 0.01);
-
-        writeHistogram(calsVsHitsPerEventDistribution, "calsVsHitsPerEventDistribution", 0.65, 0.65);
-        writeHistogram(calHitsVsHitsPerEventDistribution, "calHitsVsHitsPerEventDistribution", 0.65, 0.65);
-        writeHistogram(efficiencyVsHitsPerEventDistribution, "efficiencyVsHitsPerEventDistribution", -10, -10, (char*)"E");
-
-        //minValue = efficiencyVsHitsInOtherDoubleColumnsDistribution->GetBinContent(efficiencyVsHitsInOtherDoubleColumnsDistribution->GetMinimumBin());
-        //maxValue = efficiencyVsHitsInOtherDoubleColumnsDistribution->GetBinContent(efficiencyVsHitsInOtherDoubleColumnsDistribution->GetMaximumBin());
-        //efficiencyVsHitsInOtherDoubleColumnsDistribution->GetYaxis()->SetRangeUser(minValue * 0.9-0.1, maxValue*1.01 + 0.01);
-
-        efficiencyVsHitsInOtherDoubleColumnsDistribution->SetStats(0);
-        efficiencyVsHitsInOtherDoubleColumnsDistribution->GetXaxis()->SetTitle("hits in other double columns");
-        efficiencyVsHitsInOtherDoubleColumnsDistribution->GetYaxis()->SetTitle("efficiency");
-
-        writeHistogram(calsVsHitsInOtherDoubleColumnsDistribution, "calsVsHitsInOtherDoubleColumns", 0.65, 0.65);
-        writeHistogram(calHitsVsHitsInOtherDoubleColumnsDistribution, "calHitsVsHitsInOtherDoubleColumns", 0.65, 0.65);
-        writeHistogram(efficiencyVsHitsInOtherDoubleColumnsDistribution, "efficiencyVsHitsInOtherDoubleColumns", -10, -10, (char*)"E");
-
-
-        writeHistogram(hitsPerNEventsVsTime, "hitsPerNEventsVsTime", 0.65, 0.15);
-        writeHistogram(hitsPerNEventsVsTimeDC, "hitsPerNEventsVsTimeDC");
 
 
 
@@ -1226,6 +1405,11 @@ namespace eudaq {
             calClusterFound->Draw();
             calClusterNotFound->Draw("same");
 
+            TLegend* l = new TLegend(0.6,0.7,0.85,0.85);
+            l->AddEntry(calClusterFound, "cal found");
+            l->AddEntry(calClusterNotFound, "cal not found");
+            l->Draw();
+
             gPad->Update();
             std::stringstream ss;
             ss << outputFolder << "/" << name << ".pdf";
@@ -1237,11 +1421,115 @@ namespace eudaq {
             c1->SaveAs(ss.str().c_str());
             ss.str("");
             ss.clear();
-            ss << "<div style='float:left;'><a href='" << name << ".pdf'><img src='" << name << ".png'></a></div>" ;
+            ss << "<div style='float:left;'><a href='" << name << ".pdf'><img src='" << name << ".png' width=350 height=350></a></div>" ;
             htmlText += ss.str();
         }
 
-        std::stringstream ss;
+        //------------------------------------------------------------------------------------------------------------------------------
+        // event dumps
+        //------------------------------------------------------------------------------------------------------------------------------
+        ss.str("");
+        ss.clear();
+        ss << "<div style='clear:both;'></div>";
+        ss << "<h4>Events (non-empty)</h4>Including the injected calibrate signals drawn with ADC=1<br>" ;
+        for (int i=0; i<m_dumpedevents; i++) {
+            ss << "<div style='float:left;'><a href='nonempty_event_" << i << ".png' title='Event " << i << "'><img src='nonempty_event_" << i << ".png' width=250 height=250></a></div>";
+        }
+        ss << "<div style='clear:both;'></div>";
+        htmlText += ss.str();
+
+        //------------------------------------------------------------------------------------------------------------------------------
+        // pkam dumps
+        //------------------------------------------------------------------------------------------------------------------------------
+        ss.str("");
+        ss.clear();
+        ss << "<h4>Events PKAM (truncated)</h4>" ;
+        int nPkamsDumped = std::min(m_npkam, m_npkammax);
+        for (int i=0; i<nPkamsDumped; i++) {
+            ss << "<div style='float:left;'><a href='pkamEvent_" << i << ".png' title='Event " << i << "'><img src='pkamEvent_" << i << ".png' width=250 height=250></a></div>";
+        }
+        ss << "<div style='clear:both;'></div>";
+        htmlText += ss.str();
+
+        //------------------------------------------------------------------------------------------------------------------------------
+        // clusters
+        //------------------------------------------------------------------------------------------------------------------------------
+        int nClustersPrinted = 0;
+        int nClustersPrintMax = 100;
+        int clustersPrintoutMaxSize = 32;
+        ss.str("");
+        ss.clear();
+        ss << "<h4>Clusters</h4>Injected calibrate pulses are excluded from clustering<br>" ;
+        for (std::multimap < int, std::vector< std::pair< int,int >  > >::reverse_iterator clusterShape = clusterShapesSorted.rbegin(); clusterShape != clusterShapesSorted.rend(); clusterShape++ ) {
+            std::vector< std::vector< int > > clusterMap ( clustersPrintoutMaxSize, std::vector<int> ( clustersPrintoutMaxSize, 0 ) );
+
+            float probability = (float)(clusterShape->first)/ nclustersTotal;
+            bool bad_cluster = false;
+            int max_col = 0;
+            int max_row = 0;
+
+            for (int i=0; i<clusterShape->second.size(); i++) {
+                if (clusterShape->second[i].first < clustersPrintoutMaxSize && clusterShape->second[i].second < clustersPrintoutMaxSize) {
+                    clusterMap[clusterShape->second[i].second][clusterShape->second[i].first]++;
+                    if (clusterShape->second[i].second > max_row) max_row = clusterShape->second[i].second;
+                    if (clusterShape->second[i].first > max_col) max_col = clusterShape->second[i].first;
+
+                } else {
+                    bad_cluster = true;
+                }
+
+            }
+            if (!bad_cluster) {
+                nClustersPrinted++;
+                ss << "<div style='float:left;border:1px solid #ddd;margin:5px;padding:5px'>" << std::setprecision(3) << probability*100 << "%<br><table>";
+                for (int i=0;i<=max_row;i++) {
+                    ss << "<tr>";
+                    for (int j=0;j<=max_col;j++) {
+                        if (clusterMap[i][j]) {
+                            ss << "<td style='width:16px;height:16px;background-color:#339;text-align:center;padding:0px;border:1px solid #888;'>x</td>";
+                        } else {
+                            ss << "<td style='width:16px;height:16px;background-color:white;text-align:center;padding:0px;border:1px solid #888;'></td>";
+                        }
+                    }
+                    ss << "</tr>";
+                }
+                ss << "</table></div>";
+            }
+            if (nClustersPrinted > nClustersPrintMax) break;
+            if (nClustersPrinted % 10 == 0) {
+                ss << "<div style='clear:both;'></div>";
+
+            }
+
+        }
+        ss << "<div style='clear:both;'></div>";
+        htmlText += ss.str();
+
+        //------------------------------------------------------------------------------------------------------------------------------
+        // write efficiency per double column
+        //------------------------------------------------------------------------------------------------------------------------------
+        htmlText += ss2.str();
+        htmlText += "<div style='clear:both;'>--</div><br><br>Per double column:<br>";
+
+        int activePixelsDC = 152;
+        for (int dc=1;dc<25;dc++) {
+            ss2.str("");
+            ss2.clear();
+            double dcEfficiency = 100.0 * calsDC[dc] / (double)triggersDC[dc];
+            double dcEfficiencyError = 100.0 * sqrt( dcEfficiency * 0.01 * (1-dcEfficiency* 0.01) / (double)triggersDC[dc]);
+            double dcRate = (bgHitsDC[dc] / (activePixelsDC *25*1e-9*150.0*100.0 * 1e-2 * (double)(ntrig*4160-PKAMsTotal)))/(dcEfficiency*0.01);
+            double dcrateError = (sqrt(bgHitsDC[dc]) / (activePixelsDC*25*1e-9*150.0*100.0 * 1e-2 * (double)(ntrig*4160-PKAMsTotal)))/(dcEfficiency*0.01);
+            ss2 << "<br>[" <<  dcRate << "," << dcrateError << ", " << dcEfficiency << ", " << dcEfficiencyError << ", " << " -1" << "],";
+            htmlText += ss2.str();
+        }
+
+
+        //------------------------------------------------------------------------------------------------------------------------------
+        // WRITE HTML
+        //------------------------------------------------------------------------------------------------------------------------------
+        htmlText += "</body></html>";
+        ss.str("");
+        ss.clear();
         ss << outputFolder << "/run.html";
         std::ofstream out(ss.str());
         out << htmlText;
