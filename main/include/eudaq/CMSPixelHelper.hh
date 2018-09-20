@@ -161,7 +161,11 @@ namespace eudaq {
             tmp_vcaldict.par2 = par2;
             tmp_vcaldict.par3 = par3;
             tmp_vcaldict.calibration_factor = factor;
-            std::string identifier = roc_type + std::string( TString::Format("%01d%02d%02d",iroc,row,col));
+            char c_identifier[256];
+            sprintf(c_identifier,"%01d%02d%02d",iroc,row,col);
+            // std::string identifier = roc_type + std::string( "" + TString::Format("%01d%02d%02d",iroc,row,col));
+            std::string identifier(c_identifier);
+
             q++;
             vcal_vals[identifier] = tmp_vcaldict;
           }
@@ -290,7 +294,10 @@ namespace eudaq {
 	for(std::vector<pxar::pixel>::iterator it = evt->pixels.begin(); it != evt->pixels.end(); ++it){
 	  // Check if current pixel belongs on this plane:
 	  if(it->roc() == roc) {
-      std::string identifier = (std::string)m_detector+(std::string)TString::Format("%01zu%02d%02d",roc,it->row(),it->column());
+      char c_identifier[256];
+      sprintf(c_identifier, "%01zu%02d%02d",roc,it->row(),it->column());
+      // std::string identifier = (std::string)m_detector+(std::string)TString::Format("%01zu%02d%02d",roc,it->row(),it->column());
+      std::string identifier(c_identifier);
 
       float charge;
       if (do_conversion){
