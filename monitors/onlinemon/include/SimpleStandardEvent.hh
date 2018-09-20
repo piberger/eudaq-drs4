@@ -3,6 +3,8 @@
 
 #ifdef __CINT__
 #undef __GNUC__
+typedef unsigned short int __char16_t;
+typedef unsigned  int __char32_t;
 typedef unsigned long long int uint64_t; 
 typedef char __signed;
 typedef char int8_t;

@@ -1,6 +1,14 @@
 #ifndef ONLINE_MON_H
 #define ONLINE_MON_H
 
+#ifdef __CINT__
+#undef __GNUC__
+typedef unsigned short int __char16_t;
+typedef unsigned  int __char32_t;
+typedef char __signed;
+typedef char int8_t;
+#endif
+
 #include <cmath>
 
 //ROOT includes
